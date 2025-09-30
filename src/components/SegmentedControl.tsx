@@ -27,7 +27,7 @@ export default function SegmentedControl({
         className="absolute top-1 bottom-1 bg-white dark:bg-slate-700 rounded-md shadow-sm border border-slate-200 dark:border-slate-600"
         initial={false}
         animate={{
-          x: selectedIndex * (100 / options.length) + '%',
+          left: `${selectedIndex * (100 / options.length)}%`,
           width: `${100 / options.length}%`
         }}
         transition={{
