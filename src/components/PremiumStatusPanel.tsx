@@ -35,19 +35,24 @@ export default function PremiumStatusPanel({
 }: PremiumStatusPanelProps) {
   const getQuestionColor = (index: number) => {
     const state = sessionStates[index]
-    if (!state) return 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+    if (!state) return 'bg-slate-400 text-white border-slate-400'
+
+    // Check for "Marked and Answered" state first
+    if (state.status === 'marked_for_review' && state.user_answer) {
+      return 'bg-purple-500 text-white border-purple-500'
+    }
 
     switch (state.status) {
       case 'not_visited':
-        return 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+        return 'bg-slate-400 text-white border-slate-400'
       case 'unanswered':
-        return 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700 shadow-red-100 dark:shadow-red-900/20'
+        return 'bg-red-500 text-white border-red-500'
       case 'answered':
-        return 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700 shadow-green-100 dark:shadow-green-900/20'
+        return 'bg-green-500 text-white border-green-500'
       case 'marked_for_review':
-        return 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700 shadow-purple-100 dark:shadow-purple-900/20'
+        return 'bg-purple-500 text-white border-purple-500'
       default:
-        return 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+        return 'bg-slate-400 text-white border-slate-400'
     }
   }
 
@@ -66,20 +71,6 @@ export default function PremiumStatusPanel({
       transition={{ duration: 0.3 }}
       className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-lg"
     >
-      {/* Timer Section */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            Session Timer
-          </h3>
-          {timeLimitInMinutes && (
-            <span className="text-sm text-slate-500 dark:text-slate-400">
-              {timeLimitInMinutes} min limit
-            </span>
-          )}
-        </div>
-        <Timer sessionStartTime={sessionStartTime} duration={timeLimitInMinutes} />
-      </div>
 
 
       {/* Question Palette */}
@@ -113,6 +104,11 @@ export default function PremiumStatusPanel({
                 whileTap={{ scale: 0.92 }}
               >
                 {index + 1}
+                
+                {/* Green dot indicator for "Marked and Answered" */}
+                {state?.status === 'marked_for_review' && state?.user_answer && (
+                  <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full"></div>
+                )}
                 
                 {/* Bookmark indicator */}
                 {hasBookmark && (

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Database } from '@/types/database'
 import { FlagIcon } from '@heroicons/react/24/outline'
 import KatexRenderer from './ui/KatexRenderer'
+import Timer from './Timer'
 
 type Question = Database['public']['Tables']['questions']['Row']
 
@@ -17,6 +18,8 @@ interface QuestionDisplayProps {
   onAnswerChange: (answer: string) => void
   onBookmark: () => void
   onReportError?: () => void
+  sessionStartTime?: number
+  timeLimitInMinutes?: number
 }
 
 export default function QuestionDisplay({
@@ -27,7 +30,9 @@ export default function QuestionDisplay({
   isBookmarked,
   onAnswerChange,
   onBookmark,
-  onReportError
+  onReportError,
+  sessionStartTime,
+  timeLimitInMinutes
 }: QuestionDisplayProps) {
   const [isBookmarking, setIsBookmarking] = useState(false)
 
@@ -72,6 +77,13 @@ export default function QuestionDisplay({
             </div>
           )}
         </div>
+        
+        {/* Session Timer - Moved from right panel */}
+        {sessionStartTime && (
+          <div className="hidden lg:block">
+            <Timer sessionStartTime={sessionStartTime} duration={timeLimitInMinutes} />
+          </div>
+        )}
         
         <motion.button
           onClick={handleBookmark}
