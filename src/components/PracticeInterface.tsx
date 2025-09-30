@@ -185,14 +185,25 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question_id: currentQuestion.question_id,
-          user_id: user.id
+          questionId: currentQuestion.id
         })
       })
 
-      if (response.ok) {
-        updateSessionState(currentIndex, {
-          is_bookmarked: !currentState.is_bookmarked
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to bookmark question')
+      }
+
+      // Update the session state to reflect the bookmark status
+      updateSessionState(currentIndex, { is_bookmarked: !currentState.is_bookmarked })
+      
+      // Show success toast
+      if (typeof window !== 'undefined' && window.showToast) {
+        window.showToast({
+          type: 'success',
+          title: 'Question Bookmarked',
+          message: 'Added to your revision hub for later review'
         })
       }
     } catch (error) {

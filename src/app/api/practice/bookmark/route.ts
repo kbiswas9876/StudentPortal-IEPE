@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
+import { cookies } from 'next/headers'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -20,18 +21,38 @@ const supabaseAdmin = createClient(
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { question_id, user_id } = body
+    const { questionId } = body
 
-    if (!question_id || !user_id) {
-      return NextResponse.json({ error: 'Question ID and User ID are required' }, { status: 400 })
+    if (!questionId) {
+      return NextResponse.json({ error: 'Question ID is required' }, { status: 400 })
+    }
+
+    // Get the current user
+    const cookieStore = cookies()
+    const supabase = createClient(
+      env.SUPABASE_URL,
+      env.SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+        },
+      }
+    )
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Check if bookmark already exists
     const { data: existingBookmark, error: checkError } = await supabaseAdmin
       .from('bookmarked_questions')
       .select('id')
-      .eq('question_id', question_id)
-      .eq('user_id', user_id)
+      .eq('question_id', questionId.toString())
+      .eq('user_id', user.id)
       .single()
 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -44,8 +65,8 @@ export async function POST(request: Request) {
       const { error: deleteError } = await supabaseAdmin
         .from('bookmarked_questions')
         .delete()
-        .eq('question_id', question_id)
-        .eq('user_id', user_id)
+        .eq('question_id', questionId.toString())
+        .eq('user_id', user.id)
 
       if (deleteError) {
         console.error('Error removing bookmark:', deleteError)
@@ -58,9 +79,8 @@ export async function POST(request: Request) {
       const { error: insertError } = await supabaseAdmin
         .from('bookmarked_questions')
         .insert({
-          question_id,
-          user_id,
-          created_at: new Date().toISOString()
+          question_id: questionId.toString(),
+          user_id: user.id
         })
 
       if (insertError) {

@@ -147,28 +147,31 @@ export interface Database {
     }
     bookmarked_questions: {
       Row: {
-        id: number
+        id: string
         user_id: string
-        question_id: number
+        question_id: string
         personal_note: string | null
         custom_tags: string[] | null
         created_at: string
+        updated_at: string
       }
       Insert: {
-        id?: number
+        id?: string
         user_id: string
-        question_id: number
+        question_id: string
         personal_note?: string | null
         custom_tags?: string[] | null
         created_at?: string
+        updated_at?: string
       }
       Update: {
-        id?: number
+        id?: string
         user_id?: string
-        question_id?: number
+        question_id?: string
         personal_note?: string | null
         custom_tags?: string[] | null
         created_at?: string
+        updated_at?: string
       }
     }
     practice_plans: {

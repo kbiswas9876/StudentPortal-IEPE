@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
+import { cookies } from 'next/headers'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -17,6 +18,7 @@ const supabaseAdmin = createClient(
   }
 )
 
+// GET - Fetch all bookmarked questions for a user
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -28,15 +30,11 @@ export async function GET(request: Request) {
 
     console.log('Fetching bookmarked questions for user:', userId)
 
-    // Fetch bookmarked questions with JOIN to get full question data
     const { data, error } = await supabaseAdmin
       .from('bookmarked_questions')
       .select(`
-        id,
-        personal_note,
-        custom_tags,
-        created_at,
-        questions (
+        *,
+        questions!bookmarked_questions_question_id_fkey (
           id,
           question_id,
           book_source,

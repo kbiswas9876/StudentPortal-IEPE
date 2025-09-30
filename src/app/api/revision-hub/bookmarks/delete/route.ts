@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
+import { cookies } from 'next/headers'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -17,24 +18,43 @@ const supabaseAdmin = createClient(
   }
 )
 
-export async function DELETE(request: Request) {
+// POST - Delete a bookmark
+export async function POST(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const bookmarkId = searchParams.get('bookmarkId')
-    const userId = searchParams.get('userId')
+    const body = await request.json()
+    const { bookmarkId } = body
 
-    if (!bookmarkId || !userId) {
-      return NextResponse.json({ error: 'Bookmark ID and User ID are required' }, { status: 400 })
+    if (!bookmarkId) {
+      return NextResponse.json({ error: 'Bookmark ID is required' }, { status: 400 })
     }
 
-    console.log('Deleting bookmark:', { bookmarkId, userId })
+    // Get the current user
+    const cookieStore = cookies()
+    const supabase = createClient(
+      env.SUPABASE_URL,
+      env.SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+        },
+      }
+    )
 
-    // Delete the bookmark
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    console.log('Deleting bookmark:', { bookmarkId, userId: user.id })
+
     const { error } = await supabaseAdmin
       .from('bookmarked_questions')
       .delete()
       .eq('id', bookmarkId)
-      .eq('user_id', userId) // Ensure user can only delete their own bookmarks
+      .eq('user_id', user.id) // Ensure user can only delete their own bookmarks
 
     if (error) {
       console.error('Error deleting bookmark:', error)
