@@ -61,40 +61,30 @@ export default function Timer({ sessionStartTime, duration }: TimerProps) {
 
   return (
     <motion.div
-      className={`inline-flex items-center px-6 py-3 rounded-xl border-2 transition-all duration-500 shadow-lg ${getTimerBgColor()}`}
+      className={`inline-flex items-center px-4 py-2 rounded-lg border transition-all duration-500 shadow-md ${getTimerBgColor()}`}
       animate={{
-        scale: duration && (duration * 60 * 1000 - elapsedTime) <= 5 * 60 * 1000 ? [1, 1.05, 1] : 1
+        scale: duration && (duration * 60 * 1000 - elapsedTime) <= 5 * 60 * 1000 ? [1, 1.02, 1] : 1
       }}
       transition={{
         duration: 1,
         repeat: duration && (duration * 60 * 1000 - elapsedTime) <= 5 * 60 * 1000 ? Infinity : 0
       }}
     >
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2">
+        {/* Modern Stopwatch Icon */}
         <div className="relative">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          {duration && (
-            <motion.div
-              className="absolute inset-0"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
-                <circle cx="12" cy="12" r="10" strokeDasharray="62.83" strokeDashoffset="0" />
-              </svg>
-            </motion.div>
-          )}
         </div>
         
-        <div className="flex flex-col">
-          <span className={`font-mono text-lg font-bold transition-colors duration-500 ${getTimerColor()}`}>
+        <div className="flex items-center">
+          <span className={`font-mono text-base font-bold transition-colors duration-500 ${getTimerColor()}`}>
             {displayTime}
           </span>
           {duration && (
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              of {duration} minutes
+            <span className="ml-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+              /{duration}m
             </span>
           )}
         </div>

@@ -51,20 +51,19 @@ export default function QuestionDisplay({
       {/* Question Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
-          <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-lg font-semibold">
-            Question {questionNumber} of {totalQuestions}
+          <div className="flex items-center space-x-3">
+            <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-lg font-semibold">
+              Question {questionNumber} of {totalQuestions}
+            </div>
+            
+            {/* Session Timer - Immediately to the right of Question X of Y */}
+            {sessionStartTime && (
+              <div className="hidden lg:block">
+                <Timer sessionStartTime={sessionStartTime} duration={timeLimitInMinutes} />
+              </div>
+            )}
           </div>
-          {onReportError && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onReportError}
-              className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-              title="Report an issue with this question (Alt + R)"
-            >
-              <FlagIcon className="h-4 w-4" />
-            </motion.button>
-          )}
+          
           {question.difficulty && (
             <div className={`px-3 py-1 rounded-lg text-sm font-medium ${
               question.difficulty === 'Easy' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
@@ -78,40 +77,47 @@ export default function QuestionDisplay({
           )}
         </div>
         
-        {/* Session Timer - Moved from right panel */}
-        {sessionStartTime && (
-          <div className="hidden lg:block">
-            <Timer sessionStartTime={sessionStartTime} duration={timeLimitInMinutes} />
-          </div>
-        )}
-        
-        <motion.button
-          onClick={handleBookmark}
-          disabled={isBookmarking}
-          className={`
-            flex items-center space-x-2 px-4 py-2 rounded-lg border-2 transition-all duration-200
-            ${isBookmarked 
-              ? 'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200' 
-              : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-900'
-            }
-          `}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <motion.svg
-            className="w-5 h-5"
-            fill={isBookmarked ? 'currentColor' : 'none'}
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            animate={isBookmarking ? { rotate: 360 } : {}}
-            transition={{ duration: 0.5 }}
+        <div className="flex items-center space-x-2">
+          {/* Bookmark Button - Icon Only */}
+          <motion.button
+            onClick={handleBookmark}
+            disabled={isBookmarking}
+            className={`
+              p-2 rounded-lg border-2 transition-all duration-200
+              ${isBookmarked 
+                ? 'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200' 
+                : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-900'
+              }
+            `}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Question'}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-          </motion.svg>
-          <span className="font-medium">
-            {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-          </span>
-        </motion.button>
+            <motion.svg
+              className="w-5 h-5"
+              fill={isBookmarked ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              animate={isBookmarking ? { rotate: 360 } : {}}
+              transition={{ duration: 0.5 }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </motion.svg>
+          </motion.button>
+
+          {/* Report Question Button */}
+          {onReportError && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onReportError}
+              className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
+              title="Report an issue with this question (Alt + R)"
+            >
+              <FlagIcon className="h-5 w-5" />
+            </motion.button>
+          )}
+        </div>
       </div>
 
       {/* Question Text */}

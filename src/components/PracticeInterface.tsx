@@ -150,17 +150,37 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }, [])
 
   const handleAnswerChange = (answer: string) => {
+    // Only update status if not already marked for review
+    // If marked for review and user changes answer, keep it marked
+    const currentState = sessionStates[currentIndex]
+    const newStatus = currentState?.status === 'marked_for_review' 
+      ? 'marked_for_review' 
+      : (answer ? 'answered' : 'unanswered')
+    
     updateSessionState(currentIndex, {
       user_answer: answer,
-      status: answer ? 'answered' : 'unanswered'
+      status: newStatus
     })
   }
 
   const handleSaveAndNext = () => {
     // Record time spent on current question
     const timeSpent = Date.now() - currentQuestionStartTime
+    
+    // Determine status based on current state and user answer
+    let newStatus: QuestionStatus
+    if (currentState.status === 'marked_for_review') {
+      // If marked for review and has answer, keep as marked_for_review
+      // If marked for review and no answer, change to unanswered
+      newStatus = currentState.user_answer ? 'marked_for_review' : 'unanswered'
+    } else {
+      // Regular save logic: answered if has answer, unanswered if no answer
+      newStatus = currentState.user_answer ? 'answered' : 'unanswered'
+    }
+    
     updateSessionState(currentIndex, {
-      time_taken: currentState.time_taken + timeSpent
+      time_taken: currentState.time_taken + timeSpent,
+      status: newStatus
     })
 
     // Move to next question or show end-of-session modal
@@ -178,6 +198,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     updateSessionState(currentIndex, {
       status: 'marked_for_review',
       time_taken: currentState.time_taken + timeSpent
+      // Keep existing user_answer - don't change it
     })
 
     // Move to next question or show end-of-session modal
@@ -190,9 +211,11 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleClearResponse = () => {
+    // Clear the answer but don't change status yet
+    // Status will be determined when user clicks Save & Next or Mark for Review & Next
     updateSessionState(currentIndex, {
-      user_answer: null,
-      status: 'unanswered'
+      user_answer: null
+      // Keep existing status - will be updated on next action
     })
   }
 
