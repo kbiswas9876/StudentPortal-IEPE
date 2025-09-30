@@ -241,9 +241,9 @@ export default function PremiumPracticeSetup({
         </motion.div>
 
         {/* Two-Column Layout with Equal Heights */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-12rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 h-[calc(100vh-12rem)]">
           {/* Left Column - Selection Zone */}
-          <div className="lg:col-span-2 order-2 lg:order-1 flex flex-col">
+          <div className="lg:col-span-3 order-2 lg:order-1 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -275,7 +275,7 @@ export default function PremiumPracticeSetup({
           </div>
 
           {/* Right Column - Configuration Zone */}
-          <div className="lg:col-span-1 order-1 lg:order-2 flex flex-col">
+          <div className="lg:col-span-2 order-1 lg:order-2 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}

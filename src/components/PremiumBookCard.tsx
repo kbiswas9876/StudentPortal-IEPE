@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
 import { ChapterConfiguration } from '@/types/practice'
 import CustomCheckbox from './CustomCheckbox'
-import ChapterConfigPanel from './ChapterConfigPanel'
+import InlineChapterConfig from './InlineChapterConfig'
 
 type BookSource = Database['public']['Tables']['book_sources']['Row']
 type ChapterData = {
@@ -54,7 +54,7 @@ export default function PremiumBookCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`relative bg-white dark:bg-slate-800 rounded-2xl border-2 transition-all duration-300 ${
+      className={`relative bg-white dark:bg-slate-800 rounded-xl border-2 transition-all duration-300 ${
         isSelected
           ? 'border-blue-500 shadow-xl shadow-blue-500/20'
           : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 shadow-lg hover:shadow-xl'
@@ -119,7 +119,7 @@ export default function PremiumBookCard({
                   ))}
                 </div>
               ) : (
-                <div className="max-h-96 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
+                <div className="max-h-96 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
                   {chapters.map((chapter, index) => {
                     const config = chapterConfigs[chapter.chapter_name] || {
                       selected: false,
@@ -130,7 +130,7 @@ export default function PremiumBookCard({
                     return (
                       <motion.div
                         key={chapter.chapter_name}
-                        className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 border border-slate-200 dark:border-slate-600"
+                        className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3 border border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-shadow"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1 }}
@@ -148,18 +148,10 @@ export default function PremiumBookCard({
                               {chapter.count} questions available
                             </p>
                           </div>
-                        </div>
-
-                        <AnimatePresence>
-                          {config.selected && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="mt-3"
-                            >
-                              <ChapterConfigPanel
+                          
+                          <AnimatePresence>
+                            {config.selected && (
+                              <InlineChapterConfig
                                 chapterName={chapter.chapter_name}
                                 questionCount={chapter.count}
                                 config={config}
@@ -167,9 +159,9 @@ export default function PremiumBookCard({
                                   handleChapterConfigChange(chapter.chapter_name, newConfig)
                                 }
                               />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </motion.div>
                     )
                   })}
