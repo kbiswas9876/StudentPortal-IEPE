@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
@@ -28,6 +28,9 @@ export default function AnalysisReportPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'correct' | 'incorrect' | 'skipped'>('all')
+  
+  // Add ref to prevent duplicate fetching
+  const dataFetchedRef = useRef(false)
 
   useEffect(() => {
     if (authLoading) return
@@ -37,10 +40,28 @@ export default function AnalysisReportPage() {
       return
     }
 
-    if (resultId) {
+    if (resultId && !dataFetchedRef.current) {
+      dataFetchedRef.current = true
       fetchAnalysisData()
     }
   }, [user, authLoading, resultId, router])
+
+  // Reset loading state on component mount
+  useEffect(() => {
+    setLoading(false)
+  }, [])
+
+  // Add timeout fallback to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.log('Analysis page loading timeout - resetting loading state')
+        setLoading(false)
+      }
+    }, 10000) // 10 second timeout
+
+    return () => clearTimeout(timeout)
+  }, [loading])
 
   const fetchAnalysisData = async () => {
     try {
@@ -196,6 +217,35 @@ export default function AnalysisReportPage() {
               <p className="text-sm">
                 The overall performance summary is shown above, but detailed question-by-question analysis is not available for this session.
               </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Debug Section - Remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-8 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
+          >
+            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Debug Info</h4>
+            <div className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+              <p>Loading: {loading ? 'true' : 'false'}</p>
+              <p>Data Fetched: {dataFetchedRef.current ? 'true' : 'false'}</p>
+              <p>Analysis Data: {analysisData ? 'loaded' : 'null'}</p>
+              <p>Answer Log Count: {analysisData?.answerLog?.length || 0}</p>
+              <p>Questions Count: {analysisData?.questions?.length || 0}</p>
+              <button
+                onClick={() => {
+                  console.log('Manual reset triggered')
+                  setLoading(false)
+                  dataFetchedRef.current = false
+                }}
+                className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
+              >
+                Reset Loading State
+              </button>
             </div>
           </motion.div>
         )}

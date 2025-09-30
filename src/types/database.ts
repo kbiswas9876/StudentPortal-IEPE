@@ -145,6 +145,32 @@ export interface Database {
         }
       }
     }
+    bookmarked_questions: {
+      Row: {
+        id: number
+        user_id: string
+        question_id: number
+        personal_note: string | null
+        custom_tags: string[] | null
+        created_at: string
+      }
+      Insert: {
+        id?: number
+        user_id: string
+        question_id: number
+        personal_note?: string | null
+        custom_tags?: string[] | null
+        created_at?: string
+      }
+      Update: {
+        id?: number
+        user_id?: string
+        question_id?: number
+        personal_note?: string | null
+        custom_tags?: string[] | null
+        created_at?: string
+      }
+    }
     Views: {
       [_ in never]: never
     }

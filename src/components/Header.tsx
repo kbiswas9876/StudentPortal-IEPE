@@ -40,15 +40,33 @@ export default function Header() {
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link
-              href="/practice"
+              href="/dashboard"
               className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-                isActive('/practice')
+                isActive('/dashboard')
                   ? 'text-blue-600 dark:text-blue-400'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
               }`}
             >
               Practice
-              {isActive('/practice') && (
+              {isActive('/dashboard') && (
+                <motion.div
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"
+                  layoutId="activeIndicator"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+            </Link>
+            <Link
+              href="/revision-hub"
+              className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                isActive('/revision-hub')
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
+            >
+              Revision Hub
+              {isActive('/revision-hub') && (
                 <motion.div
                   className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"
                   layoutId="activeIndicator"
