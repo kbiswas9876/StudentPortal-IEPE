@@ -29,20 +29,22 @@ export async function GET(request: Request) {
 
     console.log('Fetching practice plans for user:', userId)
 
-    const { data, error } = await supabaseAdmin
+    const { data: plans, error: plansError } = await supabaseAdmin
       .from('practice_plans')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      console.error('Error fetching practice plans:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (plansError) {
+      console.error('Error fetching practice plans:', plansError)
+      return NextResponse.json({ error: plansError.message }, { status: 500 })
     }
 
-    console.log(`Successfully fetched ${data?.length || 0} practice plans`)
+    console.log(`Successfully fetched ${plans?.length || 0} practice plans`)
 
-    return NextResponse.json({ data: data || [] })
+    return NextResponse.json({
+      data: plans || []
+    })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -53,36 +55,36 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { userId, name, planType, content } = body
+    const { user_id, name, plan_type, content } = body
 
-    if (!userId || !name || !planType || !content) {
+    if (!user_id || !name || !plan_type || !content) {
       return NextResponse.json({ 
         error: 'User ID, name, plan type, and content are required' 
       }, { status: 400 })
     }
 
-    console.log('Creating practice plan:', { userId, name, planType })
+    console.log('Creating practice plan:', { user_id, name, plan_type })
 
-    const { data, error } = await supabaseAdmin
+    const { data: plan, error: planError } = await supabaseAdmin
       .from('practice_plans')
       .insert({
-        user_id: userId,
+        user_id,
         name,
-        plan_type: planType,
+        plan_type,
         content
       })
-      .select()
+      .select('*')
+      .single()
 
-    if (error) {
-      console.error('Error creating practice plan:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (planError) {
+      console.error('Error creating practice plan:', planError)
+      return NextResponse.json({ error: planError.message }, { status: 500 })
     }
 
-    console.log('Successfully created practice plan:', data[0])
+    console.log('Practice plan created successfully:', plan.id)
 
-    return NextResponse.json({ 
-      data: data[0],
-      message: 'Practice plan created successfully' 
+    return NextResponse.json({
+      data: plan
     })
   } catch (error) {
     console.error('Unexpected error:', error)

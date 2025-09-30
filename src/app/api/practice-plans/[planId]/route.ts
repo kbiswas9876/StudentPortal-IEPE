@@ -24,27 +24,40 @@ export async function GET(
 ) {
   try {
     const { planId } = await params
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId')
 
     if (!planId) {
       return NextResponse.json({ error: 'Plan ID is required' }, { status: 400 })
     }
 
-    console.log('Fetching practice plan:', planId)
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
 
-    const { data, error } = await supabaseAdmin
+    console.log('Fetching practice plan:', planId, 'for user:', userId)
+
+    const { data: plan, error: planError } = await supabaseAdmin
       .from('practice_plans')
       .select('*')
       .eq('id', planId)
+      .eq('user_id', userId)
       .single()
 
-    if (error) {
-      console.error('Error fetching practice plan:', error)
-      return NextResponse.json({ error: 'Practice plan not found' }, { status: 404 })
+    if (planError) {
+      console.error('Error fetching practice plan:', planError)
+      return NextResponse.json({ error: planError.message }, { status: 500 })
     }
 
-    console.log('Successfully fetched practice plan:', data)
+    if (!plan) {
+      return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
+    }
 
-    return NextResponse.json({ data })
+    console.log('Practice plan fetched successfully:', plan.name)
+
+    return NextResponse.json({
+      data: plan
+    })
   } catch (error) {
     console.error('Unexpected error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -59,40 +72,46 @@ export async function PUT(
   try {
     const { planId } = await params
     const body = await request.json()
-    const { userId, name, planType, content } = body
+    const { user_id, name, plan_type, content } = body
 
-    if (!planId || !userId) {
-      return NextResponse.json({ error: 'Plan ID and User ID are required' }, { status: 400 })
+    if (!planId) {
+      return NextResponse.json({ error: 'Plan ID is required' }, { status: 400 })
     }
 
-    console.log('Updating practice plan:', { planId, userId, name, planType })
+    if (!user_id || !name || !plan_type || !content) {
+      return NextResponse.json({ 
+        error: 'User ID, name, plan type, and content are required' 
+      }, { status: 400 })
+    }
 
-    const updateData: any = {}
-    if (name) updateData.name = name
-    if (planType) updateData.plan_type = planType
-    if (content) updateData.content = content
+    console.log('Updating practice plan:', planId)
 
-    const { data, error } = await supabaseAdmin
+    const { data: plan, error: planError } = await supabaseAdmin
       .from('practice_plans')
-      .update(updateData)
+      .update({
+        name,
+        plan_type,
+        content,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', planId)
-      .eq('user_id', userId) // Ensure user can only update their own plans
-      .select()
+      .eq('user_id', user_id)
+      .select('*')
+      .single()
 
-    if (error) {
-      console.error('Error updating practice plan:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (planError) {
+      console.error('Error updating practice plan:', planError)
+      return NextResponse.json({ error: planError.message }, { status: 500 })
     }
 
-    if (!data || data.length === 0) {
-      return NextResponse.json({ error: 'Practice plan not found or access denied' }, { status: 404 })
+    if (!plan) {
+      return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
     }
 
-    console.log('Successfully updated practice plan:', data[0])
+    console.log('Practice plan updated successfully:', plan.name)
 
-    return NextResponse.json({ 
-      data: data[0],
-      message: 'Practice plan updated successfully' 
+    return NextResponse.json({
+      data: plan
     })
   } catch (error) {
     console.error('Unexpected error:', error)
@@ -110,27 +129,31 @@ export async function DELETE(
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
-    if (!planId || !userId) {
-      return NextResponse.json({ error: 'Plan ID and User ID are required' }, { status: 400 })
+    if (!planId) {
+      return NextResponse.json({ error: 'Plan ID is required' }, { status: 400 })
     }
 
-    console.log('Deleting practice plan:', { planId, userId })
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
 
-    const { error } = await supabaseAdmin
+    console.log('Deleting practice plan:', planId, 'for user:', userId)
+
+    const { error: deleteError } = await supabaseAdmin
       .from('practice_plans')
       .delete()
       .eq('id', planId)
-      .eq('user_id', userId) // Ensure user can only delete their own plans
+      .eq('user_id', userId)
 
-    if (error) {
-      console.error('Error deleting practice plan:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (deleteError) {
+      console.error('Error deleting practice plan:', deleteError)
+      return NextResponse.json({ error: deleteError.message }, { status: 500 })
     }
 
-    console.log('Successfully deleted practice plan:', planId)
+    console.log('Practice plan deleted successfully:', planId)
 
-    return NextResponse.json({ 
-      message: 'Practice plan deleted successfully' 
+    return NextResponse.json({
+      message: 'Practice plan deleted successfully'
     })
   } catch (error) {
     console.error('Unexpected error:', error)

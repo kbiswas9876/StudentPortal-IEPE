@@ -77,14 +77,47 @@ export async function GET(
       return NextResponse.json({ error: 'Questions not found' }, { status: 404 })
     }
 
+    // Fetch peer performance data for benchmarking
+    console.log('Fetching peer performance data for benchmarking...')
+    const { data: peerPerformanceData, error: peerError } = await supabaseAdmin
+      .from('answer_log')
+      .select('question_id, time_taken')
+      .in('question_id', questionIds)
+      .not('user_id', 'eq', testResult.user_id) // Exclude current user's data
+
+    if (peerError) {
+      console.error('Error fetching peer performance data:', peerError)
+      // Continue without peer data rather than failing
+    }
+
+    // Calculate peer averages for each question
+    const peerAverages: Record<number, number> = {}
+    if (peerPerformanceData && peerPerformanceData.length > 0) {
+      const questionGroups = peerPerformanceData.reduce((acc, entry) => {
+        if (!acc[entry.question_id]) {
+          acc[entry.question_id] = []
+        }
+        acc[entry.question_id].push(entry.time_taken)
+        return acc
+      }, {} as Record<number, number[]>)
+
+      // Calculate average time for each question
+      Object.entries(questionGroups).forEach(([questionId, times]) => {
+        const average = times.reduce((sum, time) => sum + time, 0) / times.length
+        peerAverages[parseInt(questionId)] = Math.round(average)
+      })
+    }
+
     console.log('Fetched questions:', questions)
+    console.log('Peer averages calculated:', peerAverages)
     console.log(`Successfully fetched analysis data: ${testResult ? '1' : '0'} test result, ${answerLog.length} answers, ${questions.length} questions`)
 
     return NextResponse.json({
       data: {
         testResult,
         answerLog,
-        questions
+        questions,
+        peerAverages
       }
     })
   } catch (error) {

@@ -28,7 +28,9 @@ export async function POST(request: Request) {
       total_questions, 
       correct_answers,
       incorrect_answers,
-      skipped_answers
+      skipped_answers,
+      session_type = 'practice',
+      mock_test_id = null
     } = body
 
     if (!user_id || !questions || !Array.isArray(questions)) {
@@ -49,14 +51,15 @@ export async function POST(request: Request) {
       .from('test_results')
       .insert({
         user_id,
-        test_type: 'practice', // Required field
+        test_type: session_type === 'mock_test' ? 'mock_test' : 'practice',
         score: score,
         score_percentage: score,
         total_questions: total_questions,
         total_correct: correct_answers,
         total_incorrect: incorrect_answers,
         total_skipped: skipped_answers,
-        session_type: 'practice',
+        session_type: session_type,
+        mock_test_id: mock_test_id,
         submitted_at: new Date().toISOString()
       })
       .select('id')
@@ -72,9 +75,11 @@ export async function POST(request: Request) {
       const answerLogEntries = questions.map((question: any) => ({
         result_id: testResult.id, // Use result_id as per schema
         question_id: question.question_id, // This should be the numeric ID
+        user_id: user_id, // Add user_id for performance tracking
         user_answer: question.user_answer,
         status: question.status, // 'correct', 'incorrect', or 'skipped'
-        time_taken: question.time_taken // in seconds
+        time_taken: question.time_taken, // in seconds
+        created_at: new Date().toISOString() // Add timestamp for performance tracking
       }))
 
       console.log('Inserting answer log entries:', answerLogEntries)

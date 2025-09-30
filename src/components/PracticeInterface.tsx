@@ -28,9 +28,18 @@ interface PracticeInterfaceProps {
   questions: Question[]
   testMode?: 'practice' | 'timed'
   timeLimitInMinutes?: number
+  mockTestData?: {
+    test: {
+      id: number
+      name: string
+      total_time_minutes: number
+      marks_per_correct: number
+      marks_per_incorrect: number
+    }
+  }
 }
 
-export default function PracticeInterface({ questions, testMode = 'practice', timeLimitInMinutes }: PracticeInterfaceProps) {
+export default function PracticeInterface({ questions, testMode = 'practice', timeLimitInMinutes, mockTestData }: PracticeInterfaceProps) {
   const { user } = useAuth()
   const router = useRouter()
   
@@ -229,7 +238,19 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       }).length
       const skippedAnswers = sessionStates.filter(state => !state.user_answer).length
 
-      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0
+      // Calculate score based on mock test rules or default percentage
+      let score: number
+      if (mockTestData) {
+        // Mock test scoring: use actual marks
+        const totalMarks = (correctAnswers * mockTestData.test.marks_per_correct) + 
+                          (incorrectAnswers * mockTestData.test.marks_per_incorrect)
+        const maxMarks = totalQuestions * mockTestData.test.marks_per_correct
+        score = maxMarks > 0 ? Math.round((totalMarks / maxMarks) * 100) : 0
+      } else {
+        // Regular practice scoring: percentage based
+        score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0
+      }
+      
       const totalTime = Math.round((Date.now() - sessionStartTime) / 1000) // Convert to seconds
 
       console.log('Submitting practice session:', {
@@ -262,7 +283,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           total_questions: totalQuestions,
           correct_answers: correctAnswers,
           incorrect_answers: incorrectAnswers,
-          skipped_answers: skippedAnswers
+          skipped_answers: skippedAnswers,
+          // Mock test specific fields
+          session_type: mockTestData ? 'mock_test' : 'practice',
+          mock_test_id: mockTestData ? mockTestData.test.id : null
         })
       })
 
@@ -330,7 +354,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
               </svg>
             </button>
             <div className="text-sm font-medium text-slate-600 dark:text-slate-300">
-              Question {currentIndex + 1} of {questions.length}
+              {mockTestData ? mockTestData.test.name : 'Practice Session'} - Question {currentIndex + 1} of {questions.length}
             </div>
           </div>
           <Timer sessionStartTime={sessionStartTime} />
@@ -369,6 +393,15 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
               sessionStartTime={sessionStartTime} 
               duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
             />
+            {mockTestData && (
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Scoring Rules</h4>
+                <div className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                  <div>Correct: +{mockTestData.test.marks_per_correct} marks</div>
+                  <div>Incorrect: {mockTestData.test.marks_per_incorrect} marks</div>
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="flex-1 p-6">

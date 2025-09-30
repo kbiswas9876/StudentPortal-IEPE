@@ -8,15 +8,26 @@ import { Database } from '@/types/database'
 import RevisionHubFilters from '@/components/RevisionHubFilters'
 import RevisionHubBookAccordion from '@/components/RevisionHubBookAccordion'
 import EditBookmarkModal from '@/components/EditBookmarkModal'
+import QuestionSummaryCard from '@/components/QuestionSummaryCard'
 
 type BookmarkedQuestion = Database['public']['Tables']['bookmarked_questions']['Row'] & {
   questions: Database['public']['Tables']['questions']['Row']
+  performance?: {
+    total_attempts: number
+    correct_attempts: number
+    success_rate: number
+    last_attempt_status: string
+    last_attempt_time: number | null
+    last_attempt_date: string | null
+    time_trend: 'faster' | 'slower' | 'none' | null
+  }
 }
 
 interface FilterState {
   bookSource: string
   chapter: string
   customTags: string[]
+  searchQuery: string
 }
 
 export default function RevisionHubPage() {
@@ -28,7 +39,8 @@ export default function RevisionHubPage() {
   const [filters, setFilters] = useState<FilterState>({
     bookSource: '',
     chapter: '',
-    customTags: []
+    customTags: [],
+    searchQuery: ''
   })
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingBookmark, setEditingBookmark] = useState<BookmarkedQuestion | null>(null)
@@ -66,12 +78,9 @@ export default function RevisionHubPage() {
     }
   }
 
-  const handleFilterChange = (newFilters: Partial<FilterState>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }))
-  }
 
-  const handleEditBookmark = (bookmark: BookmarkedQuestion) => {
-    setEditingBookmark(bookmark)
+  const handleEditBookmark = (question: any) => {
+    setEditingBookmark(question)
     setShowEditModal(true)
   }
 
@@ -140,6 +149,11 @@ export default function RevisionHubPage() {
     const filteredQuestions = bookmarkedQuestions.filter(bookmark => {
       const question = bookmark.questions
       
+      // Skip if no question data
+      if (!question) {
+        return false
+      }
+      
       // Filter by book source
       if (filters.bookSource && question.book_source !== filters.bookSource) {
         return false
@@ -170,16 +184,18 @@ export default function RevisionHubPage() {
     }
 
     // Extract question IDs and navigate to practice setup
-    const questionIds = filteredQuestions.map(bookmark => bookmark.questions.question_id)
+    const questionIds = filteredQuestions
+      .filter(bookmark => bookmark.questions) // Filter out bookmarks without questions
+      .map(bookmark => bookmark.questions.question_id)
+    
+    if (questionIds.length === 0) {
+      alert('No valid questions found. Please check your bookmarks and try again.')
+      return
+    }
+    
     router.push(`/practice?questions=${questionIds.join(',')}&testMode=practice&fromRevision=true`)
   }
 
-  // Get unique book sources and chapters for filters
-  const bookSources = Array.from(new Set(bookmarkedQuestions.map(b => b.questions.book_source)))
-  const chapters = Array.from(new Set(bookmarkedQuestions.map(b => b.questions.chapter_name)))
-  const allCustomTags = Array.from(new Set(
-    bookmarkedQuestions.flatMap(b => b.custom_tags || [])
-  ))
 
   if (authLoading || loading) {
     return (
@@ -237,13 +253,10 @@ export default function RevisionHubPage() {
           className="mb-8"
         >
           <RevisionHubFilters
-            bookSources={bookSources}
-            chapters={chapters}
-            customTags={allCustomTags}
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onStartRevision={handleStartRevisionSession}
-            totalQuestions={bookmarkedQuestions.length}
+            bookmarkedQuestions={bookmarkedQuestions}
+            onFiltersChange={setFilters}
+            onStartRevisionSession={handleStartRevisionSession}
+            isLoading={loading}
           />
         </motion.div>
 
@@ -276,13 +289,58 @@ export default function RevisionHubPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-4"
           >
-            <RevisionHubBookAccordion
-              bookmarkedQuestions={bookmarkedQuestions}
-              filters={filters}
-              onEditBookmark={handleEditBookmark}
-              onDeleteBookmark={handleDeleteBookmark}
-            />
+            {bookmarkedQuestions
+              .filter(question => {
+                // Skip if no question data
+                if (!question.questions) {
+                  return false
+                }
+                
+                if (filters.searchQuery && !question.questions.question_text.toLowerCase().includes(filters.searchQuery.toLowerCase())) {
+                  return false
+                }
+                if (filters.bookSource && question.questions.book_source !== filters.bookSource) {
+                  return false
+                }
+                if (filters.chapter && question.questions.chapter_name !== filters.chapter) {
+                  return false
+                }
+                if (filters.customTags.length > 0) {
+                  const questionTags = question.custom_tags || []
+                  const hasMatchingTag = filters.customTags.some(tag => questionTags.includes(tag))
+                  if (!hasMatchingTag) return false
+                }
+                return true
+              })
+              .map((bookmark) => {
+                // Skip if no question data
+                if (!bookmark.questions) {
+                  return null
+                }
+                
+                return (
+                  <QuestionSummaryCard
+                    key={bookmark.id}
+                    question={{
+                      ...bookmark.questions,
+                      personal_note: bookmark.personal_note,
+                      custom_tags: bookmark.custom_tags,
+                      bookmark_id: bookmark.id,
+                      performance: bookmark.performance
+                    }}
+                    onEdit={handleEditBookmark}
+                    onDelete={handleDeleteBookmark}
+                    onViewSolution={(q) => {
+                      // TODO: Implement view solution modal
+                      console.log('View solution for question:', q.id)
+                    }}
+                  />
+                )
+              })
+              .filter(Boolean) // Remove null entries
+            }
           </motion.div>
         )}
 

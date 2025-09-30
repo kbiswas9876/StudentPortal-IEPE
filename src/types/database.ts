@@ -123,25 +123,31 @@ export interface Database {
           id: number
           result_id: number
           question_id: number
+          user_id: string
           user_answer: string | null
           status: string
           time_taken: number
+          created_at: string
         }
         Insert: {
           id?: number
           result_id: number
           question_id: number
+          user_id: string
           user_answer?: string | null
           status: string
           time_taken: number
+          created_at?: string
         }
         Update: {
           id?: number
           result_id?: number
           question_id?: number
+          user_id?: string
           user_answer?: string | null
           status?: string
           time_taken?: number
+          created_at?: string
         }
       }
     }

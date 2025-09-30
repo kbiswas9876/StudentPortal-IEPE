@@ -14,9 +14,11 @@ interface QuestionData extends AnswerLog {
 interface QuestionBreakdownProps {
   questions: QuestionData[]
   onBookmark: (questionId: string) => void
+  onReportError: (questionId: string) => void
+  peerAverages: Record<number, number>
 }
 
-export default function QuestionBreakdown({ questions, onBookmark }: QuestionBreakdownProps) {
+export default function QuestionBreakdown({ questions, onBookmark, onReportError, peerAverages }: QuestionBreakdownProps) {
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set())
 
   const toggleSolution = (questionId: string) => {
@@ -61,6 +63,22 @@ export default function QuestionBreakdown({ questions, onBookmark }: QuestionBre
     const minutes = Math.floor(seconds / 60)
     const remainingSeconds = seconds % 60
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
+
+  const getPerformanceSmiley = (questionData: QuestionData) => {
+    const peerAverage = peerAverages[questionData.question_id]
+    if (!peerAverage) return null
+
+    const timeRatio = questionData.time_taken / peerAverage
+    if (timeRatio <= 0.8) return { icon: '😊', color: 'text-green-600', tooltip: 'Faster than average' }
+    if (timeRatio >= 1.2) return { icon: '😞', color: 'text-red-600', tooltip: 'Slower than average' }
+    return { icon: '😐', color: 'text-yellow-600', tooltip: 'Average time' }
+  }
+
+  const getAttemptAnalysis = (questionData: QuestionData) => {
+    // This would need to be enhanced when we implement attempt tracking
+    // For now, we'll show a placeholder
+    return null // Will be implemented when attempt tracking is added
   }
 
   if (questions.length === 0) {
@@ -113,18 +131,40 @@ export default function QuestionBreakdown({ questions, onBookmark }: QuestionBre
                   </div>
                 
                 <div className="flex items-center space-x-4">
-                  <div className="text-sm text-slate-600 dark:text-slate-400">
-                    Time: {formatTime(item.time_taken)}
+                  <div className="text-sm text-slate-600 dark:text-slate-400 flex items-center space-x-2">
+                    <span>Time: {formatTime(item.time_taken)}</span>
+                    {getPerformanceSmiley(item) && (
+                      <span 
+                        className={`text-lg ${getPerformanceSmiley(item)?.color}`}
+                        title={getPerformanceSmiley(item)?.tooltip}
+                      >
+                        {getPerformanceSmiley(item)?.icon}
+                      </span>
+                    )}
+                    {getAttemptAnalysis(item) && (
+                      <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                        {getAttemptAnalysis(item)}
+                      </span>
+                    )}
                   </div>
-                  <button
-                    onClick={() => onBookmark(item.question_id)}
-                    className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                    title="Bookmark for later"
-                  >
-                    <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => onBookmark(item.question_id)}
+                      className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      title="Bookmark for later"
+                    >
+                      <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => onReportError(item.question_id)}
+                      className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                      title="Report an error"
+                    >
+                      <span className="text-lg">🚩</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 

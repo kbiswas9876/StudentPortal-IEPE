@@ -8,6 +8,9 @@ import { Database } from '@/types/database'
 import PerformanceDashboard from '@/components/PerformanceDashboard'
 import FilterToolbar from '@/components/FilterToolbar'
 import QuestionBreakdown from '@/components/QuestionBreakdown'
+import StrategicPerformanceMatrix from '@/components/StrategicPerformanceMatrix'
+import Leaderboard from '@/components/Leaderboard'
+import { Tab } from '@headlessui/react'
 
 type TestResult = Database['public']['Tables']['test_results']['Row']
 type AnswerLog = Database['public']['Tables']['answer_log']['Row']
@@ -17,6 +20,9 @@ interface AnalysisData {
   testResult: TestResult
   answerLog: AnswerLog[]
   questions: Question[]
+  peerAverages: Record<number, number>
+  isMockTest?: boolean
+  mockTestId?: number
 }
 
 export default function AnalysisReportPage() {
@@ -28,6 +34,11 @@ export default function AnalysisReportPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'correct' | 'incorrect' | 'skipped'>('all')
+  const [timeFilter, setTimeFilter] = useState<'all' | 'fast' | 'slow'>('all')
+  const [matrixFilter, setMatrixFilter] = useState<'strengths' | 'needs_speed' | 'careless_errors' | 'weaknesses' | 'all'>('all')
+  const [mockTestMetadata, setMockTestMetadata] = useState<any>(null)
+  const [isResultsAvailable, setIsResultsAvailable] = useState(true)
+  const [resultReleaseAt, setResultReleaseAt] = useState<string | null>(null)
   
   // Add ref to prevent duplicate fetching
   const dataFetchedRef = useRef(false)
@@ -76,12 +87,45 @@ export default function AnalysisReportPage() {
       }
 
       console.log('Analysis data fetched successfully:', result.data)
-      setAnalysisData(result.data)
+      
+      // Check if this is a mock test
+      const isMockTest = result.data.testResult.session_type === 'mock_test'
+      const mockTestId = result.data.testResult.mock_test_id
+      
+      if (isMockTest && mockTestId) {
+        // Fetch mock test metadata to check result policy
+        await fetchMockTestMetadata(mockTestId)
+      }
+      
+      setAnalysisData({
+        ...result.data,
+        isMockTest,
+        mockTestId
+      })
     } catch (error) {
       console.error('Error fetching analysis data:', error)
       setError(error instanceof Error ? error.message : 'Failed to fetch analysis data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchMockTestMetadata = async (mockTestId: number) => {
+    try {
+      console.log('Fetching mock test metadata for test ID:', mockTestId)
+      
+      const response = await fetch(`/api/mock-tests/${mockTestId}/metadata`)
+      const result = await response.json()
+
+      if (response.ok) {
+        console.log('Mock test metadata fetched successfully:', result.data)
+        setMockTestMetadata(result.data.test)
+        setIsResultsAvailable(result.data.isResultsAvailable)
+        setResultReleaseAt(result.data.resultReleaseAt)
+      }
+    } catch (error) {
+      console.error('Error fetching mock test metadata:', error)
+      // Don't fail the entire page if metadata fetch fails
     }
   }
 
@@ -109,6 +153,31 @@ export default function AnalysisReportPage() {
     }
   }
 
+  const handleReportError = async (questionId: string) => {
+    if (!user) return
+
+    try {
+      const response = await fetch('/api/error-reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question_id: questionId,
+          reported_by_user_id: user.id,
+          report_description: 'Error reported from analysis page'
+        })
+      })
+
+      if (response.ok) {
+        console.log('Error reported successfully')
+        // You could add a toast notification here
+      }
+    } catch (error) {
+      console.error('Error reporting question:', error)
+    }
+  }
+
   const getFilteredQuestions = () => {
     if (!analysisData) return []
 
@@ -125,16 +194,68 @@ export default function AnalysisReportPage() {
       }
     }).filter(item => item.question) // Only include items with valid questions
 
+    let filteredData = combinedData
+
+    // Apply status filter
     switch (filter) {
       case 'correct':
-        return combinedData.filter(item => item.status === 'correct')
+        filteredData = filteredData.filter(item => item.status === 'correct')
+        break
       case 'incorrect':
-        return combinedData.filter(item => item.status === 'incorrect')
+        filteredData = filteredData.filter(item => item.status === 'incorrect')
+        break
       case 'skipped':
-        return combinedData.filter(item => item.status === 'skipped')
+        filteredData = filteredData.filter(item => item.status === 'skipped')
+        break
       default:
-        return combinedData
+        // 'all' - no status filtering
+        break
     }
+
+    // Apply time filter
+    if (timeFilter !== 'all') {
+      filteredData = filteredData.filter(item => {
+        const peerAverage = analysisData.peerAverages[item.question_id]
+        if (!peerAverage) return true // Include if no peer data
+
+        const timeRatio = item.time_taken / peerAverage
+        if (timeFilter === 'fast') {
+          return timeRatio <= 0.8 // 20% faster than peer average
+        } else if (timeFilter === 'slow') {
+          return timeRatio >= 1.2 // 20% slower than peer average
+        }
+        return true
+      })
+    }
+
+    // Apply matrix filter
+    if (matrixFilter !== 'all') {
+      filteredData = filteredData.filter(item => {
+        const peerAverage = analysisData.peerAverages[item.question_id]
+        if (!peerAverage) return true // Include if no peer data
+
+        const timeRatio = item.time_taken / peerAverage
+        const isFast = timeRatio <= 0.8
+        const isSlow = timeRatio >= 1.2
+        const isCorrect = item.status === 'correct'
+        const isIncorrect = item.status === 'incorrect'
+
+        switch (matrixFilter) {
+          case 'strengths':
+            return isCorrect && isFast
+          case 'needs_speed':
+            return isCorrect && isSlow
+          case 'careless_errors':
+            return isIncorrect && isFast
+          case 'weaknesses':
+            return isIncorrect && isSlow
+          default:
+            return true
+        }
+      })
+    }
+
+    return filteredData
   }
 
   if (authLoading || loading) {
@@ -188,29 +309,196 @@ export default function AnalysisReportPage() {
 
   const filteredQuestions = getFilteredQuestions()
 
+  // Show result declaration message if results are not yet available
+  if (analysisData?.isMockTest && !isResultsAvailable) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center"
+          >
+            <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+              <div className="text-6xl mb-4">⏰</div>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+                Results Will Be Declared Soon
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400 mb-6">
+                Your test has been submitted successfully. Results and leaderboard will be available at:
+              </p>
+              {resultReleaseAt && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
+                  <div className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                    {new Date(resultReleaseAt).toLocaleString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={() => router.push('/mock-tests')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+              >
+                Return to Mock Tests
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Performance Dashboard */}
         <PerformanceDashboard testResult={analysisData.testResult} />
 
-        {/* Interactive Filtering - only show if we have answer log data */}
-        {analysisData.answerLog && analysisData.answerLog.length > 0 && (
-          <FilterToolbar filter={filter} onFilterChange={setFilter} />
-        )}
+        {/* Tabbed Interface for Mock Tests */}
+        {analysisData.isMockTest ? (
+          <Tab.Group>
+            <Tab.List className="flex space-x-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-8">
+              {[
+                { key: 'analysis', label: 'My Analysis', icon: '📊' },
+                { key: 'leaderboard', label: 'Leaderboard', icon: '🏆' }
+              ].map((tab) => (
+                <Tab
+                  key={tab.key}
+                  className={({ selected }) =>
+                    `w-full rounded-lg py-2.5 text-sm font-medium leading-5 transition-all duration-200 ${
+                      selected
+                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-lg'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50'
+                    }`
+                  }
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <span>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </div>
+                </Tab>
+              ))}
+            </Tab.List>
 
-        {/* Question Breakdown */}
-        {analysisData.answerLog && analysisData.answerLog.length > 0 ? (
-          <QuestionBreakdown 
-            questions={filteredQuestions}
-            onBookmark={handleBookmark}
-          />
+            <Tab.Panels>
+              <Tab.Panel>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Strategic Performance Matrix - only show if we have answer log data */}
+                  {analysisData.answerLog && analysisData.answerLog.length > 0 && (
+                    <StrategicPerformanceMatrix
+                      questions={analysisData.answerLog.map(answer => ({
+                        ...answer,
+                        question: analysisData.questions.find(q => q.id === answer.question_id)
+                      })).filter(item => item.question)}
+                      peerAverages={analysisData.peerAverages}
+                      onMatrixFilter={setMatrixFilter}
+                      activeCategory={matrixFilter}
+                    />
+                  )}
+
+                  {/* Interactive Filtering - only show if we have answer log data */}
+                  {analysisData.answerLog && analysisData.answerLog.length > 0 && (
+                    <FilterToolbar 
+                      filter={filter} 
+                      onFilterChange={setFilter}
+                      timeFilter={timeFilter}
+                      onTimeFilterChange={setTimeFilter}
+                      peerAverages={analysisData.peerAverages}
+                    />
+                  )}
+
+                  {/* Question Breakdown */}
+                  {analysisData.answerLog && analysisData.answerLog.length > 0 ? (
+                    <QuestionBreakdown 
+                      questions={filteredQuestions}
+                      onBookmark={handleBookmark}
+                      onReportError={handleReportError}
+                      peerAverages={analysisData.peerAverages}
+                    />
+                  ) : (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.3 }}
+                      className="text-center py-12"
+                    >
+                      <div className="bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">Detailed Question Analysis Not Available</h3>
+                        <p className="text-sm">
+                          The overall performance summary is shown above, but detailed question-by-question analysis is not available for this session.
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              </Tab.Panel>
+
+              <Tab.Panel>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Leaderboard 
+                    testId={analysisData.mockTestId!} 
+                    currentUserId={user?.id || ''} 
+                  />
+                </motion.div>
+              </Tab.Panel>
+            </Tab.Panels>
+          </Tab.Group>
         ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="text-center py-12"
+          // Regular practice session analysis (no tabs)
+          <>
+            {/* Strategic Performance Matrix - only show if we have answer log data */}
+            {analysisData.answerLog && analysisData.answerLog.length > 0 && (
+              <StrategicPerformanceMatrix
+                questions={analysisData.answerLog.map(answer => ({
+                  ...answer,
+                  question: analysisData.questions.find(q => q.id === answer.question_id)
+                })).filter(item => item.question)}
+                peerAverages={analysisData.peerAverages}
+                onMatrixFilter={setMatrixFilter}
+                activeCategory={matrixFilter}
+              />
+            )}
+
+            {/* Interactive Filtering - only show if we have answer log data */}
+            {analysisData.answerLog && analysisData.answerLog.length > 0 && (
+              <FilterToolbar 
+                filter={filter} 
+                onFilterChange={setFilter}
+                timeFilter={timeFilter}
+                onTimeFilterChange={setTimeFilter}
+                peerAverages={analysisData.peerAverages}
+              />
+            )}
+
+            {/* Question Breakdown */}
+            {analysisData.answerLog && analysisData.answerLog.length > 0 ? (
+              <QuestionBreakdown 
+                questions={filteredQuestions}
+                onBookmark={handleBookmark}
+                onReportError={handleReportError}
+                peerAverages={analysisData.peerAverages}
+              />
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="text-center py-12"
           >
             <div className="bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 p-6 rounded-lg">
               <h3 className="text-lg font-semibold mb-2">Detailed Question Analysis Not Available</h3>
@@ -219,6 +507,8 @@ export default function AnalysisReportPage() {
               </p>
             </div>
           </motion.div>
+            )}
+          </>
         )}
 
         {/* Debug Section - Remove in production */}

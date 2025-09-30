@@ -16,12 +16,14 @@ export default function PracticePage() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [mockTestData, setMockTestData] = useState<any>(null)
   const questionsFetchedRef = useRef(false)
 
   // Get parameters from URL
   const questionIds = searchParams.get('questions')?.split(',') || []
-  const testMode = searchParams.get('testMode') as 'practice' | 'timed' || 'practice'
+  const testMode = searchParams.get('testMode') as 'practice' | 'timed' | 'mock' || 'practice'
   const timeLimit = searchParams.get('timeLimit')
+  const mockTestId = searchParams.get('mockTestId')
 
   useEffect(() => {
     if (authLoading) return
@@ -31,15 +33,25 @@ export default function PracticePage() {
       return
     }
 
-    if (questionIds.length === 0) {
-      setError('No questions selected for practice session')
-      setLoading(false)
-      return
-    }
+    // Check if this is a mock test or regular practice
+    if (mockTestId) {
+      // Mock test mode
+      if (!questionsFetchedRef.current) {
+        questionsFetchedRef.current = true
+        fetchMockTestData()
+      }
+    } else {
+      // Regular practice mode
+      if (questionIds.length === 0) {
+        setError('No questions selected for practice session')
+        setLoading(false)
+        return
+      }
 
-    if (!questionsFetchedRef.current) {
-      questionsFetchedRef.current = true
-      fetchQuestions()
+      if (!questionsFetchedRef.current) {
+        questionsFetchedRef.current = true
+        fetchQuestions()
+      }
     }
   }, [user, authLoading, questionIds, router])
 
@@ -67,6 +79,29 @@ export default function PracticePage() {
     } catch (error) {
       console.error('Error fetching questions:', error)
       setError(error instanceof Error ? error.message : 'Failed to fetch questions')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchMockTestData = async () => {
+    try {
+      setLoading(true)
+      console.log('Fetching mock test data for test ID:', mockTestId)
+
+      const response = await fetch(`/api/mock-tests/${mockTestId}`)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch mock test data')
+      }
+
+      console.log('Mock test data fetched successfully:', result.data)
+      setMockTestData(result.data)
+      setQuestions(result.data.questions)
+    } catch (error) {
+      console.error('Error fetching mock test data:', error)
+      setError(error instanceof Error ? error.message : 'Failed to fetch mock test data')
     } finally {
       setLoading(false)
     }
@@ -125,8 +160,9 @@ export default function PracticePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <PracticeInterface 
         questions={questions} 
-        testMode={testMode}
-        timeLimitInMinutes={timeLimit ? parseInt(timeLimit) : undefined}
+        testMode={testMode === 'mock' ? 'timed' : testMode}
+        timeLimitInMinutes={mockTestData ? mockTestData.test.total_time_minutes : (timeLimit ? parseInt(timeLimit) : undefined)}
+        mockTestData={mockTestData}
       />
     </div>
   )
