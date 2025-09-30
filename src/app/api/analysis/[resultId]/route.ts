@@ -55,6 +55,7 @@ export async function GET(
 
     // Extract question IDs and fetch full question data
     const questionIds = answerLog.map(answer => answer.question_id)
+    console.log('Question IDs from answer log:', questionIds)
     
     if (questionIds.length === 0) {
       return NextResponse.json({ 
@@ -69,13 +70,14 @@ export async function GET(
     const { data: questions, error: questionsError } = await supabaseAdmin
       .from('questions')
       .select('*')
-      .in('question_id', questionIds)
+      .in('id', questionIds)
 
     if (questionsError) {
       console.error('Error fetching questions:', questionsError)
       return NextResponse.json({ error: 'Questions not found' }, { status: 404 })
     }
 
+    console.log('Fetched questions:', questions)
     console.log(`Successfully fetched analysis data: ${testResult ? '1' : '0'} test result, ${answerLog.length} answers, ${questions.length} questions`)
 
     return NextResponse.json({
