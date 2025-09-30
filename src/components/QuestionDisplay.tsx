@@ -78,15 +78,15 @@ export default function QuestionDisplay({
         </div>
         
         <div className="flex items-center space-x-2">
-          {/* Bookmark Button - Icon Only */}
+          {/* Bookmark Button - Icon Only with Visual State Change */}
           <motion.button
             onClick={handleBookmark}
             disabled={isBookmarking}
             className={`
               p-2 rounded-lg border-2 transition-all duration-200
               ${isBookmarked 
-                ? 'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200' 
-                : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-900'
+                ? 'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400' 
+                : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-900 hover:text-amber-600 dark:hover:text-amber-400'
               }
             `}
             whileHover={{ scale: 1.05 }}
@@ -96,16 +96,16 @@ export default function QuestionDisplay({
             <motion.svg
               className="w-5 h-5"
               fill={isBookmarked ? 'currentColor' : 'none'}
-              stroke="currentColor"
+              stroke={isBookmarked ? 'none' : 'currentColor'}
               viewBox="0 0 24 24"
               animate={isBookmarking ? { rotate: 360 } : {}}
               transition={{ duration: 0.5 }}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isBookmarked ? 0 : 2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </motion.svg>
           </motion.button>
 
-          {/* Report Question Button */}
+          {/* Report Question Button - Red Circle Speech Bubble with Exclamation */}
           {onReportError && (
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -114,7 +114,12 @@ export default function QuestionDisplay({
               className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
               title="Report an issue with this question (Alt + R)"
             >
-              <FlagIcon className="h-5 w-5" />
+              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="currentColor" />
+                <path d="M8 6h8c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2H8c-1.1 0-2-.9-2-2V8c0-1.1.9-2 2-2z" fill="white" />
+                <path d="M12 8v2M12 12h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M10 18l2-2 2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </motion.button>
           )}
         </div>

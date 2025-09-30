@@ -68,6 +68,41 @@ export default function ActionBar({
           Save & Next
         </motion.button>
       </motion.div>
+
+      {/* Submit Test Button - Far Right */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+        className="fixed bottom-6 right-6 z-40"
+      >
+        <motion.button
+          onClick={onSubmitTest}
+          disabled={isSubmitting}
+          className={`
+            px-12 py-4 rounded-lg font-semibold text-lg transition-all duration-200 shadow-lg min-w-[210px]
+            ${isSubmitting
+              ? 'bg-slate-400 dark:bg-slate-600 text-slate-200 dark:text-slate-400 cursor-not-allowed'
+              : 'bg-green-600 hover:bg-green-700 text-white hover:shadow-xl'
+            }
+          `}
+          whileHover={!isSubmitting ? { scale: 1.02 } : {}}
+          whileTap={!isSubmitting ? { scale: 0.98 } : {}}
+        >
+          {isSubmitting ? (
+            <div className="flex items-center space-x-2">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+              />
+              <span>Submitting...</span>
+            </div>
+          ) : (
+            'Submit Test'
+          )}
+        </motion.button>
+      </motion.div>
     </>
   )
 }

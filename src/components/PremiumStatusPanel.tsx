@@ -19,7 +19,6 @@ interface PremiumStatusPanelProps {
   sessionStartTime: number
   timeLimitInMinutes?: number
   onQuestionSelect: (index: number) => void
-  onSubmitTest?: () => void
   isSubmitting?: boolean
 }
 
@@ -30,7 +29,6 @@ export default function PremiumStatusPanel({
   sessionStartTime,
   timeLimitInMinutes,
   onQuestionSelect,
-  onSubmitTest,
   isSubmitting = false
 }: PremiumStatusPanelProps) {
   const getQuestionColor = (index: number) => {
@@ -69,7 +67,7 @@ export default function PremiumStatusPanel({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-lg"
+      className="space-y-6"
     >
 
 
@@ -95,9 +93,9 @@ export default function PremiumStatusPanel({
                 key={index}
                 onClick={() => onQuestionSelect(index)}
                 className={`
-                  relative w-12 h-12 rounded-xl border-2 transition-all duration-300 font-bold text-sm shadow-sm
+                  relative w-14 h-14 rounded-xl border-2 transition-all duration-300 font-bold text-base shadow-sm
                   ${getQuestionColor(index)}
-                  ${isCurrent ? 'ring-2 ring-blue-500 dark:ring-blue-400 shadow-xl scale-105' : 'hover:shadow-lg hover:scale-105'}
+                  ${isCurrent ? 'ring-4 ring-blue-500 dark:ring-blue-400 border-blue-500 dark:border-blue-400 shadow-xl scale-105' : 'hover:shadow-lg hover:scale-105'}
                   active:scale-95
                 `}
                 whileHover={{ scale: 1.08 }}
@@ -105,9 +103,9 @@ export default function PremiumStatusPanel({
               >
                 {index + 1}
                 
-                {/* Green dot indicator for "Marked and Answered" */}
+                {/* Green dot indicator for "Marked and Answered" - Even larger and more prominent */}
                 {state?.status === 'marked_for_review' && state?.user_answer && (
-                  <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-green-500 rounded-full shadow-lg"></div>
                 )}
                 
                 {/* Bookmark indicator */}
@@ -170,37 +168,6 @@ export default function PremiumStatusPanel({
           </div>
         </div>
         
-        {/* Submit Test Button - Bottom of Right Panel */}
-        {onSubmitTest && (
-          <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-            <motion.button
-              onClick={onSubmitTest}
-              disabled={isSubmitting}
-              className={`
-                w-full px-6 py-4 rounded-lg font-bold text-lg transition-all duration-200 shadow-lg
-                ${isSubmitting
-                  ? 'bg-slate-400 dark:bg-slate-600 text-slate-200 dark:text-slate-400 cursor-not-allowed'
-                  : 'bg-green-600 hover:bg-green-700 text-white hover:shadow-xl'
-                }
-              `}
-              whileHover={!isSubmitting ? { scale: 1.02 } : {}}
-              whileTap={!isSubmitting ? { scale: 0.98 } : {}}
-            >
-              {isSubmitting ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                  />
-                  <span>Submitting...</span>
-                </div>
-              ) : (
-                'Submit Test'
-              )}
-            </motion.button>
-          </div>
-        )}
       </div>
     </motion.div>
   )

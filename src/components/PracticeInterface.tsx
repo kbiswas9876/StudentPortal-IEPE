@@ -433,7 +433,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         </div>
       </div>
 
-      {/* Desktop Right Panel - Full Height with Collapsible Functionality */}
+      {/* Desktop Right Panel - Single Unified Full-Height Component */}
       <AnimatePresence>
         {!isFocusMode && !isRightPanelCollapsed && (
           <motion.div
@@ -441,9 +441,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="hidden lg:block w-1/4 bg-slate-50 dark:bg-slate-900 h-screen overflow-y-auto relative"
+            className="hidden lg:block w-1/4 bg-slate-50 dark:bg-slate-900 h-screen flex flex-col relative"
           >
-            {/* Collapse Toggle Button */}
+            {/* Collapse Toggle Button - On Visible Left Edge */}
             <button
               onClick={() => setIsRightPanelCollapsed(true)}
               className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-8 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-l-lg shadow-md hover:shadow-lg transition-all duration-200 z-10"
@@ -453,7 +453,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
               </svg>
             </button>
 
-            <div className="p-6">
+            {/* Question Palette - Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6">
               <PremiumStatusPanel
                 questions={questions}
                 sessionStates={sessionStates}
@@ -461,7 +462,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                 sessionStartTime={sessionStartTime}
                 timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
                 onQuestionSelect={handleQuestionNavigation}
-                onSubmitTest={handleSubmitTest}
                 isSubmitting={isSubmitting}
               />
               
@@ -481,6 +481,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                 </div>
               )}
             </div>
+
           </motion.div>
         )}
       </AnimatePresence>
