@@ -127,52 +127,49 @@ export default function PremiumStatusPanel({
           })}
         </div>
 
-        {/* Status Legend - Five-State System from Reference Image */}
+        {/* Status Legend - Professional Multi-Column Grid from Reference Image */}
         <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-          <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
-            Status Legend
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
+          <div className="grid grid-cols-2 gap-2">
+            {/* Column 1: Answered, Marked, Marked and Answered */}
+            <div className="space-y-1.5">
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-green-500 rounded"></div>
-                <span className="text-sm text-slate-700 dark:text-slate-300">Answered</span>
+                <div className="w-8 h-6 bg-green-500 rounded flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{answeredCount}</span>
+                </div>
+                <span className="text-xs text-slate-700 dark:text-slate-300">Answered</span>
               </div>
-              <span className="text-sm font-bold text-green-600 dark:text-green-400">({answeredCount})</span>
-            </div>
-            
-            <div className="flex items-center justify-between">
+              
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-purple-500 rounded"></div>
-                <span className="text-sm text-slate-700 dark:text-slate-300">Marked</span>
+                <div className="w-8 h-6 bg-purple-500 rounded flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{markedCount}</span>
+                </div>
+                <span className="text-xs text-slate-700 dark:text-slate-300">Marked</span>
               </div>
-              <span className="text-sm font-bold text-purple-600 dark:text-purple-400">({markedCount})</span>
-            </div>
-            
-            <div className="flex items-center justify-between">
+              
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-purple-500 rounded relative">
+                <div className="w-8 h-6 bg-purple-500 rounded flex items-center justify-center relative">
+                  <span className="text-sm font-bold text-white">{markedAndAnsweredCount}</span>
                   <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full"></div>
                 </div>
-                <span className="text-sm text-slate-700 dark:text-slate-300">Marked and Answered</span>
+                <span className="text-xs text-slate-700 dark:text-slate-300">Marked and Answered</span>
               </div>
-              <span className="text-sm font-bold text-purple-600 dark:text-purple-400">({markedAndAnsweredCount})</span>
             </div>
             
-            <div className="flex items-center justify-between">
+            {/* Column 2: Not Visited, Not Answered */}
+            <div className="space-y-1.5">
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-slate-400 rounded"></div>
-                <span className="text-sm text-slate-700 dark:text-slate-300">Not Visited</span>
+                <div className="w-8 h-6 bg-slate-400 rounded flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{notVisitedCount}</span>
+                </div>
+                <span className="text-xs text-slate-700 dark:text-slate-300">Not Visited</span>
               </div>
-              <span className="text-sm font-bold text-slate-600 dark:text-slate-400">({notVisitedCount})</span>
-            </div>
-            
-            <div className="flex items-center justify-between">
+              
               <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-red-500 rounded"></div>
-                <span className="text-sm text-slate-700 dark:text-slate-300">Not Answered</span>
+                <div className="w-8 h-6 bg-red-500 rounded flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">{notAnsweredCount}</span>
+                </div>
+                <span className="text-xs text-slate-700 dark:text-slate-300">Not Answered</span>
               </div>
-              <span className="text-sm font-bold text-red-600 dark:text-red-400">({notAnsweredCount})</span>
             </div>
           </div>
         </div>
