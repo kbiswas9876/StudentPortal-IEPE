@@ -13,6 +13,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import { Database } from '@/types/database'
+import KatexRenderer from './ui/KatexRenderer'
 
 type BookmarkedQuestion = {
   id: number
@@ -143,11 +144,12 @@ export default function QuestionSummaryCard({
               )}
             </div>
             
-            <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2 line-clamp-2">
-              {question.question_text ? 
-                (question.question_text.replace(/<[^>]*>/g, '').substring(0, 100) + (question.question_text.length > 100 ? '...' : '')) : 
-                'Question text not available'}
-            </h3>
+            <div className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2 line-clamp-2">
+              <KatexRenderer 
+                content={question.question_text || 'Question text not available'}
+                className="text-sm"
+              />
+            </div>
 
             {/* Performance Metrics */}
             <div className="flex items-center space-x-4 text-xs text-slate-600 dark:text-slate-400">

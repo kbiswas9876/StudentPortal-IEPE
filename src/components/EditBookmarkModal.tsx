@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { Database } from '@/types/database'
+import KatexRenderer from './ui/KatexRenderer'
 
 type BookmarkedQuestion = Database['public']['Tables']['bookmarked_questions']['Row'] & {
   questions: Database['public']['Tables']['questions']['Row']
@@ -105,9 +106,10 @@ export default function EditBookmarkModal({
               <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Question Preview:
               </h4>
-              <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">
-                {bookmark.questions.question_text}
-              </p>
+              <KatexRenderer 
+                content={bookmark.questions.question_text}
+                className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3"
+              />
               <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 Q{bookmark.questions.question_number_in_book} • {bookmark.questions.book_source} • {bookmark.questions.chapter_name}
               </div>

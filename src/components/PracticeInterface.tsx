@@ -11,6 +11,7 @@ import QuestionPalette from './QuestionPalette'
 import QuestionDisplay from './QuestionDisplay'
 import ActionBar from './ActionBar'
 import ReportErrorModal from './ReportErrorModal'
+import KatexRenderer from './ui/KatexRenderer'
 import { FlagIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline'
 
 type Question = Database['public']['Tables']['questions']['Row']

@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
+import KatexRenderer from './ui/KatexRenderer'
 
 type AnswerLog = Database['public']['Tables']['answer_log']['Row']
 type Question = Database['public']['Tables']['questions']['Row']
@@ -170,9 +171,10 @@ export default function QuestionBreakdown({ questions, onBookmark, onReportError
 
               {/* Question Text */}
               <div className="mb-4">
-                <p className="text-slate-800 dark:text-slate-200 leading-relaxed">
-                  {item.question?.question_text}
-                </p>
+                <KatexRenderer 
+                  content={item.question?.question_text || ''}
+                  className="text-slate-800 dark:text-slate-200 leading-relaxed"
+                />
               </div>
 
               {/* Answer Details */}
@@ -219,9 +221,10 @@ export default function QuestionBreakdown({ questions, onBookmark, onReportError
                         className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800"
                       >
                         <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Solution</h4>
-                        <p className="text-blue-800 dark:text-blue-200 leading-relaxed">
-                          {item.question.solution_text}
-                        </p>
+                        <KatexRenderer 
+                          content={item.question.solution_text}
+                          className="text-blue-800 dark:text-blue-200 leading-relaxed"
+                        />
                       </motion.div>
                     )}
                   </AnimatePresence>

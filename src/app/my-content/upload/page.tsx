@@ -179,7 +179,7 @@ export default function UploadContentPage() {
               Step 1: Download Template
             </h2>
             <p className="text-slate-600 dark:text-slate-400 mb-4">
-              Download the template file to see the exact format required for your questions.
+              Download the template file to see the exact format required for your questions. The template includes examples with LaTeX mathematical notation support.
             </p>
             <motion.button
               whileHover={{ scale: 1.05 }}

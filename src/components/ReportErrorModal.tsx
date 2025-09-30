@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/lib/toast-context'
+import KatexRenderer from './ui/KatexRenderer'
 
 interface ReportErrorModalProps {
   isOpen: boolean
@@ -126,9 +127,10 @@ export default function ReportErrorModal({
                 <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Question Preview:
                 </h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                  {questionText}
-                </p>
+                <KatexRenderer 
+                  content={questionText}
+                  className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2"
+                />
               </div>
 
               {/* Description */}

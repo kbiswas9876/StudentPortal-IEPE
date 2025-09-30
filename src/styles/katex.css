@@ -1,0 +1,72 @@
+/* KaTeX Global Styles for Consistent Mathematical Typesetting */
+
+/* Import KaTeX CSS */
+@import 'katex/dist/katex.min.css';
+
+/* Custom KaTeX styling for seamless integration */
+.katex {
+  font-size: 1em !important;
+  line-height: 1.2 !important;
+}
+
+/* Inline math styling */
+.katex-display {
+  margin: 1em 0 !important;
+  text-align: center;
+}
+
+/* Error styling for invalid LaTeX */
+.katex-error {
+  color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.25rem !important;
+  font-size: 0.875rem !important;
+  border: 1px solid #fecaca !important;
+}
+
+/* Ensure math doesn't break layout */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Dark mode support */
+.dark .katex {
+  color: inherit !important;
+}
+
+.dark .katex .mord {
+  color: inherit !important;
+}
+
+.dark .katex .mrel {
+  color: inherit !important;
+}
+
+.dark .katex .mbin {
+  color: inherit !important;
+}
+
+.dark .katex .mopen {
+  color: inherit !important;
+}
+
+.dark .katex .mclose {
+  color: inherit !important;
+}
+
+.dark .katex .mpunct {
+  color: inherit !important;
+}
+
+/* Responsive math */
+@media (max-width: 768px) {
+  .katex-display {
+    font-size: 0.9em !important;
+  }
+  
+  .katex {
+    font-size: 0.9em !important;
+  }
+}

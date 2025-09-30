@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Database } from '@/types/database'
 import { FlagIcon } from '@heroicons/react/24/outline'
+import KatexRenderer from './ui/KatexRenderer'
 
 type Question = Database['public']['Tables']['questions']['Row']
 
@@ -109,9 +110,9 @@ export default function QuestionDisplay({
         className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-8 mb-8 shadow-sm"
       >
         <div className="prose prose-lg max-w-none dark:prose-invert">
-          <div 
+          <KatexRenderer 
+            content={question.question_text}
             className="text-slate-900 dark:text-slate-100 leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: question.question_text }}
           />
         </div>
       </motion.div>
@@ -167,9 +168,9 @@ export default function QuestionDisplay({
                 <div className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
                   {key.toUpperCase()}
                 </div>
-                <div 
+                <KatexRenderer 
+                  content={value}
                   className="text-slate-700 dark:text-slate-300 leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: value }}
                 />
               </div>
             </div>
