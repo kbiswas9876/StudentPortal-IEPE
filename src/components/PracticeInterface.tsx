@@ -8,8 +8,11 @@ import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
 import Timer from './Timer'
 import QuestionPalette from './QuestionPalette'
+import PremiumStatusPanel from './PremiumStatusPanel'
 import QuestionDisplay from './QuestionDisplay'
 import ActionBar from './ActionBar'
+import ProgressBar from './ProgressBar'
+import EndSessionModal from './EndSessionModal'
 import ReportErrorModal from './ReportErrorModal'
 import KatexRenderer from './ui/KatexRenderer'
 import { FlagIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline'
@@ -52,6 +55,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
+  const [showEndSessionModal, setShowEndSessionModal] = useState(false)
   const [isFocusMode, setIsFocusMode] = useState(false)
 
   // Initialize session states
@@ -158,9 +162,12 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       time_taken: currentState.time_taken + timeSpent
     })
 
-    // Move to next question
+    // Move to next question or show end-of-session modal
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1)
+    } else {
+      // End of session - show modal
+      setShowEndSessionModal(true)
     }
   }
 
@@ -172,9 +179,12 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       time_taken: currentState.time_taken + timeSpent
     })
 
-    // Move to next question
+    // Move to next question or show end-of-session modal
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1)
+    } else {
+      // End of session - show modal
+      setShowEndSessionModal(true)
     }
   }
 
@@ -183,6 +193,15 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       user_answer: null,
       status: 'unanswered'
     })
+  }
+
+  const handleReturnToStart = () => {
+    setCurrentIndex(0)
+    setShowEndSessionModal(false)
+  }
+
+  const handleStayHere = () => {
+    setShowEndSessionModal(false)
   }
 
   const handleBookmark = async () => {
@@ -340,10 +359,20 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     )
   }
 
+  // Calculate answered questions for progress bar
+  const answeredQuestions = sessionStates.filter(state => state.user_answer !== null).length
+
   return (
     <div className="min-h-screen flex">
+      {/* Progress Bar - Top of Screen */}
+      <ProgressBar
+        currentQuestion={currentIndex + 1}
+        totalQuestions={questions.length}
+        answeredQuestions={answeredQuestions}
+      />
+
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-4">
+      <div className="lg:hidden fixed top-12 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
@@ -363,7 +392,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 lg:flex-none lg:w-3/4 pt-16 lg:pt-0">
+      <div className="flex-1 lg:flex-none lg:w-3/4 pt-28 lg:pt-12">
         <div className="h-screen overflow-y-auto">
           <QuestionDisplay
             question={currentQuestion}
@@ -386,34 +415,34 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="hidden lg:block w-1/4 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700"
+            className="hidden lg:block w-1/4 bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700 p-6 overflow-y-auto"
           >
-        <div className="h-screen flex flex-col">
-          <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-            <Timer 
-              sessionStartTime={sessionStartTime} 
-              duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-            />
-            {mockTestData && (
-              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Scoring Rules</h4>
-                <div className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                  <div>Correct: +{mockTestData.test.marks_per_correct} marks</div>
-                  <div>Incorrect: {mockTestData.test.marks_per_incorrect} marks</div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex-1 p-6">
-            <QuestionPalette
+            <PremiumStatusPanel
               questions={questions}
               sessionStates={sessionStates}
               currentIndex={currentIndex}
+              sessionStartTime={sessionStartTime}
+              timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
               onQuestionSelect={handleQuestionNavigation}
+              onSubmitTest={handleSubmitTest}
+              isSubmitting={isSubmitting}
             />
-          </div>
-        </div>
+            
+            {mockTestData && (
+              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">Scoring Rules</h4>
+                <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
+                  <div className="flex justify-between">
+                    <span>Correct Answer:</span>
+                    <span className="font-semibold">+{mockTestData.test.marks_per_correct} marks</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Incorrect Answer:</span>
+                    <span className="font-semibold">{mockTestData.test.marks_per_incorrect} marks</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -490,6 +519,13 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         onSubmitTest={handleSubmitTest}
         isSubmitting={isSubmitting}
         isLastQuestion={currentIndex === questions.length - 1}
+      />
+
+      {/* End Session Modal */}
+      <EndSessionModal
+        isOpen={showEndSessionModal}
+        onReturnToStart={handleReturnToStart}
+        onStayHere={handleStayHere}
       />
 
       {/* Report Error Modal */}

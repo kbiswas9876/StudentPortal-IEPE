@@ -117,29 +117,29 @@ export default function QuestionDisplay({
         </div>
       </motion.div>
 
-      {/* Options */}
+      {/* Options - Redesigned without labels */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="space-y-4"
+        className="space-y-3"
       >
         {Object.entries(options).map(([key, value]) => (
           <motion.label
             key={key}
             className={`
-              block p-6 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md
+              block p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md
               ${userAnswer === key
                 ? 'bg-blue-50 dark:bg-blue-900 border-blue-300 dark:border-blue-600 shadow-md'
                 : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-600'
               }
             `}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
           >
-            <div className="flex items-start space-x-4">
+            <div className="flex items-start space-x-3">
               <div className={`
-                w-6 h-6 rounded-full border-2 flex items-center justify-center font-semibold text-sm
+                w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5
                 ${userAnswer === key
                   ? 'bg-blue-600 border-blue-600 text-white'
                   : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400'
@@ -164,10 +164,7 @@ export default function QuestionDisplay({
                 className="sr-only"
               />
               
-              <div className="flex-1">
-                <div className="font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                  {key.toUpperCase()}
-                </div>
+              <div className="flex-1 min-h-0">
                 <KatexRenderer 
                   content={value}
                   className="text-slate-700 dark:text-slate-300 leading-relaxed"

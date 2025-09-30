@@ -61,7 +61,7 @@ export default function Timer({ sessionStartTime, duration }: TimerProps) {
 
   return (
     <motion.div
-      className={`inline-flex items-center px-4 py-2 rounded-lg border transition-all duration-500 ${getTimerBgColor()}`}
+      className={`inline-flex items-center px-6 py-3 rounded-xl border-2 transition-all duration-500 shadow-lg ${getTimerBgColor()}`}
       animate={{
         scale: duration && (duration * 60 * 1000 - elapsedTime) <= 5 * 60 * 1000 ? [1, 1.05, 1] : 1
       }}
@@ -70,17 +70,35 @@ export default function Timer({ sessionStartTime, duration }: TimerProps) {
         repeat: duration && (duration * 60 * 1000 - elapsedTime) <= 5 * 60 * 1000 ? Infinity : 0
       }}
     >
-      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span className={`font-mono text-sm font-semibold transition-colors duration-500 ${getTimerColor()}`}>
-        {displayTime}
-      </span>
-      {duration && (
-        <div className="ml-2 text-xs text-slate-500 dark:text-slate-400">
-          / {duration}m
+      <div className="flex items-center space-x-3">
+        <div className="relative">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {duration && (
+            <motion.div
+              className="absolute inset-0"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+                <circle cx="12" cy="12" r="10" strokeDasharray="62.83" strokeDashoffset="0" />
+              </svg>
+            </motion.div>
+          )}
         </div>
-      )}
+        
+        <div className="flex flex-col">
+          <span className={`font-mono text-lg font-bold transition-colors duration-500 ${getTimerColor()}`}>
+            {displayTime}
+          </span>
+          {duration && (
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              of {duration} minutes
+            </span>
+          )}
+        </div>
+      </div>
     </motion.div>
   )
 }

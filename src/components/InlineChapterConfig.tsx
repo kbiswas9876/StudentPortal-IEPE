@@ -22,13 +22,13 @@ export default function InlineChapterConfig({
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={{ opacity: 0, x: 20, scale: 0.95 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="flex items-center space-x-3 ml-4"
+      className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 sm:ml-4"
     >
-      {/* Mode Selection */}
-      <div className="flex bg-slate-100 dark:bg-slate-700 rounded-md p-0.5">
+      {/* Mode Selection - Mobile Optimized */}
+      <div className="flex bg-slate-100 dark:bg-slate-700 rounded-md p-0.5 w-full sm:w-auto">
         <button
           onClick={() => onConfigChange({ ...config, mode: 'quantity' })}
-          className={`px-2 py-1 text-xs font-medium rounded-sm transition-all ${
+          className={`flex-1 sm:flex-none px-2 py-1.5 text-xs font-medium rounded-sm transition-all ${
             config.mode === 'quantity'
               ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
@@ -38,7 +38,7 @@ export default function InlineChapterConfig({
         </button>
         <button
           onClick={() => onConfigChange({ ...config, mode: 'range' })}
-          className={`px-2 py-1 text-xs font-medium rounded-sm transition-all ${
+          className={`flex-1 sm:flex-none px-2 py-1.5 text-xs font-medium rounded-sm transition-all ${
             config.mode === 'range'
               ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
@@ -48,15 +48,15 @@ export default function InlineChapterConfig({
         </button>
       </div>
 
-      {/* Input Field */}
-      <div className="flex items-center space-x-2">
+      {/* Input Field - Mobile Optimized */}
+      <div className="flex items-center space-x-2 w-full sm:w-auto">
         {config.mode === 'quantity' ? (
           <motion.div
             key="quantity"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 flex-1"
           >
             <input
               type="number"
@@ -67,9 +67,9 @@ export default function InlineChapterConfig({
                 ...config,
                 values: { count: Math.min(parseInt(e.target.value) || 1, questionCount) }
               })}
-              className="w-16 px-2 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-16 sm:w-16 px-2 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             />
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
               of {questionCount}
             </span>
           </motion.div>
@@ -79,7 +79,7 @@ export default function InlineChapterConfig({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="flex items-center space-x-1"
+            className="flex items-center space-x-1 flex-1"
           >
             <input
               type="number"
@@ -93,7 +93,7 @@ export default function InlineChapterConfig({
                   end: config.values.end || 1
                 }
               })}
-              className="w-12 px-1 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-12 sm:w-12 px-1 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             />
             <span className="text-xs text-slate-500 dark:text-slate-400">-</span>
             <input
@@ -108,7 +108,7 @@ export default function InlineChapterConfig({
                   end: Math.min(parseInt(e.target.value) || 1, questionCount)
                 }
               })}
-              className="w-12 px-1 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="w-12 sm:w-12 px-1 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             />
           </motion.div>
         )}

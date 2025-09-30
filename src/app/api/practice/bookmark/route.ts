@@ -3,21 +3,6 @@ import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
 import { cookies } from 'next/headers'
 
-if (!env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
-}
-
-const supabaseAdmin = createClient(
-  env.SUPABASE_URL,
-  env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
-
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -48,7 +33,7 @@ export async function POST(request: Request) {
     }
 
     // Check if bookmark already exists
-    const { data: existingBookmark, error: checkError } = await supabaseAdmin
+    const { data: existingBookmark, error: checkError } = await supabase
       .from('bookmarked_questions')
       .select('id')
       .eq('question_id', questionId.toString())
@@ -62,7 +47,7 @@ export async function POST(request: Request) {
 
     if (existingBookmark) {
       // Remove existing bookmark
-      const { error: deleteError } = await supabaseAdmin
+      const { error: deleteError } = await supabase
         .from('bookmarked_questions')
         .delete()
         .eq('question_id', questionId.toString())
@@ -76,7 +61,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Bookmark removed', bookmarked: false })
     } else {
       // Add new bookmark
-      const { error: insertError } = await supabaseAdmin
+      const { error: insertError } = await supabase
         .from('bookmarked_questions')
         .insert({
           question_id: questionId.toString(),

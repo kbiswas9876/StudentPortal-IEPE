@@ -7,6 +7,7 @@ import { PracticeSessionConfig, ChapterConfiguration } from '@/types/practice'
 import PremiumBookCard from './PremiumBookCard'
 import SessionSummaryPanel from './SessionSummaryPanel'
 import SegmentedControl from './SegmentedControl'
+import StickyActionFooter from './StickyActionFooter'
 
 type BookSource = Database['public']['Tables']['book_sources']['Row']
 type ChapterData = {
@@ -224,26 +225,26 @@ export default function PremiumPracticeSetup({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="text-center mb-12"
+          className="text-center mb-6 sm:mb-12"
         >
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+          <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2 sm:mb-4">
             Start a New Practice Session
           </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
             Select your books and chapters, then configure your practice session with our premium interface
           </p>
         </motion.div>
 
-        {/* Two-Column Layout with Equal Heights */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 h-[calc(100vh-12rem)]">
-          {/* Left Column - Selection Zone */}
-          <div className="lg:col-span-3 order-2 lg:order-1 flex flex-col">
+        {/* Mobile-First Layout */}
+        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-5 lg:gap-8 lg:h-[calc(100vh-16rem)] pb-24 sm:pb-20 lg:pb-0">
+          {/* Mobile: Books & Chapters First, Desktop: Left Column */}
+          <div className="lg:col-span-3 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -254,7 +255,8 @@ export default function PremiumPracticeSetup({
                 Select Books & Chapters
               </h2>
               
-              <div className="flex-1 overflow-y-auto pr-2">
+              {/* Mobile: Full height, Desktop: Scrollable */}
+              <div className="flex-1 lg:overflow-y-auto lg:pr-2">
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                   {books.map((book) => (
                     <PremiumBookCard
@@ -274,28 +276,28 @@ export default function PremiumPracticeSetup({
             </motion.div>
           </div>
 
-          {/* Right Column - Configuration Zone */}
-          <div className="lg:col-span-2 order-1 lg:order-2 flex flex-col">
+          {/* Mobile: Settings Second, Desktop: Right Column */}
+          <div className="lg:col-span-2 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex-1 flex flex-col space-y-4"
+              className="flex-1 flex flex-col space-y-4 lg:overflow-y-auto lg:pr-2"
             >
               {/* Card 1: Session Settings */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
-                className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-lg"
+                className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-4 shadow-lg"
               >
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3 sm:mb-4">
                   Session Settings
                 </h3>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {/* Question Order */}
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Question Order
                     </label>
@@ -308,7 +310,7 @@ export default function PremiumPracticeSetup({
                   </div>
 
                   {/* Test Mode */}
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                       Test Mode
                     </label>
@@ -349,7 +351,6 @@ export default function PremiumPracticeSetup({
 
               {/* Card 2: Session Summary */}
               <SessionSummaryPanel
-                totalQuestions={getTotalQuestions()}
                 selectedChaptersByBook={getSelectedChaptersByBook()}
                 questionOrder={questionOrder}
                 testMode={testMode}
@@ -357,31 +358,17 @@ export default function PremiumPracticeSetup({
                 estimatedDuration={getEstimatedDuration()}
               />
 
-              {/* Card 3: Action Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-                className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-lg"
-              >
-                <motion.button
-                  onClick={handleStartSession}
-                  disabled={getTotalQuestions() === 0}
-                  className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-200 ${
-                    getTotalQuestions() === 0
-                      ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
-                  }`}
-                  whileHover={getTotalQuestions() > 0 ? { scale: 1.02 } : {}}
-                  whileTap={getTotalQuestions() > 0 ? { scale: 0.98 } : {}}
-                >
-                  Start Practice Session
-                </motion.button>
-              </motion.div>
             </motion.div>
           </div>
         </div>
       </div>
+
+      {/* Sticky Action Footer */}
+      <StickyActionFooter
+        totalQuestions={getTotalQuestions()}
+        onStartSession={handleStartSession}
+        disabled={getTotalQuestions() === 0}
+      />
     </div>
   )
 }

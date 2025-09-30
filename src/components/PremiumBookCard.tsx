@@ -60,26 +60,26 @@ export default function PremiumBookCard({
           : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 shadow-lg hover:shadow-xl'
       }`}
     >
-      {/* Book Card Header */}
+      {/* Book Card Header - Mobile Optimized */}
       <motion.button
         onClick={handleBookClick}
-        className="w-full p-4 text-left transition-all duration-200 hover:bg-slate-50/50 dark:hover:bg-slate-700/50"
+        className="w-full p-4 sm:p-4 text-left transition-all duration-200 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 active:bg-slate-100 dark:active:bg-slate-700"
         whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
+        whileTap={{ scale: 0.98 }}
       >
         <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 truncate">
               {book.name}
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
               Code: {book.code}
             </p>
             {isSelected && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-full"
+                className="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-full"
               >
                 Selected
               </motion.div>
@@ -89,9 +89,9 @@ export default function PremiumBookCard({
           <motion.div
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={{ duration: 0.3 }}
-            className="ml-4 p-2 rounded-lg bg-slate-100 dark:bg-slate-700"
+            className="ml-2 p-2 rounded-lg bg-slate-100 dark:bg-slate-700 flex-shrink-0"
           >
-            <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </motion.div>
@@ -108,7 +108,7 @@ export default function PremiumBookCard({
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="border-t border-slate-200 dark:border-slate-700"
           >
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
               {loadingChapters ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
@@ -119,7 +119,7 @@ export default function PremiumBookCard({
                   ))}
                 </div>
               ) : (
-                <div className="max-h-96 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
+                <div className="max-h-80 sm:max-h-96 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
                   {chapters.map((chapter, index) => {
                     const config = chapterConfigs[chapter.chapter_name] || {
                       selected: false,
@@ -140,11 +140,11 @@ export default function PremiumBookCard({
                             checked={config.selected}
                             onChange={(selected) => handleChapterSelect(chapter.chapter_name, selected)}
                           />
-                          <div className="ml-4 flex-1">
-                            <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                          <div className="ml-3 sm:ml-4 flex-1 min-w-0">
+                            <h4 className="font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate">
                               {chapter.chapter_name}
                             </h4>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                               {chapter.count} questions available
                             </p>
                           </div>

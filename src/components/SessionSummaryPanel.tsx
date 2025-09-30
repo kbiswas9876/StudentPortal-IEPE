@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { PracticeSessionConfig } from '@/types/practice'
 
 interface SessionSummaryPanelProps {
-  totalQuestions: number
   selectedChaptersByBook: Record<string, Array<{ chapter: string; count: number }>>
   questionOrder: 'shuffle' | 'interleaved' | 'sequential'
   testMode: 'practice' | 'timed'
@@ -13,7 +12,6 @@ interface SessionSummaryPanelProps {
 }
 
 export default function SessionSummaryPanel({
-  totalQuestions,
   selectedChaptersByBook,
   questionOrder,
   testMode,
@@ -36,13 +34,13 @@ export default function SessionSummaryPanel({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-lg"
+      className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-4 shadow-lg"
     >
-      <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">
+      <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mb-4 sm:mb-6">
         Session Summary
       </h3>
 
-      {totalQuestions === 0 ? (
+      {Object.keys(selectedChaptersByBook).length === 0 ? (
         <div className="text-center py-6">
           <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3">
             <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,21 +53,6 @@ export default function SessionSummaryPanel({
         </div>
       ) : (
         <div className="space-y-3">
-          {/* Total Questions */}
-          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 mb-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Total Questions</span>
-              <motion.span
-                key={totalQuestions}
-                initial={{ scale: 1.2 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="text-3xl font-bold text-blue-600 dark:text-blue-400"
-              >
-                {totalQuestions}
-              </motion.span>
-            </div>
-          </div>
 
           {/* Selected Chapters - Grouped by Book */}
           {Object.keys(selectedChaptersByBook).length > 0 && (
