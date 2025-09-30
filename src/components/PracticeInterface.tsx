@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
 import { useAuth } from '@/lib/auth-context'
+import { useToast } from '@/lib/toast-context'
 import Timer from './Timer'
 import QuestionPalette from './QuestionPalette'
 import QuestionDisplay from './QuestionDisplay'
 import ActionBar from './ActionBar'
+import ReportErrorModal from './ReportErrorModal'
+import { FlagIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline'
 
 type Question = Database['public']['Tables']['questions']['Row']
 
@@ -38,6 +41,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [isFocusMode, setIsFocusMode] = useState(false)
 
   // Initialize session states
   useEffect(() => {
@@ -59,6 +64,50 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   useEffect(() => {
     setCurrentQuestionStartTime(Date.now())
   }, [currentIndex])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Prevent shortcuts when typing in inputs
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      // Alt + S: Save and Next
+      if (event.altKey && event.key === 's') {
+        event.preventDefault()
+        handleSaveAndNext()
+      }
+      // Alt + M: Mark for Review and Next
+      else if (event.altKey && event.key === 'm') {
+        event.preventDefault()
+        handleMarkForReviewAndNext()
+      }
+      // Alt + C: Clear Response
+      else if (event.altKey && event.key === 'c') {
+        event.preventDefault()
+        handleClearResponse()
+      }
+      // Alt + B: Bookmark
+      else if (event.altKey && event.key === 'b') {
+        event.preventDefault()
+        handleBookmark()
+      }
+      // Alt + F: Focus Mode
+      else if (event.altKey && event.key === 'f') {
+        event.preventDefault()
+        setIsFocusMode(!isFocusMode)
+      }
+      // Alt + R: Report Error
+      else if (event.altKey && event.key === 'r') {
+        event.preventDefault()
+        setShowReportModal(true)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isFocusMode])
 
   const currentQuestion = questions[currentIndex]
   const currentState = sessionStates[currentIndex] || {
@@ -288,12 +337,21 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             isBookmarked={currentState.is_bookmarked}
             onAnswerChange={handleAnswerChange}
             onBookmark={handleBookmark}
+            onReportError={() => setShowReportModal(true)}
           />
         </div>
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block w-1/4 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700">
+      <AnimatePresence>
+        {!isFocusMode && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.3 }}
+            className="hidden lg:block w-1/4 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700"
+          >
         <div className="h-screen flex flex-col">
           <div className="p-6 border-b border-slate-200 dark:border-slate-700">
             <Timer 
@@ -311,7 +369,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             />
           </div>
         </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
@@ -362,6 +422,21 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         )}
       </AnimatePresence>
 
+      {/* Focus Mode Toggle */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsFocusMode(!isFocusMode)}
+        className="fixed top-4 right-4 z-40 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        title={`${isFocusMode ? 'Exit' : 'Enter'} Focus Mode (Alt + F)`}
+      >
+        {isFocusMode ? (
+          <ArrowsPointingOutIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+        ) : (
+          <ArrowsPointingInIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+        )}
+      </motion.button>
+
       {/* Action Bar */}
       <ActionBar
         onSaveAndNext={handleSaveAndNext}
@@ -371,6 +446,16 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         isSubmitting={isSubmitting}
         isLastQuestion={currentIndex === questions.length - 1}
       />
+
+      {/* Report Error Modal */}
+      {showReportModal && (
+        <ReportErrorModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          questionId={currentQuestion.id}
+          questionText={currentQuestion.question_text}
+        />
+      )}
     </div>
   )
 }

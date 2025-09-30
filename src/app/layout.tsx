@@ -3,6 +3,8 @@ import React from 'react'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
+import { ThemeProvider } from '@/lib/theme-context'
+import { ToastProvider } from '@/lib/toast-context'
 import Header from '@/components/Header'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -20,12 +22,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>
-          <Header />
-          <main className="min-h-screen">
-            {children}
-          </main>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <Header />
+              <main className="min-h-screen">
+                {children}
+              </main>
+            </ToastProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

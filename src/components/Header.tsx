@@ -6,12 +6,26 @@ import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, Transition } from '@headlessui/react'
 import { useAuth } from '@/lib/auth-context'
+import { useTheme } from '@/lib/theme-context'
+import { SunIcon, MoonIcon } from '@heroicons/react/24/outline'
 
 export default function Header() {
   const { user, signOut } = useAuth()
   const pathname = usePathname()
   const router = useRouter()
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  
+  // Safely get theme context
+  let theme = 'light'
+  let toggleTheme = () => {}
+  try {
+    const themeContext = useTheme()
+    theme = themeContext.theme
+    toggleTheme = themeContext.toggleTheme
+  } catch (error) {
+    // Theme provider not available, use default
+    console.warn('ThemeProvider not available, using default theme')
+  }
 
   const handleLogout = async () => {
     await signOut()
@@ -76,6 +90,24 @@ export default function Header() {
               )}
             </Link>
             <Link
+              href="/my-plans"
+              className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                isActive('/my-plans')
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
+            >
+              My Plans
+              {isActive('/my-plans') && (
+                <motion.div
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400"
+                  layoutId="activeIndicator"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+            </Link>
+            <Link
               href="/mock-tests"
               className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
                 isActive('/mock-tests')
@@ -96,7 +128,26 @@ export default function Header() {
           </nav>
 
           {/* User Profile Area */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleTheme}
+              className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors duration-200"
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              <motion.div
+                animate={{ rotate: theme === 'light' ? 0 : 180 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+              >
+                {theme === 'light' ? (
+                  <SunIcon className="h-5 w-5" />
+                ) : (
+                  <MoonIcon className="h-5 w-5" />
+                )}
+              </motion.div>
+            </motion.button>
             {user ? (
               <Menu as="div" className="relative">
                 <Menu.Button

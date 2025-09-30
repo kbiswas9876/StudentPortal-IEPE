@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Database } from '@/types/database'
+import { FlagIcon } from '@heroicons/react/24/outline'
 
 type Question = Database['public']['Tables']['questions']['Row']
 
@@ -14,6 +15,7 @@ interface QuestionDisplayProps {
   isBookmarked: boolean
   onAnswerChange: (answer: string) => void
   onBookmark: () => void
+  onReportError?: () => void
 }
 
 export default function QuestionDisplay({
@@ -23,7 +25,8 @@ export default function QuestionDisplay({
   userAnswer,
   isBookmarked,
   onAnswerChange,
-  onBookmark
+  onBookmark,
+  onReportError
 }: QuestionDisplayProps) {
   const [isBookmarking, setIsBookmarking] = useState(false)
 
@@ -45,6 +48,17 @@ export default function QuestionDisplay({
           <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-lg font-semibold">
             Question {questionNumber} of {totalQuestions}
           </div>
+          {onReportError && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onReportError}
+              className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              title="Report an issue with this question (Alt + R)"
+            >
+              <FlagIcon className="h-4 w-4" />
+            </motion.button>
+          )}
           {question.difficulty && (
             <div className={`px-3 py-1 rounded-lg text-sm font-medium ${
               question.difficulty === 'Easy' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
