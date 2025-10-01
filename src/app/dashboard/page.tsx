@@ -137,10 +137,17 @@ export default function DashboardPage() {
       console.log('Sequenced question IDs:', sequencedQuestionIds)
       
       // Navigate to practice session with complete payload
-      const queryString = new URLSearchParams({
+      const queryParams: Record<string, string> = {
         questions: sequencedQuestionIds.join(','),
-        testMode: 'practice'
-      }).toString()
+        testMode: config.testMode || 'practice'
+      }
+      
+      // Add time limit if in timed mode
+      if (config.testMode === 'timed' && config.timeLimitInMinutes) {
+        queryParams.timeLimit = config.timeLimitInMinutes.toString()
+      }
+      
+      const queryString = new URLSearchParams(queryParams).toString()
       
       const totalTime = Date.now() - startTime
       console.log(`Total session startup time: ${totalTime}ms`)

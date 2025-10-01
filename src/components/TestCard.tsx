@@ -64,12 +64,13 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
   }, [test.start_time, type])
 
   const formatTime = (minutes: number) => {
-    const hours = Math.floor(minutes / 60)
-    const remainingMinutes = minutes % 60
-    if (hours > 0) {
-      return `${hours}h ${remainingMinutes}m`
-    }
-    return `${minutes}m`
+    const totalSeconds = minutes * 60
+    const hours = Math.floor(totalSeconds / 3600)
+    const mins = Math.floor((totalSeconds % 3600) / 60)
+    const secs = totalSeconds % 60
+    
+    // Always show HH:MM:SS format
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
   const getCardStyles = () => {

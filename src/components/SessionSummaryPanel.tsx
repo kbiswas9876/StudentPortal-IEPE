@@ -29,6 +29,17 @@ export default function SessionSummaryPanel({
     timed: 'Timed Mode'
   }
 
+  // Helper function to format time in HH:MM:SS format
+  const formatTime = (minutes: number) => {
+    const totalSeconds = minutes * 60
+    const hours = Math.floor(totalSeconds / 3600)
+    const mins = Math.floor((totalSeconds % 3600) / 60)
+    const secs = totalSeconds % 60
+    
+    // Always show HH:MM:SS format
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -98,7 +109,7 @@ export default function SessionSummaryPanel({
               {testMode === 'timed' && (
                 <div className="flex justify-between items-center">
                   <span className="text-slate-700 dark:text-slate-300 font-medium">Time Limit:</span>
-                  <span className="text-blue-600 dark:text-blue-400 font-semibold">{timeLimitInMinutes} min</span>
+                  <span className="text-blue-600 dark:text-blue-400 font-semibold">{formatTime(timeLimitInMinutes)}</span>
                 </div>
               )}
             </div>
@@ -119,7 +130,7 @@ export default function SessionSummaryPanel({
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
                     <span className="text-blue-800 dark:text-blue-200">Time Limit:</span>
-                    <span className="text-blue-900 dark:text-blue-100 font-semibold">{timeLimitInMinutes} minutes</span>
+                    <span className="text-blue-900 dark:text-blue-100 font-semibold">{formatTime(timeLimitInMinutes)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-blue-800 dark:text-blue-200">Estimated Pace:</span>

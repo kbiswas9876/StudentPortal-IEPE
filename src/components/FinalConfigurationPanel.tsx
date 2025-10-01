@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import SegmentedControl from './SegmentedControl'
+import { PremiumTimeInput } from './PremiumTimeInput'
 
 interface FinalConfigurationPanelProps {
   questionOrder: 'shuffle' | 'interleaved' | 'sequential'
@@ -21,6 +22,17 @@ export default function FinalConfigurationPanel({
   onTestModeChange,
   onTimeLimitChange
 }: FinalConfigurationPanelProps) {
+  
+  // Helper function to format time in HH:MM:SS format
+  const formatTime = (minutes: number) => {
+    const totalSeconds = minutes * 60
+    const hours = Math.floor(totalSeconds / 3600)
+    const mins = Math.floor((totalSeconds % 3600) / 60)
+    const secs = totalSeconds % 60
+    
+    // Always show HH:MM:SS format
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
   const [isExpanded, setIsExpanded] = useState(false)
 
   const questionOrderOptions = [
@@ -112,19 +124,14 @@ export default function FinalConfigurationPanel({
                     className="space-y-2"
                   >
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Time Limit (minutes)
+                      Time Limit
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="300"
-                      value={timeLimitInMinutes}
-                      onChange={(e) => onTimeLimitChange(parseInt(e.target.value) || 30)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      placeholder="30"
+                    <PremiumTimeInput
+                      defaultValue={timeLimitInMinutes * 60}
+                      onChange={(totalSeconds) => onTimeLimitChange(Math.ceil(totalSeconds / 60))}
                     />
                     <div className="text-xs text-slate-500 dark:text-slate-400">
-                      Set the time limit for your practice session (1-300 minutes)
+                      Set the time limit for your practice session (HH:MM:SS format)
                     </div>
                   </motion.div>
                 )}
@@ -140,7 +147,7 @@ export default function FinalConfigurationPanel({
                 <div>• Question Order: {questionOrderOptions.find(opt => opt.value === questionOrder)?.label}</div>
                 <div>• Test Mode: {testModeOptions.find(opt => opt.value === testMode)?.label}</div>
                 {testMode === 'timed' && (
-                  <div>• Time Limit: {timeLimitInMinutes} minutes</div>
+                  <div>• Time Limit: {formatTime(timeLimitInMinutes)}</div>
                 )}
               </div>
             </div>
