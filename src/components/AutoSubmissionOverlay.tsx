@@ -61,7 +61,7 @@ export default function AutoSubmissionOverlay({ isVisible }: AutoSubmissionOverl
 
         {/* Main Message */}
         <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
-          Time's Up!
+          Time&apos;s Up!
         </h2>
         <p className="text-slate-600 dark:text-slate-400 mb-6">
           Your test time has expired. Submitting your test automatically...

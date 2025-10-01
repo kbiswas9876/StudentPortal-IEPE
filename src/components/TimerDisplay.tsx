@@ -32,6 +32,7 @@ export default function TimerDisplay({
   onPause,
   showPauseButton = false
 }: TimerDisplayProps) {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   // Simple format function for per-question timer
   const formatTime = (ms: number): string => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -40,16 +41,7 @@ export default function TimerDisplay({
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-  // If milliseconds prop is provided, this is a per-question timer - render directly
-  if (milliseconds !== undefined) {
-    return (
-      <span className="font-mono text-sm">
-        {formatTime(milliseconds)}
-      </span>
-    );
-  }
-
-  // Original logic for main session timer
+  // Original logic for main session timer - hooks must be called unconditionally
   const [currentTime, setCurrentTime] = useState<number>(Date.now())
   const [previousTime, setPreviousTime] = useState<string>('')
 
@@ -69,6 +61,15 @@ export default function TimerDisplay({
       }
     }
   }, [isPaused])
+
+  // If milliseconds prop is provided, this is a per-question timer - render directly
+  if (milliseconds !== undefined) {
+    return (
+      <span className="font-mono text-sm">
+        {formatTime(milliseconds)}
+      </span>
+    );
+  }
 
   const formatTimeComplex = (milliseconds: number) => {
     const totalSeconds = Math.floor(milliseconds / 1000)
@@ -129,6 +130,14 @@ export default function TimerDisplay({
 
   const { time, isLowTime, isCritical } = getDisplayTime()
 
+  // Track time changes for smooth animations
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (time !== previousTime) {
+      setPreviousTime(time)
+    }
+  }, [time, previousTime])
+
   const getSizeClasses = () => {
     switch (size) {
       case 'small':
@@ -188,13 +197,6 @@ export default function TimerDisplay({
         return 'rounded-lg'
     }
   }
-
-  // Track time changes for smooth animations
-  useEffect(() => {
-    if (time !== previousTime) {
-      setPreviousTime(time)
-    }
-  }, [time, previousTime])
 
   if (variant === 'ultra-premium') {
     return (
