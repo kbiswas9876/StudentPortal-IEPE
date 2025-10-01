@@ -12,7 +12,6 @@ interface QuestionPaletteProps {
   sessionStates: Array<{
     status: QuestionStatus
     user_answer: string | null
-    time_taken: number
     is_bookmarked: boolean
   }>
   currentIndex: number

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
-import Timer from './Timer'
+import TimerDisplay from './TimerDisplay'
 import QuestionPalette from './QuestionPalette'
 import PremiumStatusPanel from './PremiumStatusPanel'
 import QuestionDisplay from './QuestionDisplay'
@@ -26,7 +26,6 @@ export type QuestionStatus = 'not_visited' | 'unanswered' | 'answered' | 'marked
 export type SessionState = {
   status: QuestionStatus
   user_answer: string | null
-  time_taken: number
   is_bookmarked: boolean
 }
 
@@ -54,7 +53,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [currentIndex, setCurrentIndex] = useState(0)
   const [sessionStates, setSessionStates] = useState<SessionState[]>([])
   const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now())
-  const [currentQuestionStartTime, setCurrentQuestionStartTime] = useState<number>(Date.now())
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -62,6 +60,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showEndSessionModal, setShowEndSessionModal] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false)
+  
+  // Dual-Timer System State Management
+  const [timePerQuestion, setTimePerQuestion] = useState<Record<string, number>>({})
+  const [currentQuestionStartTime, setCurrentQuestionStartTime] = useState<number>(Date.now())
 
   // Initialize session states
   useEffect(() => {
@@ -75,7 +77,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           return {
             status: (savedSessionState?.questionStatuses?.[questionId] as QuestionStatus) || 'not_visited',
             user_answer: savedSessionState?.userAnswers?.[questionId] || null,
-            time_taken: (savedSessionState?.timePerQuestion?.[questionId] || 0) * 1000, // Convert back to milliseconds
             is_bookmarked: savedSessionState?.bookmarkedQuestions?.[questionId] || false
           }
         })
@@ -84,7 +85,16 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         setSessionStates(restoredStates)
         setCurrentIndex(savedSessionState?.currentIndex || 0)
         setSessionStartTime(savedSessionState?.sessionStartTime || Date.now())
-        setCurrentQuestionStartTime(Date.now())
+        
+        // Restore per-question timing data
+        if (savedSessionState?.timePerQuestion) {
+          const restoredTimePerQuestion: Record<string, number> = {}
+          Object.entries(savedSessionState.timePerQuestion).forEach(([questionId, timeInSeconds]) => {
+            restoredTimePerQuestion[questionId] = (timeInSeconds as number) * 1000 // Convert back to milliseconds
+          })
+          setTimePerQuestion(restoredTimePerQuestion)
+        }
+        
         setIsInitialized(true)
         
         console.log('Session state restored successfully with:', {
@@ -98,21 +108,15 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         const initialStates: SessionState[] = questions.map(() => ({
           status: 'not_visited',
           user_answer: null,
-          time_taken: 0,
           is_bookmarked: false
         }))
         setSessionStates(initialStates)
         setSessionStartTime(Date.now())
-        setCurrentQuestionStartTime(Date.now())
         setIsInitialized(true)
       }
     }
   }, [questions, savedSessionState])
 
-  // Update current question start time when index changes
-  useEffect(() => {
-    setCurrentQuestionStartTime(Date.now())
-  }, [currentIndex])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -154,10 +158,32 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }, [])
 
   const currentQuestion = questions[currentIndex]
+
+  // Core per-question timing logic
+  useEffect(() => {
+    if (!currentQuestion) return
+
+    const questionId = currentQuestion.id.toString()
+    
+    // Save time spent on previous question when navigating away
+    const savePreviousQuestionTime = () => {
+      if (currentQuestionStartTime) {
+        const timeSpent = Date.now() - currentQuestionStartTime
+        setTimePerQuestion(prev => ({
+          ...prev,
+          [questionId]: (prev[questionId] || 0) + timeSpent
+        }))
+      }
+    }
+
+    // Cleanup function to save time when component unmounts or question changes
+    return () => {
+      savePreviousQuestionTime()
+    }
+  }, [currentIndex, currentQuestion, currentQuestionStartTime])
   const currentState = sessionStates[currentIndex] || {
     status: 'not_visited' as QuestionStatus,
     user_answer: null,
-    time_taken: 0,
     is_bookmarked: false
   }
 
@@ -178,6 +204,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     })
   }, [])
 
+
   const handleAnswerChange = (answer: string) => {
     // Only update status if not already marked for review
     // If marked for review and user changes answer, keep it marked
@@ -193,9 +220,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleSaveAndNext = () => {
-    // Record time spent on current question
-    const timeSpent = Date.now() - currentQuestionStartTime
-    
     // Determine status based on current state and user answer
     let newStatus: QuestionStatus
     if (currentState.status === 'marked_for_review') {
@@ -208,7 +232,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     }
     
     updateSessionState(currentIndex, {
-      time_taken: currentState.time_taken + timeSpent,
       status: newStatus
     })
 
@@ -222,11 +245,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleMarkForReviewAndNext = () => {
-    // Record time spent on current question
-    const timeSpent = Date.now() - currentQuestionStartTime
     updateSessionState(currentIndex, {
-      status: 'marked_for_review',
-      time_taken: currentState.time_taken + timeSpent
+      status: 'marked_for_review'
       // Keep existing user_answer - don't change it
     })
 
@@ -300,8 +320,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         
         timePerQuestion: questions.reduce((acc, q, index) => {
           const state = sessionStates[index]
-          if (state?.time_taken) {
-            acc[q.id] = Math.floor(state.time_taken / 1000) // Convert to seconds
+          const questionTime = timePerQuestion[q.id] || 0
+          if (questionTime > 0) {
+            acc[q.id] = Math.floor(questionTime / 1000) // Convert to seconds
           }
           return acc
         }, {} as Record<string, number>),
@@ -479,7 +500,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             status: sessionStates[index].user_answer ? 
               (sessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
               'skipped',
-            time_taken: Math.round(sessionStates[index].time_taken / 1000) // Convert to seconds
+            time_taken: Math.round((timePerQuestion[question.id] || 0) / 1000) // Use new per-question timing data
           })),
           score,
           total_time: totalTime,
@@ -510,12 +531,16 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleQuestionNavigation = (index: number) => {
-    // Record time spent on current question
-    const timeSpent = Date.now() - currentQuestionStartTime
-    updateSessionState(currentIndex, {
-      time_taken: currentState.time_taken + timeSpent
-    })
-
+    // Save time spent on current question before navigating
+    if (currentQuestion && currentQuestionStartTime) {
+      const timeSpent = Date.now() - currentQuestionStartTime
+      const questionId = currentQuestion.id.toString()
+      setTimePerQuestion(prev => ({
+        ...prev,
+        [questionId]: (prev[questionId] || 0) + timeSpent
+      }))
+    }
+    
     setCurrentIndex(index)
     setShowMobileSidebar(false) // Close mobile sidebar
   }
@@ -566,16 +591,49 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <div className="text-sm font-medium text-slate-600 dark:text-slate-300">
-              {mockTestData ? mockTestData.test.name : 'Practice Session'} - Question {currentIndex + 1} of {questions.length}
+            <div className="flex items-center space-x-3">
+              <div className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                {mockTestData ? mockTestData.test.name : 'Practice Session'} - Question {currentIndex + 1} of {questions.length}
+              </div>
+              <TimerDisplay
+                startTime={currentQuestionStartTime}
+                mode="stopwatch"
+                size="small"
+                className="text-slate-600 dark:text-slate-400"
+              />
             </div>
           </div>
-          <Timer sessionStartTime={sessionStartTime} />
         </div>
+      </div>
+
+      {/* Mobile Ultra-Premium Main Timer - Positioned to the left of question palette */}
+      <div className="lg:hidden fixed top-20 left-4 z-50">
+        <TimerDisplay
+          startTime={sessionStartTime}
+          mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
+          duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
+          onTimeUp={handleSubmitTest}
+          size="large"
+          variant="ultra-premium"
+          className="shadow-2xl hover:shadow-3xl"
+        />
       </div>
 
       {/* Main Content Area */}
       <div className={`flex-1 pt-28 lg:pt-12 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4'}`}>
+        {/* Desktop Ultra-Premium Main Timer - Positioned to the left of question palette */}
+        <div className="hidden lg:block fixed top-16 left-6 z-50">
+          <TimerDisplay
+            startTime={sessionStartTime}
+            mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
+            duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
+            onTimeUp={handleSubmitTest}
+            size="ultra"
+            variant="ultra-premium"
+            className="shadow-2xl hover:shadow-3xl"
+          />
+        </div>
+        
         <div className="h-screen overflow-y-auto">
           <QuestionDisplay
             question={currentQuestion}
@@ -588,6 +646,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             onReportError={() => setShowReportModal(true)}
             sessionStartTime={sessionStartTime}
             timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
+            currentQuestionStartTime={currentQuestionStartTime}
+            cumulativeTime={timePerQuestion[currentQuestion.id] || 0}
           />
         </div>
       </div>
@@ -636,10 +696,23 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                     </svg>
                   </button>
                 </div>
-                <Timer 
-                  sessionStartTime={sessionStartTime} 
-                  duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-                />
+                <div className="flex items-center justify-between mt-4">
+                  <TimerDisplay
+                    startTime={currentQuestionStartTime}
+                    mode="stopwatch"
+                    size="small"
+                    className="text-slate-600 dark:text-slate-400"
+                  />
+                  <TimerDisplay
+                    startTime={sessionStartTime}
+                    mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
+                    duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
+                    onTimeUp={handleSubmitTest}
+                    size="large"
+                    variant="premium"
+                    className="shadow-lg"
+                  />
+                </div>
               </div>
               
               {/* Mobile Question Palette - Full Height with Proper Flex Layout */}
