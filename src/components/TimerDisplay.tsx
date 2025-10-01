@@ -198,16 +198,17 @@ export default function TimerDisplay({
             </svg>
           </motion.div>
           
-          {/* Timer display with stable format and subtle ticking effect */}
-          <motion.div
-            className={`font-mono font-bold ${getSizeClasses()} ${getColorClasses()} relative`}
-            animate={{ 
-              scale: [1, 1.02, 1],
-            }}
-            transition={{ 
-              duration: 1,
-              repeat: Infinity,
-              ease: "easeInOut"
+          {/* Timer display with modern premium typography - stable */}
+          <div
+            className={`font-black tracking-wider ${getSizeClasses()} ${getColorClasses()} relative`}
+            style={{
+              fontFamily: '"SF Pro Display", "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code", "Roboto Mono", "Source Code Pro", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace',
+              textShadow: '0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1)',
+              letterSpacing: '0.15em',
+              fontWeight: '900',
+              fontFeatureSettings: '"tnum" 1, "ss01" 1, "ss02" 1',
+              fontVariantNumeric: 'tabular-nums',
+              textRendering: 'optimizeLegibility'
             }}
           >
             {time}
@@ -224,7 +225,7 @@ export default function TimerDisplay({
                 ease: "easeInOut"
               }}
             />
-          </motion.div>
+          </div>
         </div>
 
         {/* Premium glow effect for critical time */}
@@ -275,15 +276,16 @@ export default function TimerDisplay({
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" 
             />
           </motion.svg>
-          <motion.div 
-            className={`font-mono font-semibold ${getSizeClasses()} ${getColorClasses()} relative`}
-            animate={{ 
-              scale: [1, 1.01, 1],
-            }}
-            transition={{ 
-              duration: 1,
-              repeat: Infinity,
-              ease: "easeInOut"
+          <div 
+            className={`font-bold tracking-wide ${getSizeClasses()} ${getColorClasses()} relative`}
+            style={{
+              fontFamily: '"SF Pro Text", "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code", "Roboto Mono", "Source Code Pro", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace',
+              textShadow: '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.08)',
+              letterSpacing: '0.08em',
+              fontWeight: '700',
+              fontFeatureSettings: '"tnum" 1, "ss01" 1',
+              fontVariantNumeric: 'tabular-nums',
+              textRendering: 'optimizeLegibility'
             }}
           >
             {time}
@@ -300,7 +302,7 @@ export default function TimerDisplay({
                 ease: "easeInOut"
               }}
             />
-          </motion.div>
+          </div>
         </div>
       </motion.div>
     )
@@ -308,7 +310,18 @@ export default function TimerDisplay({
 
   // Default variant
   return (
-    <div className={`font-mono font-medium transition-colors duration-300 ${getSizeClasses()} ${getColorClasses()} ${className}`}>
+    <div 
+      className={`font-semibold tracking-wide transition-colors duration-300 ${getSizeClasses()} ${getColorClasses()} ${className}`}
+      style={{
+        fontFamily: '"SF Pro Text", "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code", "Roboto Mono", "Source Code Pro", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace',
+        letterSpacing: '0.06em',
+        fontWeight: '600',
+        fontFeatureSettings: '"tnum" 1',
+        fontVariantNumeric: 'tabular-nums',
+        textRendering: 'optimizeLegibility',
+        textShadow: '0 1px 2px rgba(0, 0, 0, 0.08)'
+      }}
+    >
       {time}
     </div>
   )

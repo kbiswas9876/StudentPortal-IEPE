@@ -606,8 +606,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         </div>
       </div>
 
-      {/* Mobile Ultra-Premium Main Timer - Positioned to the left of question palette */}
-      <div className="lg:hidden fixed top-20 left-4 z-50">
+      {/* Mobile Ultra-Premium Main Timer - Fixed at top edge */}
+      <div className="lg:hidden fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
         <TimerDisplay
           startTime={sessionStartTime}
           mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
@@ -621,8 +621,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
 
       {/* Main Content Area */}
       <div className={`flex-1 pt-28 lg:pt-12 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4'}`}>
-        {/* Desktop Ultra-Premium Main Timer - Positioned to the left of question palette */}
-        <div className="hidden lg:block fixed top-16 left-6 z-50">
+        {/* Desktop Ultra-Premium Main Timer - Fixed at top edge */}
+        <div className="hidden lg:block fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
           <TimerDisplay
             startTime={sessionStartTime}
             mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
