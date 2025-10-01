@@ -132,6 +132,11 @@ function PracticePageContent() {
         throw new Error('Invalid session data: missing questions array')
       }
       
+      // Validate that we have the required state data
+      if (!sessionData.questionStatuses || !sessionData.userAnswers) {
+        console.warn('Saved session missing some state data, but proceeding with restoration')
+      }
+      
       // Restore questions from saved session
       setQuestions(sessionData.questions)
       
@@ -146,7 +151,13 @@ function PracticePageContent() {
         (window as any).__SAVED_SESSION_STATE__ = sessionData
       }
       
-      console.log('Saved session restored successfully')
+      console.log('Saved session restored successfully with state:', {
+        questionsCount: sessionData.questions?.length || 0,
+        currentIndex: sessionData.currentIndex || 0,
+        userAnswersCount: Object.keys(sessionData.userAnswers || {}).length,
+        questionStatusesCount: Object.keys(sessionData.questionStatuses || {}).length,
+        hasMockTestData: !!sessionData.mockTestData
+      })
     } catch (error) {
       console.error('Error restoring saved session:', error)
       setError(`Failed to restore saved session: ${error instanceof Error ? error.message : 'Unknown error'}`)

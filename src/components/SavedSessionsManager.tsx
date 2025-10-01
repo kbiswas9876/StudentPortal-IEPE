@@ -100,10 +100,12 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
   }
 
   const getProgressSummary = (sessionState: any) => {
-    if (!sessionState || !sessionState.questions) return { answered: 0, total: 0 }
+    if (!sessionState || !sessionState.questionStatuses) return { answered: 0, total: 0 }
     
-    const total = sessionState.questions.length
-    const answered = sessionState.questions.filter((q: any) => q.selectedAnswer !== null).length
+    // Parse the questionStatuses object to get the true count
+    const questionStatuses = sessionState.questionStatuses
+    const total = Object.keys(questionStatuses).length
+    const answered = Object.values(questionStatuses).filter((status: any) => status === 'answered').length
     
     return { answered, total }
   }
@@ -164,7 +166,7 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
   }
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-2xl mx-auto space-y-3">
       <AnimatePresence>
         {savedSessions.map((session) => {
           const progress = getProgressSummary(session.session_state)
@@ -177,67 +179,68 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
-              className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 hover:shadow-lg transition-all duration-200"
+              className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 hover:shadow-lg transition-all duration-200"
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+              {/* Compact Header Row */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
                     {session.session_name}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Saved {formatDate(session.updated_at)}
                   </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handleDeleteSession(session.id)}
-                    disabled={isDeleting}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {isDeleting ? (
-                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    ) : (
-                      <TrashIcon className="w-4 h-4" />
-                    )}
-                  </button>
+                <button
+                  onClick={() => handleDeleteSession(session.id)}
+                  disabled={isDeleting}
+                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 ml-2"
+                >
+                  {isDeleting ? (
+                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <TrashIcon className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+
+              {/* Compact Progress Info */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-1">
+                    <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" />
+                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                      {progress.answered}/{progress.total} answered
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <ClockIcon className="w-3.5 h-3.5 text-blue-500" />
+                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                      {formatTimeHumanReadable(session.session_state?.mainTimerValue || 0)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Progress Summary */}
-              <div className="flex items-center space-x-6 mb-4">
-                <div className="flex items-center space-x-2">
-                  <CheckCircleIcon className="w-4 h-4 text-green-500" />
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {progress.answered} of {progress.total} answered
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <ClockIcon className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {formatTimeHumanReadable(session.session_state?.mainTimerValue || 0)} spent
-                  </span>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-4">
+              {/* Compact Progress Bar */}
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mb-3">
                 <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(progress.answered / progress.total) * 100}%` }}
+                  className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${progress.total > 0 ? (progress.answered / progress.total) * 100 : 0}%` }}
                 />
               </div>
 
-              {/* Resume Button */}
+              {/* Compact Resume Button */}
               <motion.button
                 onClick={() => handleResumeSession(session)}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <PlayIcon className="w-4 h-4" />
+                <PlayIcon className="w-3.5 h-3.5" />
                 <span>Resume Session</span>
               </motion.button>
             </motion.div>

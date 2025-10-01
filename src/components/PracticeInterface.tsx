@@ -67,7 +67,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   useEffect(() => {
     if (questions.length > 0) {
       if (savedSessionState) {
-        // Restore saved session state
+        // Restore saved session state - RE-HYDRATION MODE
         console.log('Restoring saved session state:', savedSessionState)
         
         const restoredStates: SessionState[] = questions.map((q, index) => {
@@ -80,15 +80,21 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           }
         })
         
+        // RE-HYDRATE ALL STATE FROM SAVED SESSION
         setSessionStates(restoredStates)
         setCurrentIndex(savedSessionState?.currentIndex || 0)
         setSessionStartTime(savedSessionState?.sessionStartTime || Date.now())
         setCurrentQuestionStartTime(Date.now())
         setIsInitialized(true)
         
-        console.log('Session state restored successfully')
+        console.log('Session state restored successfully with:', {
+          currentIndex: savedSessionState?.currentIndex,
+          sessionStartTime: savedSessionState?.sessionStartTime,
+          userAnswers: Object.keys(savedSessionState?.userAnswers || {}).length,
+          questionStatuses: Object.keys(savedSessionState?.questionStatuses || {}).length
+        })
       } else {
-        // Initialize new session
+        // Initialize new session - NEW SESSION MODE
         const initialStates: SessionState[] = questions.map(() => ({
           status: 'not_visited',
           user_answer: null,
@@ -262,16 +268,22 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
 
       // Create comprehensive session state object with complete state serialization
       const sessionState = {
-        // Core session data
+        // Core session configuration
+        sessionConfig: {
+          testMode,
+          timeLimitInMinutes,
+          questionOrder: 'sequential' // Default for now
+        },
+        
+        // Question set and current position
         questionSet: questions.map(q => q.id),
         currentIndex,
+        
+        // Timer data
         sessionStartTime,
         mainTimerValue: Math.floor((Date.now() - sessionStartTime) / 1000),
-        testMode,
-        timeLimitInMinutes,
-        mockTestData,
         
-        // User progress data
+        // User progress data - capture ALL live state
         userAnswers: questions.reduce((acc, q, index) => {
           const state = sessionStates[index]
           if (state?.user_answer) {
@@ -301,6 +313,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           }
           return acc
         }, {} as Record<string, boolean>),
+        
+        // Mock test data if applicable
+        mockTestData,
         
         // Full question data for restoration
         questions: questions.map((q, index) => ({

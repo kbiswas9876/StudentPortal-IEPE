@@ -142,61 +142,36 @@ export default function ExitSessionModal({
             </button>
           </div>
 
-          {/* Enhanced Progress Summary with Status Legend */}
-          {currentProgress && statusBreakdown && (
+          {/* Status Legend Only - No Redundant Summary */}
+          {statusBreakdown && (
             <div className="p-6 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-              {/* Basic Stats */}
-              <div className="grid grid-cols-3 gap-4 text-center mb-4">
-                <div>
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {currentProgress.answered}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Answered</div>
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 text-center">
+                Question Status Breakdown
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                    {statusBreakdown.answered} Answered
+                  </span>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-slate-600 dark:text-slate-400">
-                    {currentProgress.total}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Total</div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                    {statusBreakdown.notAnswered} Not Answered
+                  </span>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {currentProgress.timeSpent}
-                  </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Time Spent</div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                    {statusBreakdown.markedForReview} Marked for Review
+                  </span>
                 </div>
-              </div>
-              
-              {/* Detailed Status Legend */}
-              <div className="border-t border-slate-200 dark:border-slate-600 pt-4">
-                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 text-center">
-                  Question Status Breakdown
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                      {statusBreakdown.answered} Answered
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                      {statusBreakdown.notAnswered} Not Answered
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                      {statusBreakdown.markedForReview} Marked for Review
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                      {statusBreakdown.notVisited} Not Visited
-                    </span>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
+                    {statusBreakdown.notVisited} Not Visited
+                  </span>
                 </div>
               </div>
             </div>
@@ -251,46 +226,56 @@ export default function ExitSessionModal({
             /* Main Options */
             <div className="p-6">
               <div className="space-y-3">
-                {/* Save & Exit Option */}
+                {/* Save & Exit Option - Premium Design */}
                 <motion.button
                   onClick={() => {
                     setSessionName(getDefaultSessionName())
                     setShowSavePrompt(true)
                   }}
-                  className="w-full flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-left"
-                  whileHover={{ scale: 1.02 }}
+                  className="w-full flex items-center space-x-4 p-5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-left"
+                  whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center">
-                    <BookmarkIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <BookmarkIcon className="w-6 h-6 text-white" />
                   </div>
-                  <div>
-                    <div className="font-semibold text-blue-900 dark:text-blue-100">
+                  <div className="flex-1">
+                    <div className="font-semibold text-lg text-white">
                       Save & Exit
                     </div>
-                    <div className="text-sm text-blue-700 dark:text-blue-300">
+                    <div className="text-sm text-blue-100">
                       Save your progress and resume later
                     </div>
                   </div>
+                  <div className="text-white/60">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </motion.button>
 
-                {/* Exit Without Saving Option */}
+                {/* Exit Without Saving Option - Premium Design */}
                 <motion.button
                   onClick={handleExitWithoutSaving}
-                  className="w-full flex items-center space-x-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-left"
-                  whileHover={{ scale: 1.02 }}
+                  className="w-full flex items-center space-x-4 p-5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-left"
+                  whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center">
-                    <TrashIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <TrashIcon className="w-6 h-6 text-white" />
                   </div>
-                  <div>
-                    <div className="font-semibold text-red-900 dark:text-red-100">
+                  <div className="flex-1">
+                    <div className="font-semibold text-lg text-white">
                       Exit without Saving
                     </div>
-                    <div className="text-sm text-red-700 dark:text-red-300">
+                    <div className="text-sm text-red-100">
                       Discard all progress and return to dashboard
                     </div>
+                  </div>
+                  <div className="text-white/60">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
                 </motion.button>
               </div>
