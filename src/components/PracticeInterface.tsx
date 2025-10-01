@@ -592,74 +592,18 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         </div>
       </div>
 
-      {/* Desktop Right Panel - Single Unified Full-Height Component */}
-      <AnimatePresence>
-        {!isRightPanelCollapsed && (
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'tween', duration: 0.3 }}
-            className="hidden lg:block w-1/4 bg-slate-50 dark:bg-slate-900 h-screen flex flex-col relative"
-          >
-            {/* Collapse Toggle Button - On Visible Left Edge */}
-            <button
-              onClick={() => setIsRightPanelCollapsed(true)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-8 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-l-lg shadow-md hover:shadow-lg transition-all duration-200 z-10"
-            >
-              <svg className="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-
-            {/* Question Palette - Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <PremiumStatusPanel
-                questions={questions}
-                sessionStates={sessionStates}
-                currentIndex={currentIndex}
-                sessionStartTime={sessionStartTime}
-                timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
-                onQuestionSelect={handleQuestionNavigation}
-                isSubmitting={isSubmitting}
-              />
-              
-              {mockTestData && (
-                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">Scoring Rules</h4>
-                  <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-                    <div className="flex justify-between">
-                      <span>Correct Answer:</span>
-                      <span className="font-semibold">+{mockTestData.test.marks_per_correct} marks</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Incorrect Answer:</span>
-                      <span className="font-semibold">{mockTestData.test.marks_per_incorrect} marks</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Collapsed Panel Toggle Button */}
-      {isRightPanelCollapsed && (
-        <motion.button
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          exit={{ x: '100%' }}
-          transition={{ type: 'tween', duration: 0.3 }}
-          onClick={() => setIsRightPanelCollapsed(false)}
-          className="hidden lg:block fixed right-0 top-1/2 -translate-y-1/2 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-l-lg shadow-md hover:shadow-lg transition-all duration-200 z-10"
-        >
-          <svg className="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </motion.button>
-      )}
+      {/* Desktop Right Panel - Simplified Structure */}
+      <div className="hidden lg:block w-1/4 h-screen p-6">
+        <PremiumStatusPanel
+          questions={questions}
+          sessionStates={sessionStates}
+          currentIndex={currentIndex}
+          onQuestionSelect={handleQuestionNavigation}
+          onSubmitTest={handleSubmitTest}
+          isSubmitting={isSubmitting}
+          mockTestData={mockTestData}
+        />
+      </div>
 
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
@@ -703,6 +647,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                   sessionStates={sessionStates}
                   currentIndex={currentIndex}
                   onQuestionSelect={handleQuestionNavigation}
+                  onSubmitTest={handleSubmitTest}
+                  isSubmitting={isSubmitting}
                 />
               </div>
             </motion.div>
@@ -716,8 +662,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         onSaveAndNext={handleSaveAndNext}
         onMarkForReviewAndNext={handleMarkForReviewAndNext}
         onClearResponse={handleClearResponse}
-        onSubmitTest={handleSubmitTest}
-        isSubmitting={isSubmitting}
         isLastQuestion={currentIndex === questions.length - 1}
       />
 
