@@ -16,6 +16,10 @@ import EndSessionModal from './EndSessionModal'
 import ReportErrorModal from './ReportErrorModal'
 import ExitSessionModal from './ExitSessionModal'
 import ZenModeBackButton from './ZenModeBackButton'
+import PauseOverlay from './PauseOverlay'
+import PauseModal from './PauseModal'
+import SubmissionConfirmationModal from './SubmissionConfirmationModal'
+import AutoSubmissionOverlay from './AutoSubmissionOverlay'
 import KatexRenderer from './ui/KatexRenderer'
 import { FlagIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline'
 
@@ -60,6 +64,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showEndSessionModal, setShowEndSessionModal] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false)
+  const [showPauseModal, setShowPauseModal] = useState(false)
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false)
+  const [showAutoSubmissionOverlay, setShowAutoSubmissionOverlay] = useState(false)
+  const [isSessionPaused, setIsSessionPaused] = useState(false)
   
   // Centralized Timer Architecture - Your Method Implementation
   const [displayTime, setDisplayTime] = useState(0); // State for triggering re-renders of timer display
@@ -67,6 +75,25 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   // Timer pause state management
   const [isPaused, setIsPaused] = useState(false);
   const [timeWhenPaused, setTimeWhenPaused] = useState(0);
+  
+  // Pause functionality
+  const handlePauseSession = () => {
+    setIsSessionPaused(true);
+    setShowPauseModal(true);
+    // The existing pause logic will handle timer pausing
+  };
+
+  const handleResumeSession = () => {
+    setIsSessionPaused(false);
+    setShowPauseModal(false);
+    // The existing resume logic will handle timer resuming
+  };
+
+  const handlePauseExit = () => {
+    setShowPauseModal(false);
+    setIsSessionPaused(false); // Remove the pause overlay
+    setShowExitModal(true);
+  };
   
   // Refs for synchronous state management (prevents race conditions)
   const cumulativeTimeRef = useRef<Record<string, number>>({}); // Stores cumulative time per question ID
@@ -91,7 +118,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   useEffect(() => {
     let timerId: NodeJS.Timeout | null = null;
 
-    if (!showExitModal && !isPaused) {
+    if (!showExitModal && !isPaused && !isSessionPaused) {
       // RESUMING - Start the interval for updating display
       timerId = setInterval(() => {
         const currentTime = Date.now();
@@ -119,18 +146,18 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       }
       // Note: We don't save time here as it's handled by the pause/resume logic
     };
-  }, [showExitModal, isPaused, saveCurrentQuestionTime]); // Depend on modal state
+  }, [showExitModal, isPaused, isSessionPaused, saveCurrentQuestionTime]); // Depend on modal state
 
   // Handle timer pause/resume for both main session and per-question timers
   useEffect(() => {
-    if (showExitModal && !isPaused) {
+    if ((showExitModal || isSessionPaused) && !isPaused) {
       // PAUSING - Record when we paused and save current question time
       setTimeWhenPaused(Date.now());
       setIsPaused(true);
       
       // Save the current question time before pausing
       saveCurrentQuestionTime();
-    } else if (!showExitModal && isPaused) {
+    } else if (!showExitModal && !isSessionPaused && isPaused) {
       // RESUMING - Adjust main session timer and reset per-question timer
       const pausedDuration = Date.now() - timeWhenPaused;
       
@@ -150,7 +177,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       
       setIsPaused(false);
     }
-  }, [showExitModal, isPaused, timeWhenPaused, saveCurrentQuestionTime]);
+  }, [showExitModal, isSessionPaused, isPaused, timeWhenPaused, saveCurrentQuestionTime]);
 
   // Initialize session states
   useEffect(() => {
@@ -555,7 +582,109 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const handleSubmitTest = async () => {
     if (isSubmitting) return
 
+    // Show confirmation modal for manual submission
+    setShowSubmissionModal(true)
+  }
+
+  const handleConfirmSubmission = async () => {
+    if (isSubmitting) return
+
     setIsSubmitting(true)
+    setShowSubmissionModal(false)
+
+    try {
+      // Save current question time first
+      saveCurrentQuestionTime();
+      
+      // Get final time data
+      const finalTimeData = { ...cumulativeTimeRef.current };
+
+      // Calculate final results
+      const totalQuestions = questions.length
+      const correctAnswers = sessionStates.filter((state, index) => {
+        const question = questions[index]
+        return state.user_answer === question.correct_option
+      }).length
+      const incorrectAnswers = sessionStates.filter((state, index) => {
+        const question = questions[index]
+        return state.user_answer && state.user_answer !== question.correct_option
+      }).length
+      const skippedAnswers = sessionStates.filter(state => !state.user_answer).length
+
+      // Calculate score based on mock test rules or default percentage
+      let score: number
+      if (mockTestData) {
+        // Mock test scoring: use actual marks
+        const totalMarks = (correctAnswers * mockTestData.test.marks_per_correct) + 
+                          (incorrectAnswers * mockTestData.test.marks_per_incorrect)
+        const maxMarks = totalQuestions * mockTestData.test.marks_per_correct
+        score = maxMarks > 0 ? Math.round((totalMarks / maxMarks) * 100) : 0
+      } else {
+        // Regular practice scoring: percentage based
+        score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0
+      }
+      
+      const totalTime = Math.round((Date.now() - effectiveSessionStartTime) / 1000) // Convert to seconds
+
+      console.log('Submitting practice session:', {
+        user_id: user?.id,
+        total_questions: totalQuestions,
+        correct_answers: correctAnswers,
+        incorrect_answers: incorrectAnswers,
+        skipped_answers: skippedAnswers,
+        score
+      })
+
+      // Save test result
+      const response = await fetch('/api/practice/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+          questions: questions.map((question, index) => ({
+            question_id: question.id, // Use numeric ID from questions table
+            user_answer: sessionStates[index].user_answer,
+            status: sessionStates[index].user_answer ? 
+              (sessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
+              'skipped',
+            time_taken: Math.round((cumulativeTimeRef.current[question.id.toString()] || 0) / 1000) // Use new per-question timing data
+          })),
+          score,
+          total_time: totalTime,
+          total_questions: totalQuestions,
+          correct_answers: correctAnswers,
+          incorrect_answers: incorrectAnswers,
+          skipped_answers: skippedAnswers,
+          // Mock test specific fields
+          session_type: mockTestData ? 'mock_test' : 'practice',
+          mock_test_id: mockTestData ? mockTestData.test.id : null
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('Test submitted successfully:', result)
+        // Redirect to analysis report
+        router.push(`/analysis/${result.test_id}`)
+      } else {
+        const errorData = await response.json()
+        console.error('Test submission failed:', errorData)
+        throw new Error(errorData.error || 'Failed to submit test')
+      }
+    } catch (error) {
+      console.error('Error submitting test:', error)
+      setIsSubmitting(false)
+      setShowAutoSubmissionOverlay(false)
+    }
+  }
+
+  const handleAutoSubmission = async () => {
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+    setShowAutoSubmissionOverlay(true)
 
     try {
       // Save current question time first
@@ -724,11 +853,13 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           startTime={effectiveSessionStartTime}
           mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
           duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-          onTimeUp={handleSubmitTest}
+          onTimeUp={handleAutoSubmission}
           size="large"
           variant="ultra-premium"
           className="shadow-2xl hover:shadow-3xl"
           isPaused={isPaused}
+          onPause={handlePauseSession}
+          showPauseButton={true}
         />
       </div>
 
@@ -740,11 +871,13 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             startTime={effectiveSessionStartTime}
             mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
             duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-            onTimeUp={handleSubmitTest}
+            onTimeUp={handleAutoSubmission}
             size="ultra"
             variant="ultra-premium"
             className="shadow-2xl hover:shadow-3xl"
             isPaused={isPaused}
+            onPause={handlePauseSession}
+            showPauseButton={true}
           />
         </div>
         
@@ -884,6 +1017,31 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         currentProgress={getCurrentProgress()}
         statusCounts={getStatusCounts()}
       />
+
+      {/* Pause Overlay */}
+      <PauseOverlay isVisible={showPauseModal}>
+        <PauseModal
+          isOpen={showPauseModal}
+          onResume={handleResumeSession}
+          onExit={handlePauseExit}
+        />
+      </PauseOverlay>
+
+      {/* Submission Confirmation Modal */}
+      <SubmissionConfirmationModal
+        isOpen={showSubmissionModal}
+        onCancel={() => setShowSubmissionModal(false)}
+        onSubmit={handleConfirmSubmission}
+        timeRemaining={testMode === 'timed' && timeLimitInMinutes ? 
+          `${Math.floor((timeLimitInMinutes * 60 - (Date.now() - effectiveSessionStartTime) / 1000) / 60)}m ${Math.floor(((timeLimitInMinutes * 60 - (Date.now() - effectiveSessionStartTime) / 1000) % 60))}s` : 
+          undefined
+        }
+        statusCounts={getStatusCounts()}
+        isSubmitting={isSubmitting}
+      />
+
+      {/* Auto Submission Overlay */}
+      <AutoSubmissionOverlay isVisible={showAutoSubmissionOverlay} />
 
     </div>
   )

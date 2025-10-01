@@ -14,6 +14,8 @@ interface TimerDisplayProps {
   variant?: 'default' | 'premium' | 'ultra-premium'
   initialElapsedTime?: number // in milliseconds, for per-question timer
   isPaused?: boolean // Whether the timer should appear paused (stop animations)
+  onPause?: () => void // Callback for pause button click
+  showPauseButton?: boolean // Whether to show pause button
 }
 
 export default function TimerDisplay({ 
@@ -26,7 +28,9 @@ export default function TimerDisplay({
   className = '',
   variant = 'default',
   initialElapsedTime = 0,
-  isPaused = false
+  isPaused = false,
+  onPause,
+  showPauseButton = false
 }: TimerDisplayProps) {
   // Simple format function for per-question timer
   const formatTime = (ms: number): string => {
@@ -252,6 +256,25 @@ export default function TimerDisplay({
           >
             {time}
           </div>
+
+          {/* Pause Button */}
+          {showPauseButton && onPause && (
+            <motion.button
+              onClick={onPause}
+              className="ml-3 p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Pause Session"
+            >
+              <svg 
+                className="w-4 h-4 text-slate-600 dark:text-slate-300" 
+                fill="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+              </svg>
+            </motion.button>
+          )}
         </div>
 
         {/* Premium glow effect for critical time */}
