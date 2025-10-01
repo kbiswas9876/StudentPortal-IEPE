@@ -242,7 +242,7 @@ export default function PremiumPracticeSetup({
         </motion.div>
 
         {/* Mobile-First Layout */}
-        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-5 lg:gap-8 lg:h-[calc(100vh-16rem)] pb-24 sm:pb-20 lg:pb-0">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-5 lg:gap-8 lg:min-h-[calc(100vh-16rem)] pb-24 sm:pb-20 lg:pb-0">
           {/* Mobile: Books & Chapters First, Desktop: Left Column */}
           <div className="lg:col-span-3 flex flex-col">
             <motion.div
@@ -282,7 +282,7 @@ export default function PremiumPracticeSetup({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex-1 flex flex-col space-y-4 lg:overflow-y-auto lg:pr-2"
+              className="flex-1 flex flex-col space-y-4 lg:max-h-[calc(100vh-20rem)] lg:overflow-y-auto lg:pr-2"
             >
               {/* Card 1: Session Settings */}
               <motion.div
@@ -350,13 +350,15 @@ export default function PremiumPracticeSetup({
               </motion.div>
 
               {/* Card 2: Session Summary */}
-              <SessionSummaryPanel
-                selectedChaptersByBook={getSelectedChaptersByBook()}
-                questionOrder={questionOrder}
-                testMode={testMode}
-                timeLimitInMinutes={timeLimitInMinutes}
-                estimatedDuration={getEstimatedDuration()}
-              />
+              <div className="flex-shrink-0">
+                <SessionSummaryPanel
+                  selectedChaptersByBook={getSelectedChaptersByBook()}
+                  questionOrder={questionOrder}
+                  testMode={testMode}
+                  timeLimitInMinutes={timeLimitInMinutes}
+                  estimatedDuration={getEstimatedDuration()}
+                />
+              </div>
 
             </motion.div>
           </div>

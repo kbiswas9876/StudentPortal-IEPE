@@ -17,6 +17,9 @@ const supabaseAdmin = createClient(
   }
 )
 
+// Cache for book lookups to avoid repeated database queries
+const bookCache = new Map<string, string>()
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -26,23 +29,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Book code and chapter name are required' }, { status: 400 })
     }
 
-    // First, get the book name from the book_sources table using the code
-    const { data: bookData, error: bookError } = await supabaseAdmin
-      .from('book_sources')
-      .select('name')
-      .eq('code', bookCode)
-      .single()
+    // Check cache first, then fetch from database if not cached
+    let bookName = bookCache.get(bookCode)
+    if (!bookName) {
+      const { data: bookData, error: bookError } = await supabaseAdmin
+        .from('book_sources')
+        .select('name')
+        .eq('code', bookCode)
+        .single()
 
-    if (bookError || !bookData) {
-      console.error('Error fetching book name:', bookError)
-      return NextResponse.json({ error: 'Book not found' }, { status: 404 })
+      if (bookError || !bookData) {
+        console.error('Error fetching book name:', bookError)
+        return NextResponse.json({ error: 'Book not found' }, { status: 404 })
+      }
+      
+      bookName = bookData.name
+      bookCache.set(bookCode, bookName)
     }
 
     // Build query based on mode (matching admin panel approach)
     let query = supabaseAdmin
       .from('questions')
       .select('question_id, question_number_in_book')
-      .eq('book_source', bookData.name)
+      .eq('book_source', bookName)
       .eq('chapter_name', chapterName)
 
     if (mode === 'range') {

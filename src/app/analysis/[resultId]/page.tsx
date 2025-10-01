@@ -10,6 +10,7 @@ import FilterToolbar from '@/components/FilterToolbar'
 import QuestionBreakdown from '@/components/QuestionBreakdown'
 import StrategicPerformanceMatrix from '@/components/StrategicPerformanceMatrix'
 import Leaderboard from '@/components/Leaderboard'
+import AnalysisSkeletonLoader from '@/components/AnalysisSkeletonLoader'
 import { Tab } from '@headlessui/react'
 
 type TestResult = Database['public']['Tables']['test_results']['Row']
@@ -33,6 +34,7 @@ export default function AnalysisReportPage() {
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
   const [filter, setFilter] = useState<'all' | 'correct' | 'incorrect' | 'skipped'>('all')
   const [timeFilter, setTimeFilter] = useState<'all' | 'fast' | 'slow'>('all')
   const [matrixFilter, setMatrixFilter] = useState<'strengths' | 'needs_speed' | 'careless_errors' | 'weaknesses' | 'all'>('all')
@@ -74,10 +76,14 @@ export default function AnalysisReportPage() {
     return () => clearTimeout(timeout)
   }, [loading])
 
-  const fetchAnalysisData = async () => {
+  const fetchAnalysisData = async (isRetry = false) => {
     try {
       setLoading(true)
-      console.log('Fetching analysis data for result ID:', resultId)
+      if (isRetry) {
+        setError(null)
+        setRetryCount(prev => prev + 1)
+      }
+      console.log('Fetching analysis data for result ID:', resultId, isRetry ? `(retry ${retryCount + 1})` : '')
 
       const response = await fetch(`/api/analysis/${resultId}`)
       const result = await response.json()
@@ -105,6 +111,15 @@ export default function AnalysisReportPage() {
     } catch (error) {
       console.error('Error fetching analysis data:', error)
       setError(error instanceof Error ? error.message : 'Failed to fetch analysis data')
+      
+      // Auto-retry for certain errors (like data not ready yet)
+      if (retryCount < 3 && (error instanceof Error && error.message.includes('not found'))) {
+        console.log('Auto-retrying in 2 seconds...')
+        setTimeout(() => {
+          fetchAnalysisData(true)
+        }, 2000)
+        return
+      }
     } finally {
       setLoading(false)
     }
@@ -259,14 +274,7 @@ export default function AnalysisReportPage() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-300">Loading analysis report...</p>
-        </div>
-      </div>
-    )
+    return <AnalysisSkeletonLoader retryCount={retryCount} showRetryMessage={retryCount > 0} />
   }
 
   if (error) {
@@ -277,34 +285,27 @@ export default function AnalysisReportPage() {
             <h2 className="font-bold text-lg mb-2">Analysis Report Error</h2>
             <p>{error}</p>
           </div>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-          >
-            Return to Dashboard
-          </button>
+          <div className="space-x-3">
+            <button
+              onClick={() => fetchAnalysisData(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Retry Loading
+            </button>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Return to Dashboard
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
-  if (!analysisData) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 p-4 rounded-lg mb-4">
-            <h2 className="font-bold text-lg mb-2">No Analysis Data Found</h2>
-            <p>Unable to load the analysis report for this session.</p>
-          </div>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      </div>
-    )
+  if (!analysisData && !loading) {
+    return <AnalysisSkeletonLoader retryCount={retryCount} showRetryMessage={true} />
   }
 
   const filteredQuestions = getFilteredQuestions()

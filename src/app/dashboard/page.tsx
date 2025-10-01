@@ -117,10 +117,13 @@ export default function DashboardPage() {
     setCurrentSessionConfig(config)
     setSessionLoading(true)
     
+    const startTime = Date.now()
+    
     try {
       // Fetch question IDs based on the configuration
       const questionIds = await fetchQuestionIds(config)
-      console.log('Fetched question IDs:', questionIds)
+      const fetchTime = Date.now() - startTime
+      console.log(`Fetched question IDs in ${fetchTime}ms:`, questionIds)
       
       if (questionIds.length === 0) {
         alert('No questions found for the selected configuration. Please try different chapters or settings.')
@@ -137,6 +140,9 @@ export default function DashboardPage() {
         questions: sequencedQuestionIds.join(','),
         testMode: 'practice'
       }).toString()
+      
+      const totalTime = Date.now() - startTime
+      console.log(`Total session startup time: ${totalTime}ms`)
       
       router.push(`/practice?${queryString}`)
     } catch (error) {
@@ -164,31 +170,41 @@ export default function DashboardPage() {
     const allQuestionIds: string[] = []
     
     try {
-      for (const [chapterName, chapterConfig] of Object.entries(config.chapters)) {
-        if (!chapterConfig.selected) continue
-        
-        const response = await fetch('/api/questions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            bookCode: config.bookCode,
-            chapterName,
-            mode: chapterConfig.mode,
-            values: chapterConfig.values
+      // Create array of API calls for parallel execution
+      const apiCalls = Object.entries(config.chapters)
+        .filter(([_, chapterConfig]) => chapterConfig.selected)
+        .map(([chapterName, chapterConfig]) => 
+          fetch('/api/questions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              bookCode: config.bookCode,
+              chapterName,
+              mode: chapterConfig.mode,
+              values: chapterConfig.values
+            })
+          }).then(async (response) => {
+            const result = await response.json()
+            if (!response.ok) {
+              console.error(`Error fetching questions for ${chapterName}:`, result.error)
+              return []
+            }
+            return result.data || []
+          }).catch((error) => {
+            console.error(`Error fetching questions for ${chapterName}:`, error)
+            return []
           })
-        })
+        )
 
-        const result = await response.json()
-
-        if (!response.ok) {
-          console.error(`Error fetching questions for ${chapterName}:`, result.error)
-          continue
-        }
-
-        allQuestionIds.push(...result.data)
-      }
+      // Execute all API calls in parallel
+      const results = await Promise.all(apiCalls)
+      
+      // Flatten all results into single array
+      results.forEach(questionIds => {
+        allQuestionIds.push(...questionIds)
+      })
       
       return allQuestionIds
     } catch (error) {
