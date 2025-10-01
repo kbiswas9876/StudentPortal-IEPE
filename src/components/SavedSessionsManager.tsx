@@ -6,6 +6,7 @@ import { PlayIcon, TrashIcon, ClockIcon, CheckCircleIcon } from '@heroicons/reac
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/lib/auth-context'
 import { formatTimeHumanReadable } from '@/lib/timeUtils'
+import DeleteSessionModal from './DeleteSessionModal'
 
 interface SavedSession {
   id: number
@@ -24,6 +25,8 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
   const [savedSessions, setSavedSessions] = useState<SavedSession[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [sessionToDelete, setSessionToDelete] = useState<SavedSession | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -76,14 +79,21 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
     }
   }
 
-  const handleDeleteSession = async (sessionId: number) => {
+  const handleDeleteSession = (session: SavedSession) => {
+    setSessionToDelete(session)
+    setShowDeleteModal(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!sessionToDelete) return
+
     try {
-      setDeletingId(sessionId)
+      setDeletingId(sessionToDelete.id)
       
       const { error } = await supabase
         .from('saved_practice_sessions')
         .delete()
-        .eq('id', sessionId)
+        .eq('id', sessionToDelete.id)
 
       if (error) {
         console.error('Error deleting saved session:', error)
@@ -91,12 +101,21 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
       }
 
       // Remove from local state
-      setSavedSessions(prev => prev.filter(s => s.id !== sessionId))
+      setSavedSessions(prev => prev.filter(s => s.id !== sessionToDelete.id))
+      
+      // Close modal and reset state
+      setShowDeleteModal(false)
+      setSessionToDelete(null)
     } catch (error) {
       console.error('Error deleting saved session:', error)
     } finally {
       setDeletingId(null)
     }
+  }
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false)
+    setSessionToDelete(null)
   }
 
   const getProgressSummary = (sessionState: any) => {
@@ -166,9 +185,10 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-3">
-      <AnimatePresence>
-        {savedSessions.map((session) => {
+    <div className="w-full">
+      <div className="flex flex-wrap gap-6">
+        <AnimatePresence>
+          {savedSessions.map((session) => {
           const progress = getProgressSummary(session.session_state)
           const isDeleting = deletingId === session.id
           
@@ -179,7 +199,7 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
-              className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 hover:shadow-lg transition-all duration-200"
+              className="flex-1 basis-1/4 min-w-[300px] max-w-[400px] bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 hover:shadow-lg transition-all duration-200"
             >
               {/* Compact Header Row */}
               <div className="flex items-center justify-between mb-3">
@@ -192,7 +212,7 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
                   </p>
                 </div>
                 <button
-                  onClick={() => handleDeleteSession(session.id)}
+                  onClick={() => handleDeleteSession(session)}
                   disabled={isDeleting}
                   className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 ml-2"
                 >
@@ -246,7 +266,17 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
             </motion.div>
           )
         })}
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteSessionModal
+        isOpen={showDeleteModal}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        sessionName={sessionToDelete?.session_name || ''}
+        isDeleting={deletingId !== null}
+      />
     </div>
   )
 }
