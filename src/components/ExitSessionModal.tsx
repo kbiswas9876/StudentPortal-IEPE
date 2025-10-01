@@ -14,6 +14,12 @@ interface ExitSessionModalProps {
     total: number
     timeSpent: string
   }
+  sessionStates?: Array<{
+    status: 'not_visited' | 'unanswered' | 'answered' | 'marked_for_review'
+    user_answer: string | null
+    time_taken: number
+    is_bookmarked: boolean
+  }>
 }
 
 export default function ExitSessionModal({
@@ -21,7 +27,8 @@ export default function ExitSessionModal({
   onClose,
   onExitWithoutSaving,
   onSaveAndExit,
-  currentProgress
+  currentProgress,
+  sessionStates = []
 }: ExitSessionModalProps) {
   const [showSavePrompt, setShowSavePrompt] = useState(false)
   const [sessionName, setSessionName] = useState('')
@@ -59,6 +66,39 @@ export default function ExitSessionModal({
     })
     return `Practice Session - ${dateStr}`
   }
+
+  // Calculate detailed status breakdown
+  const getStatusBreakdown = () => {
+    if (!sessionStates.length) return null
+
+    const breakdown = {
+      answered: 0,
+      notAnswered: 0,
+      markedForReview: 0,
+      notVisited: 0
+    }
+
+    sessionStates.forEach(state => {
+      switch (state.status) {
+        case 'answered':
+          breakdown.answered++
+          break
+        case 'unanswered':
+          breakdown.notAnswered++
+          break
+        case 'marked_for_review':
+          breakdown.markedForReview++
+          break
+        case 'not_visited':
+          breakdown.notVisited++
+          break
+      }
+    })
+
+    return breakdown
+  }
+
+  const statusBreakdown = getStatusBreakdown()
 
   if (!isOpen) return null
 
@@ -102,10 +142,11 @@ export default function ExitSessionModal({
             </button>
           </div>
 
-          {/* Progress Summary */}
-          {currentProgress && (
+          {/* Enhanced Progress Summary with Status Legend */}
+          {currentProgress && statusBreakdown && (
             <div className="p-6 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-              <div className="grid grid-cols-3 gap-4 text-center">
+              {/* Basic Stats */}
+              <div className="grid grid-cols-3 gap-4 text-center mb-4">
                 <div>
                   <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {currentProgress.answered}
@@ -123,6 +164,39 @@ export default function ExitSessionModal({
                     {currentProgress.timeSpent}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">Time Spent</div>
+                </div>
+              </div>
+              
+              {/* Detailed Status Legend */}
+              <div className="border-t border-slate-200 dark:border-slate-600 pt-4">
+                <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 text-center">
+                  Question Status Breakdown
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                      {statusBreakdown.answered} Answered
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                      {statusBreakdown.notAnswered} Not Answered
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                      {statusBreakdown.markedForReview} Marked for Review
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">
+                      {statusBreakdown.notVisited} Not Visited
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

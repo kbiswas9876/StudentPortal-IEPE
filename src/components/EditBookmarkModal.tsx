@@ -6,7 +6,14 @@ import { XMarkIcon } from '@heroicons/react/24/outline'
 import { Database } from '@/types/database'
 import KatexRenderer from './ui/KatexRenderer'
 
-type BookmarkedQuestion = Database['public']['Tables']['bookmarked_questions']['Row'] & {
+type BookmarkedQuestion = {
+  id: string
+  user_id: string
+  question_id: string
+  personal_note: string | null
+  custom_tags: string[] | null
+  created_at: string
+  updated_at: string
   questions: Database['public']['Tables']['questions']['Row']
 }
 

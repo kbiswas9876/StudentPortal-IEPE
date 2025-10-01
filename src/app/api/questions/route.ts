@@ -56,7 +56,9 @@ export async function POST(request: Request) {
       }
       
       bookName = bookData.name
-      bookCache.set(bookCode, bookName)
+      if (bookName) {
+        bookCache.set(bookCode, bookName)
+      }
     }
 
     // Build query based on mode (matching admin panel approach)

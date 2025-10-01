@@ -212,7 +212,7 @@ export default function PlanBuilder({
             No Days Added Yet
           </h4>
           <p className="text-slate-600 dark:text-slate-400 mb-4">
-            Click "Add Day" to start building your practice plan
+            Click &quot;Add Day&quot; to start building your practice plan
           </p>
         </motion.div>
       )}

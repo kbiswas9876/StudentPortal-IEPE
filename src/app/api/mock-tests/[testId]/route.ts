@@ -76,7 +76,7 @@ export async function GET(
     const testInfo = testData[0].tests
     const questions = testData.map(item => item.questions)
 
-    console.log(`Successfully fetched mock test: ${testInfo.name} with ${questions.length} questions`)
+    console.log(`Successfully fetched mock test: ${testInfo?.[0]?.name} with ${questions.length} questions`)
 
     return NextResponse.json({
       data: {

@@ -159,7 +159,9 @@ const BookAccordion = forwardRef<any, BookAccordionProps>(({ books, onSessionSta
       if (Object.keys(selectedChapters).length > 0) {
         selectedConfigs.push({
           bookCode,
-          chapters: selectedChapters
+          chapters: selectedChapters,
+          questionOrder: 'sequential',
+          testMode: 'practice'
         })
       }
     })
@@ -185,7 +187,9 @@ const BookAccordion = forwardRef<any, BookAccordionProps>(({ books, onSessionSta
       if (Object.keys(selectedChapters).length > 0) {
         selectedConfigs.push({
           bookCode,
-          chapters: selectedChapters
+          chapters: selectedChapters,
+          questionOrder: 'sequential',
+          testMode: 'practice'
         })
       }
     })

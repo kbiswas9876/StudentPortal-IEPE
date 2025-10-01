@@ -13,16 +13,24 @@ export async function POST(request: Request) {
     }
 
     // Get the current user
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createClient(
       env.SUPABASE_URL,
       env.SUPABASE_ANON_KEY,
       {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-        },
+        auth: {
+          storage: {
+            getItem: (name: string) => {
+              return cookieStore.get(name)?.value || null
+            },
+            setItem: (name: string, value: string) => {
+              // No-op for server-side
+            },
+            removeItem: (name: string) => {
+              // No-op for server-side
+            }
+          }
+        }
       }
     )
 

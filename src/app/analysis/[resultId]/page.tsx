@@ -197,30 +197,30 @@ export default function AnalysisReportPage() {
     if (!analysisData) return []
 
     // If no answer log data, return empty array
-    if (!analysisData.answerLog || analysisData.answerLog.length === 0) {
+    if (!analysisData?.answerLog || analysisData?.answerLog.length === 0) {
       return []
     }
 
-    const combinedData = analysisData.answerLog.map(answer => {
-      const question = analysisData.questions.find(q => q.id === answer.question_id)
+    const combinedData = analysisData?.answerLog.map(answer => {
+      const question = analysisData?.questions.find(q => q.id === answer.question_id)
       return {
         ...answer,
         question
       }
-    }).filter(item => item.question) // Only include items with valid questions
+    }).filter(item => item.question) as any // Only include items with valid questions
 
     let filteredData = combinedData
 
     // Apply status filter
     switch (filter) {
       case 'correct':
-        filteredData = filteredData.filter(item => item.status === 'correct')
+        filteredData = filteredData.filter((item: any) => item.status === 'correct')
         break
       case 'incorrect':
-        filteredData = filteredData.filter(item => item.status === 'incorrect')
+        filteredData = filteredData.filter((item: any) => item.status === 'incorrect')
         break
       case 'skipped':
-        filteredData = filteredData.filter(item => item.status === 'skipped')
+        filteredData = filteredData.filter((item: any) => item.status === 'skipped')
         break
       default:
         // 'all' - no status filtering
@@ -229,8 +229,8 @@ export default function AnalysisReportPage() {
 
     // Apply time filter
     if (timeFilter !== 'all') {
-      filteredData = filteredData.filter(item => {
-        const peerAverage = analysisData.peerAverages[item.question_id]
+      filteredData = filteredData.filter((item: any) => {
+        const peerAverage = analysisData?.peerAverages[item.question_id]
         if (!peerAverage) return true // Include if no peer data
 
         const timeRatio = item.time_taken / peerAverage
@@ -245,8 +245,8 @@ export default function AnalysisReportPage() {
 
     // Apply matrix filter
     if (matrixFilter !== 'all') {
-      filteredData = filteredData.filter(item => {
-        const peerAverage = analysisData.peerAverages[item.question_id]
+      filteredData = filteredData.filter((item: any) => {
+        const peerAverage = analysisData?.peerAverages[item.question_id]
         if (!peerAverage) return true // Include if no peer data
 
         const timeRatio = item.time_taken / peerAverage
@@ -360,10 +360,10 @@ export default function AnalysisReportPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Performance Dashboard */}
-        <PerformanceDashboard testResult={analysisData.testResult} />
+        {analysisData?.testResult && <PerformanceDashboard testResult={analysisData.testResult} />}
 
         {/* Tabbed Interface for Mock Tests */}
-        {analysisData.isMockTest ? (
+        {analysisData?.isMockTest ? (
           <Tab.Group>
             <Tab.List className="flex space-x-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-8">
               {[
@@ -396,36 +396,36 @@ export default function AnalysisReportPage() {
                   transition={{ duration: 0.3 }}
                 >
                   {/* Strategic Performance Matrix - only show if we have answer log data */}
-                  {analysisData.answerLog && analysisData.answerLog.length > 0 && (
+                  {analysisData?.answerLog && analysisData?.answerLog.length > 0 && (
                     <StrategicPerformanceMatrix
-                      questions={analysisData.answerLog.map(answer => ({
+                      questions={analysisData?.answerLog?.map(answer => ({
                         ...answer,
-                        question: analysisData.questions.find(q => q.id === answer.question_id)
-                      })).filter(item => item.question)}
-                      peerAverages={analysisData.peerAverages}
+                        question: analysisData?.questions?.find(q => q.id === answer.question_id)
+                      })).filter(item => item.question) as any || []}
+                      peerAverages={analysisData?.peerAverages}
                       onMatrixFilter={setMatrixFilter}
                       activeCategory={matrixFilter}
                     />
                   )}
 
                   {/* Interactive Filtering - only show if we have answer log data */}
-                  {analysisData.answerLog && analysisData.answerLog.length > 0 && (
+                  {analysisData?.answerLog && analysisData?.answerLog.length > 0 && (
                     <FilterToolbar 
                       filter={filter} 
                       onFilterChange={setFilter}
                       timeFilter={timeFilter}
                       onTimeFilterChange={setTimeFilter}
-                      peerAverages={analysisData.peerAverages}
+                      peerAverages={analysisData?.peerAverages}
                     />
                   )}
 
                   {/* Question Breakdown */}
-                  {analysisData.answerLog && analysisData.answerLog.length > 0 ? (
+                  {analysisData?.answerLog && analysisData?.answerLog.length > 0 ? (
                     <QuestionBreakdown 
                       questions={filteredQuestions}
                       onBookmark={handleBookmark}
                       onReportError={handleReportError}
-                      peerAverages={analysisData.peerAverages}
+                      peerAverages={analysisData?.peerAverages}
                     />
                   ) : (
                     <motion.div
@@ -452,7 +452,7 @@ export default function AnalysisReportPage() {
                   transition={{ duration: 0.3 }}
                 >
                   <Leaderboard 
-                    testId={analysisData.mockTestId!} 
+                    testId={analysisData?.mockTestId!} 
                     currentUserId={user?.id || ''} 
                   />
                 </motion.div>
@@ -463,36 +463,36 @@ export default function AnalysisReportPage() {
           // Regular practice session analysis (no tabs)
           <>
             {/* Strategic Performance Matrix - only show if we have answer log data */}
-            {analysisData.answerLog && analysisData.answerLog.length > 0 && (
+            {analysisData?.answerLog && analysisData?.answerLog.length > 0 && (
               <StrategicPerformanceMatrix
-                questions={analysisData.answerLog.map(answer => ({
+                questions={analysisData?.answerLog?.map(answer => ({
                   ...answer,
-                  question: analysisData.questions.find(q => q.id === answer.question_id)
-                })).filter(item => item.question)}
-                peerAverages={analysisData.peerAverages}
+                  question: analysisData?.questions?.find(q => q.id === answer.question_id)
+                })).filter(item => item.question) as any || []}
+                peerAverages={analysisData?.peerAverages}
                 onMatrixFilter={setMatrixFilter}
                 activeCategory={matrixFilter}
               />
             )}
 
             {/* Interactive Filtering - only show if we have answer log data */}
-            {analysisData.answerLog && analysisData.answerLog.length > 0 && (
+            {analysisData?.answerLog && analysisData?.answerLog.length > 0 && (
               <FilterToolbar 
                 filter={filter} 
                 onFilterChange={setFilter}
                 timeFilter={timeFilter}
                 onTimeFilterChange={setTimeFilter}
-                peerAverages={analysisData.peerAverages}
+                peerAverages={analysisData?.peerAverages}
               />
             )}
 
             {/* Question Breakdown */}
-            {analysisData.answerLog && analysisData.answerLog.length > 0 ? (
+            {analysisData?.answerLog && analysisData?.answerLog.length > 0 ? (
               <QuestionBreakdown 
                 questions={filteredQuestions}
                 onBookmark={handleBookmark}
                 onReportError={handleReportError}
-                peerAverages={analysisData.peerAverages}
+                peerAverages={analysisData?.peerAverages}
               />
             ) : (
               <motion.div

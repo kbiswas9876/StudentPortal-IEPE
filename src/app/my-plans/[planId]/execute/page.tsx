@@ -198,7 +198,7 @@ export default function ExecutePlanPage() {
             <div className="text-center py-12">
               <div className="bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 p-6 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2">No Practice Sessions</h3>
-                <p>This plan doesn't have any practice sessions configured yet.</p>
+                <p>This plan doesn&apos;t have any practice sessions configured yet.</p>
               </div>
             </div>
           ) : (

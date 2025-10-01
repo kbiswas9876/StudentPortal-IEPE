@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
@@ -10,7 +10,7 @@ import PracticeSkeletonLoader from '@/components/PracticeSkeletonLoader'
 
 type Question = Database['public']['Tables']['questions']['Row']
 
-export default function PracticePage() {
+function PracticePageContent() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -121,7 +121,16 @@ export default function PracticePage() {
       setLoading(true)
       console.log('Restoring saved session:', savedSessionData)
 
-      const sessionData = JSON.parse(savedSessionData!)
+      if (!savedSessionData) {
+        throw new Error('No saved session data provided')
+      }
+
+      const sessionData = JSON.parse(savedSessionData)
+      
+      // Validate session data structure
+      if (!sessionData.questions || !Array.isArray(sessionData.questions)) {
+        throw new Error('Invalid session data: missing questions array')
+      }
       
       // Restore questions from saved session
       setQuestions(sessionData.questions)
@@ -131,10 +140,16 @@ export default function PracticePage() {
         setMockTestData(sessionData.mockTestData)
       }
       
+      // Store the complete session state for the PracticeInterface to use
+      // This will be passed as a prop to enable state restoration
+      if (typeof window !== 'undefined') {
+        (window as any).__SAVED_SESSION_STATE__ = sessionData
+      }
+      
       console.log('Saved session restored successfully')
     } catch (error) {
       console.error('Error restoring saved session:', error)
-      setError('Failed to restore saved session')
+      setError(`Failed to restore saved session: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setLoading(false)
     }
@@ -189,7 +204,16 @@ export default function PracticePage() {
         testMode={testMode === 'mock' ? 'timed' : testMode}
         timeLimitInMinutes={mockTestData ? mockTestData.test.total_time_minutes : (timeLimit ? parseInt(timeLimit) : undefined)}
         mockTestData={mockTestData}
+        savedSessionState={isSavedSession ? (window as any).__SAVED_SESSION_STATE__ : null}
       />
     </div>
+  )
+}
+
+export default function PracticePage() {
+  return (
+    <Suspense fallback={<PracticeSkeletonLoader />}>
+      <PracticePageContent />
+    </Suspense>
   )
 }

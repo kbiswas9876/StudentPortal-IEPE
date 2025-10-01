@@ -12,7 +12,16 @@ import {
 } from '@heroicons/react/24/outline'
 import { Database } from '@/types/database'
 
-type PracticePlan = Database['public']['Tables']['practice_plans']['Row']
+type PracticePlan = {
+  id: string
+  user_id: string
+  name: string
+  description: string | null
+  content: any
+  plan_type: string
+  created_at: string
+  updated_at: string
+}
 
 interface PlanCardProps {
   plan: PracticePlan
@@ -222,7 +231,7 @@ export default function PlanCard({
               Delete Practice Plan
             </h3>
             <p className="text-slate-600 dark:text-slate-400 mb-6">
-              Are you sure you want to delete "{plan.name}"? This action cannot be undone.
+              Are you sure you want to delete &quot;{plan.name}&quot;? This action cannot be undone.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button

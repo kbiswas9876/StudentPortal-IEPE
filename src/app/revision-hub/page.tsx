@@ -10,7 +10,14 @@ import RevisionHubBookAccordion from '@/components/RevisionHubBookAccordion'
 import EditBookmarkModal from '@/components/EditBookmarkModal'
 import QuestionSummaryCard from '@/components/QuestionSummaryCard'
 
-type BookmarkedQuestion = Database['public']['Tables']['bookmarked_questions']['Row'] & {
+type BookmarkedQuestion = {
+  id: string
+  user_id: string
+  question_id: string
+  personal_note: string | null
+  custom_tags: string[] | null
+  created_at: string
+  updated_at: string
   questions: Database['public']['Tables']['questions']['Row']
   performance?: {
     total_attempts: number
@@ -328,7 +335,15 @@ export default function RevisionHubPage() {
                       personal_note: bookmark.personal_note,
                       custom_tags: bookmark.custom_tags,
                       bookmark_id: bookmark.id,
-                      performance: bookmark.performance
+                      performance: bookmark.performance || {
+                        total_attempts: 0,
+                        correct_attempts: 0,
+                        success_rate: 0,
+                        last_attempt_status: 'never',
+                        last_attempt_time: null,
+                        last_attempt_date: null,
+                        time_trend: null
+                      }
                     }}
                     onEdit={handleEditBookmark}
                     onDelete={handleDeleteBookmark}

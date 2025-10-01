@@ -7,8 +7,7 @@ import { useAuth } from '@/lib/auth-context'
 import { Database } from '@/types/database'
 import { ChevronLeftIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 
-type Book = Database['public']['Tables']['books']['Row']
-type Chapter = Database['public']['Tables']['chapters']['Row']
+type Book = Database['public']['Tables']['book_sources']['Row']
 type Question = Database['public']['Tables']['questions']['Row']
 
 interface PlanDay {
@@ -31,7 +30,7 @@ export default function CreatePlanPage() {
   const router = useRouter()
   
   const [books, setBooks] = useState<Book[]>([])
-  const [chapters, setChapters] = useState<Chapter[]>([])
+  const [chapters, setChapters] = useState<any[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -219,7 +218,7 @@ export default function CreatePlanPage() {
     
     // For official books, filter by selected chapters
     return questions.filter(question => {
-      const chapterMatch = day.selectedChapters.length === 0 || day.selectedChapters.includes(question.chapter_id)
+      const chapterMatch = day.selectedChapters.length === 0 || day.selectedChapters.includes(question.chapter_name)
       return chapterMatch
     })
   }
@@ -394,8 +393,7 @@ export default function CreatePlanPage() {
                           <option value="">Select a book...</option>
                           {books.map(book => (
                             <option key={book.id} value={book.id}>
-                              {book.type === 'custom' ? '📚 ' : '📖 '}{book.name}
-                              {book.type === 'custom' && book.question_count && ` (${book.question_count} questions)`}
+                              📖 {book.name}
                             </option>
                           ))}
                         </select>

@@ -6,8 +6,35 @@ import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { Database } from '@/types/database'
 import QuestionSummaryCard from './QuestionSummaryCard'
 
-type BookmarkedQuestion = Database['public']['Tables']['bookmarked_questions']['Row'] & {
+type BookmarkedQuestion = {
+  id: number
+  user_id: string
+  question_id: string
+  book_source: string
+  chapter_name: string
+  custom_tags: string[]
+  created_at: string
+  updated_at: string
   questions: Database['public']['Tables']['questions']['Row']
+  question_number_in_book: number
+  question_text: string
+  options: any
+  correct_option: string
+  solution_text: string | null
+  exam_metadata: any
+  admin_tags: string[] | null
+  difficulty: string | null
+  personal_note: string | null
+  bookmark_id: string
+  performance: {
+    total_attempts: number
+    correct_attempts: number
+    success_rate: number
+    last_attempt_status: string
+    last_attempt_time: number | null
+    last_attempt_date: string | null
+    time_trend: 'faster' | 'slower' | 'none' | null
+  }
 }
 
 interface FilterState {
@@ -230,9 +257,10 @@ export default function RevisionHubBookAccordion({
                                       transition={{ duration: 0.2, delay: questionIndex * 0.05 }}
                                     >
                                       <QuestionSummaryCard
-                                        bookmark={bookmark}
+                                        question={bookmark}
                                         onEdit={() => onEditBookmark(bookmark)}
-                                        onDelete={() => onDeleteBookmark(bookmark.id)}
+                                        onDelete={() => onDeleteBookmark(bookmark.id.toString())}
+                                        onViewSolution={() => {}}
                                       />
                                     </motion.div>
                                   ))}

@@ -43,10 +43,12 @@ interface PracticeInterfaceProps {
       marks_per_incorrect: number
     }
   }
+  savedSessionState?: any
 }
 
-export default function PracticeInterface({ questions, testMode = 'practice', timeLimitInMinutes, mockTestData }: PracticeInterfaceProps) {
+export default function PracticeInterface({ questions, testMode = 'practice', timeLimitInMinutes, mockTestData, savedSessionState }: PracticeInterfaceProps) {
   const { user } = useAuth()
+  const { showToast } = useToast()
   const router = useRouter()
   
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -59,24 +61,47 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showReportModal, setShowReportModal] = useState(false)
   const [showEndSessionModal, setShowEndSessionModal] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
-  const [isFocusMode, setIsFocusMode] = useState(false)
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false)
 
   // Initialize session states
   useEffect(() => {
     if (questions.length > 0) {
-      const initialStates: SessionState[] = questions.map(() => ({
-        status: 'not_visited',
-        user_answer: null,
-        time_taken: 0,
-        is_bookmarked: false
-      }))
-      setSessionStates(initialStates)
-      setSessionStartTime(Date.now())
-      setCurrentQuestionStartTime(Date.now())
-      setIsInitialized(true)
+      if (savedSessionState) {
+        // Restore saved session state
+        console.log('Restoring saved session state:', savedSessionState)
+        
+        const restoredStates: SessionState[] = questions.map((q, index) => {
+          const questionId = q.id
+          return {
+            status: (savedSessionState?.questionStatuses?.[questionId] as QuestionStatus) || 'not_visited',
+            user_answer: savedSessionState?.userAnswers?.[questionId] || null,
+            time_taken: (savedSessionState?.timePerQuestion?.[questionId] || 0) * 1000, // Convert back to milliseconds
+            is_bookmarked: savedSessionState?.bookmarkedQuestions?.[questionId] || false
+          }
+        })
+        
+        setSessionStates(restoredStates)
+        setCurrentIndex(savedSessionState?.currentIndex || 0)
+        setSessionStartTime(savedSessionState?.sessionStartTime || Date.now())
+        setCurrentQuestionStartTime(Date.now())
+        setIsInitialized(true)
+        
+        console.log('Session state restored successfully')
+      } else {
+        // Initialize new session
+        const initialStates: SessionState[] = questions.map(() => ({
+          status: 'not_visited',
+          user_answer: null,
+          time_taken: 0,
+          is_bookmarked: false
+        }))
+        setSessionStates(initialStates)
+        setSessionStartTime(Date.now())
+        setCurrentQuestionStartTime(Date.now())
+        setIsInitialized(true)
+      }
     }
-  }, [questions])
+  }, [questions, savedSessionState])
 
   // Update current question start time when index changes
   useEffect(() => {
@@ -111,11 +136,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         event.preventDefault()
         handleBookmark()
       }
-      // Alt + F: Focus Mode
-      else if (event.altKey && event.key === 'f') {
-        event.preventDefault()
-        setIsFocusMode(!isFocusMode)
-      }
       // Alt + R: Report Error
       else if (event.altKey && event.key === 'r') {
         event.preventDefault()
@@ -125,7 +145,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isFocusMode])
+  }, [])
 
   const currentQuestion = questions[currentIndex]
   const currentState = sessionStates[currentIndex] || {
@@ -240,25 +260,62 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     try {
       if (!user) return
 
-      // Create session state object
+      // Create comprehensive session state object with complete state serialization
       const sessionState = {
+        // Core session data
+        questionSet: questions.map(q => q.id),
+        currentIndex,
+        sessionStartTime,
+        mainTimerValue: Math.floor((Date.now() - sessionStartTime) / 1000),
+        testMode,
+        timeLimitInMinutes,
+        mockTestData,
+        
+        // User progress data
+        userAnswers: questions.reduce((acc, q, index) => {
+          const state = sessionStates[index]
+          if (state?.user_answer) {
+            acc[q.id] = state.user_answer
+          }
+          return acc
+        }, {} as Record<string, string>),
+        
+        questionStatuses: questions.reduce((acc, q, index) => {
+          const state = sessionStates[index]
+          acc[q.id] = state?.status || 'not_visited'
+          return acc
+        }, {} as Record<string, string>),
+        
+        timePerQuestion: questions.reduce((acc, q, index) => {
+          const state = sessionStates[index]
+          if (state?.time_taken) {
+            acc[q.id] = Math.floor(state.time_taken / 1000) // Convert to seconds
+          }
+          return acc
+        }, {} as Record<string, number>),
+        
+        bookmarkedQuestions: questions.reduce((acc, q, index) => {
+          const state = sessionStates[index]
+          if (state?.is_bookmarked) {
+            acc[q.id] = true
+          }
+          return acc
+        }, {} as Record<string, boolean>),
+        
+        // Full question data for restoration
         questions: questions.map((q, index) => ({
           id: q.id,
           question_text: q.question_text,
           options: q.options,
-          correct_answer: q.correct_answer,
-          selectedAnswer: sessionStates[index]?.user_answer,
-          status: sessionStates[index]?.status,
-          timeSpent: sessionStates[index]?.time_taken,
-          isBookmarked: sessionStates[index]?.is_bookmarked
-        })),
-        currentIndex,
-        sessionStartTime,
-        timeSpent: Date.now() - sessionStartTime,
-        testMode,
-        timeLimitInMinutes,
-        mockTestData
+          correct_option: q.correct_option,
+          solution_text: q.solution_text,
+          difficulty: q.difficulty,
+          chapter_name: q.chapter_name,
+          book_source: q.book_source
+        }))
       }
+
+      console.log('Saving comprehensive session state:', sessionState)
 
       // Save to database
       const response = await fetch('/api/saved-sessions', {
@@ -282,7 +339,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       router.push('/dashboard')
     } catch (error) {
       console.error('Error saving session:', error)
-      toast.error('Failed to save session. Please try again.')
+      showToast({ type: 'error', title: 'Failed to save session', message: 'Please try again.' })
     }
   }
 
@@ -323,13 +380,11 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       updateSessionState(currentIndex, { is_bookmarked: !currentState.is_bookmarked })
       
       // Show success toast
-      if (typeof window !== 'undefined' && window.showToast) {
-        window.showToast({
-          type: 'success',
-          title: 'Question Bookmarked',
-          message: 'Added to your revision hub for later review'
-        })
-      }
+      showToast({
+        type: 'success',
+        title: 'Question Bookmarked',
+        message: 'Added to your revision hub for later review'
+      })
     } catch (error) {
       console.error('Error bookmarking question:', error)
     }
@@ -506,7 +561,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
 
       {/* Desktop Right Panel - Single Unified Full-Height Component */}
       <AnimatePresence>
-        {!isFocusMode && !isRightPanelCollapsed && (
+        {!isRightPanelCollapsed && (
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -558,7 +613,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       </AnimatePresence>
 
       {/* Collapsed Panel Toggle Button */}
-      {isRightPanelCollapsed && !isFocusMode && (
+      {isRightPanelCollapsed && (
         <motion.button
           initial={{ x: '100%' }}
           animate={{ x: 0 }}
@@ -622,20 +677,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         )}
       </AnimatePresence>
 
-      {/* Focus Mode Toggle */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsFocusMode(!isFocusMode)}
-        className="fixed top-4 right-4 z-40 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-        title={`${isFocusMode ? 'Exit' : 'Enter'} Focus Mode (Alt + F)`}
-      >
-        {isFocusMode ? (
-          <ArrowsPointingOutIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-        ) : (
-          <ArrowsPointingInIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-        )}
-      </motion.button>
 
       {/* Action Bar */}
       <ActionBar
@@ -674,6 +715,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         onExitWithoutSaving={handleExitWithoutSaving}
         onSaveAndExit={handleSaveAndExit}
         currentProgress={getCurrentProgress()}
+        sessionStates={sessionStates}
       />
     </div>
   )

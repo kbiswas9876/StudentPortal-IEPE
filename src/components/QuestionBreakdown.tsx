@@ -156,7 +156,7 @@ export default function QuestionBreakdown({ questions, onBookmark, onReportError
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => onBookmark(item.question_id)}
+                      onClick={() => onBookmark(item.question_id.toString())}
                       className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                       title="Bookmark for later"
                     >
@@ -165,7 +165,7 @@ export default function QuestionBreakdown({ questions, onBookmark, onReportError
                       </svg>
                     </button>
                     <button
-                      onClick={() => onReportError(item.question_id)}
+                      onClick={() => onReportError(item.question_id.toString())}
                       className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                       title="Report an error"
                     >
@@ -203,11 +203,11 @@ export default function QuestionBreakdown({ questions, onBookmark, onReportError
               {item.question?.solution_text && (
                 <div className="mt-4">
                   <button
-                    onClick={() => toggleSolution(item.question_id)}
+                    onClick={() => toggleSolution(item.question_id.toString())}
                     className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                   >
                     <svg 
-                      className={`w-4 h-4 transition-transform ${expandedQuestions.has(item.question_id) ? 'rotate-180' : ''}`} 
+                      className={`w-4 h-4 transition-transform ${expandedQuestions.has(item.question_id.toString()) ? 'rotate-180' : ''}`} 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
@@ -218,7 +218,7 @@ export default function QuestionBreakdown({ questions, onBookmark, onReportError
                   </button>
 
                   <AnimatePresence>
-                    {expandedQuestions.has(item.question_id) && (
+                    {expandedQuestions.has(item.question_id.toString()) && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}

@@ -34,6 +34,11 @@ export default function Header() {
 
   const isActive = (path: string) => pathname === path
 
+  // Hide header on practice route for Zen Mode
+  if (pathname === '/practice') {
+    return null
+  }
+
   return (
     <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -19,9 +19,8 @@ export default function AccessHub({ recentReports, loading }: AccessHubProps) {
         className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
         whileHover={{ scale: 1.02 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.3 }}
       >
         <div className="flex items-center space-x-3 mb-4">
           <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -92,7 +91,7 @@ export default function AccessHub({ recentReports, loading }: AccessHubProps) {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                      Test Session #{report.id.slice(-4)}
+                      Test Session #{report.id.toString().slice(-4)}
                     </h4>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
                       {new Date(report.submitted_at).toLocaleDateString()}

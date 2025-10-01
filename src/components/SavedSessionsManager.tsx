@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { PlayIcon, TrashIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/lib/auth-context'
+import { formatTimeHumanReadable } from '@/lib/timeUtils'
 
 interface SavedSession {
   id: number
@@ -216,7 +217,7 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
                 <div className="flex items-center space-x-2">
                   <ClockIcon className="w-4 h-4 text-blue-500" />
                   <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {session.session_state?.timeSpent || '0:00'} spent
+                    {formatTimeHumanReadable(session.session_state?.mainTimerValue || 0)} spent
                   </span>
                 </div>
               </div>

@@ -115,8 +115,8 @@ export default function CreatePlanModal({
                       { label: 'Weekly', value: 'weekly' },
                       { label: 'Monthly', value: 'monthly' },
                     ]}
-                    selectedValue={planType}
-                    onValueChange={(value) => setPlanType(value as 'daily' | 'weekly' | 'monthly')}
+                    value={planType}
+                    onChange={(value) => setPlanType(value as 'daily' | 'weekly' | 'monthly')}
                   />
                 </div>
 
