@@ -620,10 +620,11 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'tween', duration: 0.3 }}
-              className="w-80 h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700"
+              className="w-80 h-full flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+              {/* Mobile Header with Timer */}
+              <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-700/50 dark:to-slate-800/50">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Question Navigation</h3>
                   <button
@@ -636,12 +637,13 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                   </button>
                 </div>
                 <Timer 
-              sessionStartTime={sessionStartTime} 
-              duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-            />
+                  sessionStartTime={sessionStartTime} 
+                  duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
+                />
               </div>
               
-              <div className="p-6">
+              {/* Mobile Question Palette - Full Height with Proper Flex Layout */}
+              <div className="flex-1 p-6 flex flex-col min-h-0">
                 <QuestionPalette
                   questions={questions}
                   sessionStates={sessionStates}

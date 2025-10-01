@@ -82,14 +82,18 @@ export default function PremiumStatusPanel({
           transition={{ type: 'tween', duration: 0.3 }}
           className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl h-full flex flex-col relative"
         >
-          {/* Collapse Toggle Button - Inside the panel */}
+          {/* Premium Collapse Toggle Button - Positioned at Left Edge Center */}
           <button
             onClick={() => setIsCollapsed(true)}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 p-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-l-xl shadow-lg hover:shadow-xl transition-all duration-300 z-10 group"
+            className="absolute -left-14 top-1/2 -translate-y-1/2 w-12 h-12 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-l-2xl shadow-xl hover:shadow-2xl transition-all duration-300 z-30 group backdrop-blur-sm"
           >
-            <svg className="w-4 h-4 text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-            </svg>
+            <div className="w-full h-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-all duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            {/* Premium glow effect */}
+            <div className="absolute inset-0 rounded-l-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </button>
       {/* Section 1: Header - Fixed, Top (No Changes Here) */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-700">
@@ -203,19 +207,23 @@ export default function PremiumStatusPanel({
       )}
         </motion.div>
       ) : (
-        // --- Panel Collapsed State ---
+        // --- Premium Panel Collapsed State ---
         <motion.button
           key="panel-collapsed"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
           transition={{ duration: 0.3 }}
           onClick={() => setIsCollapsed(false)}
-          className="fixed right-0 top-1/2 -translate-y-1/2 p-2.5 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-l-xl shadow-lg hover:shadow-xl transition-all duration-300 z-10 group"
+          className="fixed right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-l-2xl shadow-xl hover:shadow-2xl transition-all duration-300 z-30 group backdrop-blur-sm"
         >
-          <svg className="w-4 h-4 text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-          </svg>
+          <div className="w-full h-full flex items-center justify-center">
+            <svg className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-all duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+          </div>
+          {/* Premium glow effect */}
+          <div className="absolute inset-0 rounded-l-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </motion.button>
       )}
     </AnimatePresence>

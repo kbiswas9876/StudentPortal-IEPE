@@ -65,7 +65,7 @@ export default function QuestionPalette({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl h-fit max-h-[calc(100vh-2rem)] flex flex-col w-80"
+      className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl h-full flex flex-col"
     >
       {/* Section 1: Header - Dedicated header area with distinct background */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-700/50 dark:to-slate-800/50 rounded-t-xl">
@@ -79,8 +79,8 @@ export default function QuestionPalette({
         </div>
       </div>
 
-      {/* Section 2: Scrollable Question Grid - Fixed height with internal scrolling */}
-      <div className="flex-1 p-4 overflow-y-auto" style={{ maxHeight: '300px' }}>
+      {/* Section 2: Scrollable Question Grid - Dynamic height with proper flex layout */}
+      <div className="flex-1 p-4 overflow-y-auto min-h-0">
         <div className="grid grid-cols-5 gap-2">
           {questions.map((_, index) => {
             const state = sessionStates[index]
@@ -136,34 +136,28 @@ export default function QuestionPalette({
 
       {/* Section 4: Submit Button Container - Fixed, Absolute Bottom */}
       {onSubmitTest && (
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-700/30 dark:to-slate-800/30 rounded-b-xl">
-          {/* Visual Separator - Clean horizontal rule */}
-          <div className="border-t border-slate-300 dark:border-slate-600 mb-4"></div>
-
-          {/* Submit Button Container - Dedicated sub-container with distinct styling */}
-          <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-3 border border-red-200 dark:border-red-800/30">
-            <motion.button
-              onClick={onSubmitTest}
-              disabled={isSubmitting}
-              className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-red-400 disabled:to-red-500 text-white rounded-lg font-semibold transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Submitting...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Submit Test</span>
-                </>
-              )}
-            </motion.button>
-          </div>
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+          <motion.button
+            onClick={onSubmitTest}
+            disabled={isSubmitting}
+            className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-red-400 disabled:to-red-500 text-white rounded-lg font-semibold transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {isSubmitting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>Submitting...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Submit Test</span>
+              </>
+            )}
+          </motion.button>
         </div>
       )}
     </motion.div>
