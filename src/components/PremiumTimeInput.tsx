@@ -27,9 +27,9 @@ export const PremiumTimeInput: React.FC<PremiumTimeInputProps> = ({
   const [minutes, setMinutes] = useState(padZero(initialMinutes))
   const [seconds, setSeconds] = useState(padZero(initialSeconds))
 
-  const hoursRef = useRef<HTMLInputElement>(null)
-  const minutesRef = useRef<HTMLInputElement>(null)
-  const secondsRef = useRef<HTMLInputElement>(null)
+  const hoursRef = useRef<HTMLInputElement | null>(null)
+  const minutesRef = useRef<HTMLInputElement | null>(null)
+  const secondsRef = useRef<HTMLInputElement | null>(null)
 
   // Notify parent component of any change
   useEffect(() => {
@@ -40,7 +40,7 @@ export const PremiumTimeInput: React.FC<PremiumTimeInputProps> = ({
   // Smart Input Logic with auto-focus
   const handleSegmentChange = (
     setter: React.Dispatch<React.SetStateAction<string>>,
-    nextRef?: React.RefObject<HTMLInputElement>
+    nextRef?: React.RefObject<HTMLInputElement | null>
   ) => (value: string) => {
     setter(value)
     // Auto-focus next input when 2 digits are entered
@@ -77,7 +77,7 @@ export const PremiumTimeInput: React.FC<PremiumTimeInputProps> = ({
 
   return (
     <motion.div 
-      className={`flex items-center justify-center p-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg ${className}`}
+      className={`flex items-start justify-center p-2 bg-gray-50 rounded-lg border ${className}`}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
@@ -90,17 +90,11 @@ export const PremiumTimeInput: React.FC<PremiumTimeInputProps> = ({
         onDecrement={hoursHandler.decrement}
         label="Hours"
         inputRef={hoursRef}
-        max={23}
+        max={99}
       />
 
       {/* Separator */}
-      <motion.div 
-        className="text-3xl font-mono text-slate-400 dark:text-slate-500 mx-4 select-none"
-        animate={{ scale: [1, 1.1, 1] }}
-        transition={{ duration: 0.3, repeat: Infinity, repeatDelay: 2 }}
-      >
-        :
-      </motion.div>
+      <span className="text-2xl font-semibold text-gray-400 mx-2 mt-7">:</span>
 
       {/* Minutes Segment */}
       <TimeSegment
@@ -114,13 +108,7 @@ export const PremiumTimeInput: React.FC<PremiumTimeInputProps> = ({
       />
 
       {/* Separator */}
-      <motion.div 
-        className="text-3xl font-mono text-slate-400 dark:text-slate-500 mx-4 select-none"
-        animate={{ scale: [1, 1.1, 1] }}
-        transition={{ duration: 0.3, repeat: Infinity, repeatDelay: 2, delay: 1 }}
-      >
-        :
-      </motion.div>
+      <span className="text-2xl font-semibold text-gray-400 mx-2 mt-7">:</span>
 
       {/* Seconds Segment */}
       <TimeSegment

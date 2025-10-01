@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect } from 'react'
+import React from 'react'
 import { motion } from 'framer-motion'
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 
@@ -10,7 +10,7 @@ interface TimeSegmentProps {
   onIncrement: () => void
   onDecrement: () => void
   label: string
-  inputRef: React.RefObject<HTMLInputElement>
+  inputRef: React.RefObject<HTMLInputElement | null>
   max?: number
 }
 
@@ -62,20 +62,18 @@ export const TimeSegment: React.FC<TimeSegmentProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-center space-y-2">
-      {/* Increment Button */}
-      <motion.button
-        onClick={onIncrement}
-        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 transition-all duration-200"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        aria-label={`Increase ${label}`}
-      >
-        <ChevronUpIcon className="w-4 h-4" />
-      </motion.button>
-
-      {/* Input Field */}
-      <div className="relative">
+    <div className="flex flex-col items-center">
+      {/* Container for the input and arrows */}
+      <div className="flex flex-col items-center bg-white rounded-md border border-gray-200 px-3 py-1 shadow-sm">
+        <motion.button
+          onClick={onIncrement}
+          className="text-gray-400 hover:text-blue-500 transition-colors"
+          whileTap={{ scale: 0.9 }}
+          aria-label={`Increase ${label}`}
+        >
+          <ChevronUpIcon className="w-4 h-4" />
+        </motion.button>
+        
         <input
           ref={inputRef}
           type="text"
@@ -84,27 +82,22 @@ export const TimeSegment: React.FC<TimeSegmentProps> = ({
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           onFocus={handleFocus}
-          className="w-16 h-16 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-600 rounded-xl text-center text-2xl font-mono font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+          className="w-10 bg-transparent text-2xl font-semibold text-center text-gray-800 focus:outline-none"
           maxLength={2}
           placeholder="00"
         />
-      </div>
 
-      {/* Decrement Button */}
-      <motion.button
-        onClick={onDecrement}
-        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 transition-all duration-200"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        aria-label={`Decrease ${label}`}
-      >
-        <ChevronDownIcon className="w-4 h-4" />
-      </motion.button>
-
-      {/* Label */}
-      <div className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-        {label}
+        <motion.button
+          onClick={onDecrement}
+          className="text-gray-400 hover:text-blue-500 transition-colors"
+          whileTap={{ scale: 0.9 }}
+          aria-label={`Decrease ${label}`}
+        >
+          <ChevronDownIcon className="w-4 h-4" />
+        </motion.button>
       </div>
+      {/* Label below the input box */}
+      <p className="mt-1 text-xs font-medium text-gray-500 tracking-wider uppercase">{label}</p>
     </div>
   )
 }

@@ -123,13 +123,15 @@ export default function FinalConfigurationPanel({
                     transition={{ duration: 0.3 }}
                     className="space-y-2"
                   >
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Time Limit
-                    </label>
-                    <PremiumTimeInput
-                      defaultValue={timeLimitInMinutes * 60}
-                      onChange={(totalSeconds) => onTimeLimitChange(Math.ceil(totalSeconds / 60))}
-                    />
+                    <div className="flex items-center justify-between w-full">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Time Limit
+                      </label>
+                      <PremiumTimeInput
+                        defaultValue={timeLimitInMinutes * 60}
+                        onChange={(totalSeconds) => onTimeLimitChange(Math.ceil(totalSeconds / 60))}
+                      />
+                    </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
                       Set the time limit for your practice session (HH:MM:SS format)
                     </div>

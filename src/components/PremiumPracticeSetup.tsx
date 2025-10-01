@@ -335,23 +335,30 @@ export default function PremiumPracticeSetup({
                           transition={{ duration: 0.4, ease: "easeOut" }}
                           className="space-y-3"
                         >
-                          <motion.label 
-                            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                          <motion.div
+                            className="flex items-center justify-between w-full"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.1 }}
                           >
-                            Time Limit
-                          </motion.label>
-                          <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.2, duration: 0.3 }}
-                          >
-                            <PremiumTimeInput
-                              defaultValue={timeLimitInSeconds}
-                              onChange={(totalSeconds) => setTimeLimitInSeconds(totalSeconds)}
-                            />
+                            <motion.label
+                              className="text-sm font-medium text-slate-700 dark:text-slate-300"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: 0.1 }}
+                            >
+                              Time Limit
+                            </motion.label>
+                            <motion.div
+                              initial={{ scale: 0.95, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ delay: 0.2, duration: 0.3 }}
+                            >
+                              <PremiumTimeInput
+                                defaultValue={timeLimitInSeconds}
+                                onChange={(totalSeconds) => setTimeLimitInSeconds(totalSeconds)}
+                              />
+                            </motion.div>
                           </motion.div>
                           <motion.div 
                             className="text-xs text-slate-500 dark:text-slate-400 flex items-center space-x-1"
