@@ -48,7 +48,7 @@ export default function StatusLegend({
           <div className="flex items-center space-x-2">
             <div className="w-8 h-6 bg-purple-500 rounded flex items-center justify-center relative">
               <span className="text-sm font-bold text-white">{markedAndAnsweredCount}</span>
-              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full"></div>
+              <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full"></div>
             </div>
             <span className="text-xs text-slate-700 dark:text-slate-300">Marked and Answered</span>
           </div>

@@ -138,7 +138,7 @@ export default function PremiumStatusPanel({
               >
                 {index + 1}
                 {state?.status === 'marked_for_review' && state?.user_answer && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full shadow-sm"></div>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full shadow-sm"></div>
                 )}
                 {hasBookmark && (
                   <div className="absolute -top-1 -right-1">
