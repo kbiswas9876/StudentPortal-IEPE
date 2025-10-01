@@ -125,7 +125,18 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         // RE-HYDRATE ALL STATE FROM SAVED SESSION
         setSessionStates(restoredStates)
         setCurrentIndex(savedSessionState?.currentIndex || 0)
-        setSessionStartTime(savedSessionState?.sessionStartTime || Date.now())
+        
+        // --- The Core Fix: Main Session Timer State Persistence ---
+        // Instead of using the old startTime, we calculate a NEW adjusted startTime.
+        // This implements the "Adjusted Start Time" trick to pause/resume the main timer.
+        const savedMainTimerValue = savedSessionState?.mainTimerValue || 0; // This is in seconds
+        const savedMainTimerValueMs = savedMainTimerValue * 1000; // Convert to milliseconds
+        const adjustedStartTime = Date.now() - savedMainTimerValueMs;
+        
+        // Use this new adjusted start time to initialize the session
+        // The timer component will now calculate: Date.now() - adjustedStartTime = savedMainTimerValueMs
+        // This effectively "pauses" and "resumes" the timer across sessions
+        setSessionStartTime(adjustedStartTime);
         
         // Restore per-question timing data into ref
         if (savedSessionState?.timePerQuestion) {
@@ -351,7 +362,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         
         // Timer data
         sessionStartTime,
-        mainTimerValue: Math.floor((Date.now() - sessionStartTime) / 1000),
+        mainTimerValue: Math.floor((Date.now() - sessionStartTime) / 1000), // Save in seconds for database efficiency
         
         // User progress data - capture ALL live state
         userAnswers: questions.reduce((acc, q, index) => {
