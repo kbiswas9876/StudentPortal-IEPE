@@ -11,6 +11,7 @@ import { debounce } from '@/lib/development-utils'
 import PremiumPracticeSetup from '@/components/PremiumPracticeSetup'
 import AccessHub from '@/components/AccessHub'
 import SupabaseTest from '@/components/SupabaseTest'
+import DashboardSkeletonLoader from '@/components/DashboardSkeletonLoader'
 import { BookAccordionSkeleton, RecentReportsSkeleton } from '@/components/SkeletonLoader'
 
 type BookSource = Database['public']['Tables']['book_sources']['Row']
@@ -216,32 +217,7 @@ export default function DashboardPage() {
   console.log('Dashboard render state:', { authLoading, loading, user: !!user, books: books.length })
 
   if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center mb-8">
-            <div className="animate-pulse">
-              <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-64 mx-auto mb-4"></div>
-              <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-96 mx-auto"></div>
-            </div>
-            <p className="text-slate-600 dark:text-slate-400 mt-4">
-              Loading dashboard... {authLoading ? '(Auth)' : ''} {loading ? '(Data)' : ''}
-            </p>
-            <button 
-              onClick={() => {
-                console.log('Manual loading reset')
-                setLoading(false)
-                setBooksLoading(false)
-                setReportsLoading(false)
-              }}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Reset Loading State
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+    return <DashboardSkeletonLoader />
   }
 
   if (!user) {
@@ -251,17 +227,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       {booksLoading ? (
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="animate-pulse">
-              <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-64 mx-auto mb-4"></div>
-              <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-96 mx-auto"></div>
-            </div>
-            <p className="text-slate-600 dark:text-slate-400 mt-4">
-              Loading books...
-            </p>
-          </div>
-        </div>
+        <DashboardSkeletonLoader />
       ) : books.length === 0 ? (
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
