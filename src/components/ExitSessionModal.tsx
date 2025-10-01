@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { XMarkIcon, ArrowLeftIcon, TrashIcon, BookmarkIcon } from '@heroicons/react/24/outline'
+import StatusLegend from './StatusLegend'
 
 interface ExitSessionModalProps {
   isOpen: boolean
@@ -14,12 +15,14 @@ interface ExitSessionModalProps {
     total: number
     timeSpent: string
   }
-  sessionStates?: Array<{
-    status: 'not_visited' | 'unanswered' | 'answered' | 'marked_for_review'
-    user_answer: string | null
-    time_taken: number
-    is_bookmarked: boolean
-  }>
+  statusCounts?: {
+    answeredCount: number
+    notAnsweredCount: number
+    notVisitedCount: number
+    markedCount: number
+    markedAndAnsweredCount: number
+    bookmarkedCount: number
+  }
 }
 
 export default function ExitSessionModal({
@@ -28,7 +31,7 @@ export default function ExitSessionModal({
   onExitWithoutSaving,
   onSaveAndExit,
   currentProgress,
-  sessionStates = []
+  statusCounts
 }: ExitSessionModalProps) {
   const [showSavePrompt, setShowSavePrompt] = useState(false)
   const [sessionName, setSessionName] = useState('')
@@ -67,38 +70,6 @@ export default function ExitSessionModal({
     return `Practice Session - ${dateStr}`
   }
 
-  // Calculate detailed status breakdown
-  const getStatusBreakdown = () => {
-    if (!sessionStates.length) return null
-
-    const breakdown = {
-      answered: 0,
-      notAnswered: 0,
-      markedForReview: 0,
-      notVisited: 0
-    }
-
-    sessionStates.forEach(state => {
-      switch (state.status) {
-        case 'answered':
-          breakdown.answered++
-          break
-        case 'unanswered':
-          breakdown.notAnswered++
-          break
-        case 'marked_for_review':
-          breakdown.markedForReview++
-          break
-        case 'not_visited':
-          breakdown.notVisited++
-          break
-      }
-    })
-
-    return breakdown
-  }
-
-  const statusBreakdown = getStatusBreakdown()
 
   if (!isOpen) return null
 
@@ -142,38 +113,21 @@ export default function ExitSessionModal({
             </button>
           </div>
 
-          {/* Status Legend Only - No Redundant Summary */}
-          {statusBreakdown && (
+          {/* Exact Status Legend Component */}
+          {statusCounts && (
             <div className="p-6 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
               <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 text-center">
                 Question Status Breakdown
               </h4>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {statusBreakdown.answered} Answered
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {statusBreakdown.notAnswered} Not Answered
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {statusBreakdown.markedForReview} Marked for Review
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    {statusBreakdown.notVisited} Not Visited
-                  </span>
-                </div>
-              </div>
+              <StatusLegend
+                answeredCount={statusCounts.answeredCount}
+                notAnsweredCount={statusCounts.notAnsweredCount}
+                notVisitedCount={statusCounts.notVisitedCount}
+                markedCount={statusCounts.markedCount}
+                markedAndAnsweredCount={statusCounts.markedAndAnsweredCount}
+                bookmarkedCount={statusCounts.bookmarkedCount}
+                className="mt-0"
+              />
             </div>
           )}
 

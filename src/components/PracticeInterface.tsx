@@ -371,6 +371,24 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     }
   }
 
+  const getStatusCounts = () => {
+    const answeredCount = sessionStates.filter(s => s.status === 'answered').length
+    const notAnsweredCount = sessionStates.filter(s => s.status === 'unanswered').length
+    const notVisitedCount = sessionStates.filter(s => s.status === 'not_visited').length
+    const markedCount = sessionStates.filter(s => s.status === 'marked_for_review').length
+    const markedAndAnsweredCount = sessionStates.filter(s => s.status === 'marked_for_review' && s.user_answer).length
+    const bookmarkedCount = sessionStates.filter(s => s.is_bookmarked).length
+
+    return {
+      answeredCount,
+      notAnsweredCount,
+      notVisitedCount,
+      markedCount,
+      markedAndAnsweredCount,
+      bookmarkedCount
+    }
+  }
+
   const handleBookmark = async () => {
     if (!user || !currentQuestion) return
 
@@ -730,7 +748,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         onExitWithoutSaving={handleExitWithoutSaving}
         onSaveAndExit={handleSaveAndExit}
         currentProgress={getCurrentProgress()}
-        sessionStates={sessionStates}
+        statusCounts={getStatusCounts()}
       />
     </div>
   )
