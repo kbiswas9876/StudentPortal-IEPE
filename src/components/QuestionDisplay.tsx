@@ -22,6 +22,7 @@ interface QuestionDisplayProps {
   timeLimitInMinutes?: number
   currentQuestionStartTime?: number
   cumulativeTime?: number
+  isPaused?: boolean
 }
 
 export default function QuestionDisplay({
@@ -36,7 +37,8 @@ export default function QuestionDisplay({
   sessionStartTime,
   timeLimitInMinutes,
   currentQuestionStartTime,
-  cumulativeTime
+  cumulativeTime,
+  isPaused = false
 }: QuestionDisplayProps) {
   const [isBookmarking, setIsBookmarking] = useState(false)
 
@@ -72,6 +74,7 @@ export default function QuestionDisplay({
                   milliseconds={cumulativeTime || 0}
                   size="small"
                   className="text-slate-600 dark:text-slate-400"
+                  isPaused={isPaused}
                 />
               </div>
             )}

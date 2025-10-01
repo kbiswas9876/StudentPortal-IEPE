@@ -13,6 +13,7 @@ interface TimerDisplayProps {
   className?: string
   variant?: 'default' | 'premium' | 'ultra-premium'
   initialElapsedTime?: number // in milliseconds, for per-question timer
+  isPaused?: boolean // Whether the timer should appear paused (stop animations)
 }
 
 export default function TimerDisplay({ 
@@ -24,7 +25,8 @@ export default function TimerDisplay({
   onTimeUp,
   className = '',
   variant = 'default',
-  initialElapsedTime = 0
+  initialElapsedTime = 0,
+  isPaused = false
 }: TimerDisplayProps) {
   // Simple format function for per-question timer
   const formatTime = (ms: number): string => {
@@ -48,12 +50,21 @@ export default function TimerDisplay({
   const [previousTime, setPreviousTime] = useState<string>('')
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(Date.now())
-    }, 100) // Reduced to 10fps to minimize re-renders while maintaining smoothness
+    let interval: NodeJS.Timeout | null = null;
+    
+    // Only run the interval if not paused
+    if (!isPaused) {
+      interval = setInterval(() => {
+        setCurrentTime(Date.now())
+      }, 100) // Reduced to 10fps to minimize re-renders while maintaining smoothness
+    }
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => {
+      if (interval) {
+        clearInterval(interval)
+      }
+    }
+  }, [isPaused])
 
   const formatTimeComplex = (milliseconds: number) => {
     const totalSeconds = Math.floor(milliseconds / 1000)
@@ -205,8 +216,8 @@ export default function TimerDisplay({
           {/* Premium clock icon */}
           <motion.div
             className="flex items-center justify-center"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            animate={isPaused ? {} : { rotate: 360 }}
+            transition={isPaused ? {} : { duration: 2, repeat: Infinity, ease: "linear" }}
           >
             <svg 
               className={`w-5 h-5 ${getColorClasses()}`} 
@@ -278,8 +289,8 @@ export default function TimerDisplay({
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            animate={isPaused ? {} : { rotate: 360 }}
+            transition={isPaused ? {} : { duration: 2, repeat: Infinity, ease: "linear" }}
           >
             <path 
               strokeLinecap="round" 
@@ -304,11 +315,11 @@ export default function TimerDisplay({
             {/* Subtle ticking dot */}
             <motion.div
               className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-current rounded-full opacity-50"
-              animate={{ 
+              animate={isPaused ? {} : { 
                 scale: [0.5, 1, 0.5],
                 opacity: [0.2, 0.6, 0.2]
               }}
-              transition={{ 
+              transition={isPaused ? {} : { 
                 duration: 1,
                 repeat: Infinity,
                 ease: "easeInOut"

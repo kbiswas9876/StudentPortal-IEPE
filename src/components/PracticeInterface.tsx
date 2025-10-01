@@ -64,6 +64,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   // Centralized Timer Architecture - Your Method Implementation
   const [displayTime, setDisplayTime] = useState(0); // State for triggering re-renders of timer display
   
+  // Timer pause state management
+  const [isPaused, setIsPaused] = useState(false);
+  const [timeWhenPaused, setTimeWhenPaused] = useState(0);
+  
   // Refs for synchronous state management (prevents race conditions)
   const cumulativeTimeRef = useRef<Record<string, number>>({}); // Stores cumulative time per question ID
   const currentQuestionStartRef = useRef<number>(Date.now()); // Start time of current viewing session
@@ -82,36 +86,74 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     
   }, []);
   
-  // Initialize timer interval - runs only once on mount
+  // Timer interval with pause/resume functionality
   useEffect(() => {
-    // Start the interval for updating display
-    intervalRef.current = setInterval(() => {
-      const currentTime = Date.now();
-      const timeSpentThisSession = currentTime - currentQuestionStartRef.current;
-      const questionId = activeQuestionIdRef.current;
-      const previousTime = cumulativeTimeRef.current[questionId] || 0;
-      const totalTime = previousTime + timeSpentThisSession;
+    let timerId: NodeJS.Timeout | null = null;
+
+    if (!showExitModal && !isPaused) {
+      // RESUMING - Start the interval for updating display
+      timerId = setInterval(() => {
+        const currentTime = Date.now();
+        const timeSpentThisSession = currentTime - currentQuestionStartRef.current;
+        const questionId = activeQuestionIdRef.current;
+        const previousTime = cumulativeTimeRef.current[questionId] || 0;
+        const totalTime = previousTime + timeSpentThisSession;
+        
+        setDisplayTime(totalTime);
+      }, 100); // Update every 100ms for smooth display
       
-      
-      setDisplayTime(totalTime);
-    }, 100); // Update every 100ms for smooth display
+      intervalRef.current = timerId;
+    } else {
+      // PAUSING - Clear the interval to freeze timers
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
 
     // Cleanup
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      if (timerId) {
+        clearInterval(timerId);
       }
-      // Save current question time on unmount
-      saveCurrentQuestionTime();
+      // Note: We don't save time here as it's handled by the pause/resume logic
     };
-  }, []); // Only run once on mount
+  }, [showExitModal, isPaused, saveCurrentQuestionTime]); // Depend on modal state
+
+  // Handle timer pause/resume for both main session and per-question timers
+  useEffect(() => {
+    if (showExitModal && !isPaused) {
+      // PAUSING - Record when we paused and save current question time
+      setTimeWhenPaused(Date.now());
+      setIsPaused(true);
+      
+      // Save the current question time before pausing
+      saveCurrentQuestionTime();
+    } else if (!showExitModal && isPaused) {
+      // RESUMING - Adjust main session timer and reset per-question timer
+      const pausedDuration = Date.now() - timeWhenPaused;
+      
+      // Adjust main session timer only
+      setSessionStartTime(prev => prev + pausedDuration);
+      
+      // CRITICAL FIX: Reset per-question timer start time to current time
+      // The cumulative time is already saved, so we just need to reset the current session
+      currentQuestionStartRef.current = Date.now();
+      
+      // Update display with the saved cumulative time for current question
+      const questionId = activeQuestionIdRef.current;
+      const savedTime = cumulativeTimeRef.current[questionId] || 0;
+      setDisplayTime(savedTime);
+      
+      setIsPaused(false);
+    }
+  }, [showExitModal, isPaused, timeWhenPaused, saveCurrentQuestionTime]);
 
   // Initialize session states
   useEffect(() => {
     if (questions.length > 0) {
       if (savedSessionState) {
         // Restore saved session state - RE-HYDRATION MODE
-        console.log('Restoring saved session state:', savedSessionState)
         
         const restoredStates: SessionState[] = questions.map((q, index) => {
           const questionId = q.id
@@ -660,6 +702,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
               <TimerDisplay
                 milliseconds={displayTime}
                 className="text-slate-600 dark:text-slate-400"
+                isPaused={isPaused}
               />
             </div>
           </div>
@@ -676,6 +719,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           size="large"
           variant="ultra-premium"
           className="shadow-2xl hover:shadow-3xl"
+          isPaused={isPaused}
         />
       </div>
 
@@ -691,6 +735,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             size="ultra"
             variant="ultra-premium"
             className="shadow-2xl hover:shadow-3xl"
+            isPaused={isPaused}
           />
         </div>
         
@@ -708,6 +753,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
             currentQuestionStartTime={currentQuestionStartRef.current}
             cumulativeTime={displayTime}
+            isPaused={isPaused}
           />
         </div>
       </div>
@@ -760,6 +806,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                   <TimerDisplay
                     milliseconds={displayTime}
                     className="text-slate-600 dark:text-slate-400"
+                    isPaused={isPaused}
                   />
                   <TimerDisplay
                     startTime={sessionStartTime}
@@ -769,6 +816,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                     size="large"
                     variant="premium"
                     className="shadow-lg"
+                    isPaused={isPaused}
                   />
                 </div>
               </div>
