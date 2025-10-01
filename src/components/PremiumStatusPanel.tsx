@@ -82,18 +82,24 @@ export default function PremiumStatusPanel({
           transition={{ type: 'tween', duration: 0.3 }}
           className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl h-full flex flex-col relative"
         >
-          {/* Premium Collapse Toggle Button - Positioned at Left Edge Center */}
+          {/* Premium Card Toggle Button - Always Visible */}
           <button
             onClick={() => setIsCollapsed(true)}
-            className="absolute -left-14 top-1/2 -translate-y-1/2 w-12 h-12 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-l-2xl shadow-xl hover:shadow-2xl transition-all duration-300 z-30 group backdrop-blur-sm"
+            className="absolute -left-12 top-1/2 -translate-y-1/2 w-8 h-16 bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-300 rounded-r-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 z-30 group backdrop-blur-md hover:scale-105"
+            style={{
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+              transform: 'rotate(180deg)'
+            }}
           >
             <div className="w-full h-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-all duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              <svg className="w-4 h-4 text-slate-600 dark:text-slate-700 group-hover:text-slate-900 dark:group-hover:text-slate-900 transition-all duration-300 group-hover:scale-125" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
               </svg>
             </div>
-            {/* Premium glow effect */}
-            <div className="absolute inset-0 rounded-l-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            {/* Premium card glow effect */}
+            <div className="absolute inset-0 rounded-r-2xl bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+            {/* Subtle inner highlight */}
+            <div className="absolute top-0 left-0 right-0 h-1/2 rounded-r-2xl bg-gradient-to-b from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </button>
       {/* Section 1: Header - Fixed, Top (No Changes Here) */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-700">
@@ -207,24 +213,34 @@ export default function PremiumStatusPanel({
       )}
         </motion.div>
       ) : (
-        // --- Premium Panel Collapsed State ---
-        <motion.button
+        // --- Panel Collapsed State - Same Button, Different Arrow Direction ---
+        <motion.div
           key="panel-collapsed"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 20 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          onClick={() => setIsCollapsed(false)}
-          className="fixed right-6 top-1/2 -translate-y-1/2 w-12 h-12 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-l-2xl shadow-xl hover:shadow-2xl transition-all duration-300 z-30 group backdrop-blur-sm"
+          className="fixed right-6 top-1/2 -translate-y-1/2 z-30"
         >
-          <div className="w-full h-full flex items-center justify-center">
-            <svg className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-all duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-            </svg>
-          </div>
-          {/* Premium glow effect */}
-          <div className="absolute inset-0 rounded-l-2xl bg-gradient-to-r from-blue-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        </motion.button>
+          {/* Premium Card Toggle Button - Always Visible */}
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="w-8 h-16 bg-white dark:bg-slate-50 border border-slate-200 dark:border-slate-300 rounded-l-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 group backdrop-blur-md hover:scale-105"
+            style={{
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)'
+            }}
+          >
+            <div className="w-full h-full flex items-center justify-center">
+              <svg className="w-4 h-4 text-slate-600 dark:text-slate-700 group-hover:text-slate-900 dark:group-hover:text-slate-900 transition-all duration-300 group-hover:scale-125" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </div>
+            {/* Premium card glow effect */}
+            <div className="absolute inset-0 rounded-l-2xl bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+            {/* Subtle inner highlight */}
+            <div className="absolute top-0 left-0 right-0 h-1/2 rounded-l-2xl bg-gradient-to-b from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          </button>
+        </motion.div>
       )}
     </AnimatePresence>
   )
