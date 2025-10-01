@@ -73,6 +73,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const currentQuestionStartRef = useRef<number>(Date.now()); // Start time of current viewing session
   const activeQuestionIdRef = useRef<string>(questions[0]?.id?.toString() || ''); // Current question ID
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionStartTimeRef = useRef<number>(Date.now()); // Ref to store current session start time for immediate access
 
   // Save time for current question (synchronous)
   const saveCurrentQuestionTime = useCallback(() => {
@@ -133,8 +134,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       // RESUMING - Adjust main session timer and reset per-question timer
       const pausedDuration = Date.now() - timeWhenPaused;
       
-      // Adjust main session timer only
-      setSessionStartTime(prev => prev + pausedDuration);
+      // Adjust main session timer - update ref immediately to prevent glitch
+      const newStartTime = sessionStartTimeRef.current + pausedDuration;
+      sessionStartTimeRef.current = newStartTime;
+      setSessionStartTime(newStartTime);
       
       // CRITICAL FIX: Reset per-question timer start time to current time
       // The cumulative time is already saved, so we just need to reset the current session
@@ -179,6 +182,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         // The timer component will now calculate: Date.now() - adjustedStartTime = savedMainTimerValueMs
         // This effectively "pauses" and "resumes" the timer across sessions
         setSessionStartTime(adjustedStartTime);
+        sessionStartTimeRef.current = adjustedStartTime; // Keep ref in sync
         
         // Restore per-question timing data into ref
         if (savedSessionState?.timePerQuestion) {
@@ -210,7 +214,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           is_bookmarked: false
         }))
         setSessionStates(initialStates)
-        setSessionStartTime(Date.now())
+        const initialStartTime = Date.now();
+        setSessionStartTime(initialStartTime);
+        sessionStartTimeRef.current = initialStartTime; // Keep ref in sync
         
         // Set initial active question ID and start time for new session
         if (questions.length > 0) {
@@ -403,8 +409,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         currentIndex,
         
         // Timer data
-        sessionStartTime,
-        mainTimerValue: Math.floor((Date.now() - sessionStartTime) / 1000), // Save in seconds for database efficiency
+        sessionStartTime: effectiveSessionStartTime,
+        mainTimerValue: Math.floor((Date.now() - effectiveSessionStartTime) / 1000), // Save in seconds for database efficiency
         
         // User progress data - capture ALL live state
         userAnswers: questions.reduce((acc, q, index) => {
@@ -484,7 +490,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const getCurrentProgress = () => {
     const answered = sessionStates.filter(state => state.user_answer !== null).length
     const total = questions.length
-    const timeSpent = Math.floor((Date.now() - sessionStartTime) / 1000)
+    const timeSpent = Math.floor((Date.now() - effectiveSessionStartTime) / 1000)
     const minutes = Math.floor(timeSpent / 60)
     const seconds = timeSpent % 60
     return {
@@ -583,7 +589,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0
       }
       
-      const totalTime = Math.round((Date.now() - sessionStartTime) / 1000) // Convert to seconds
+      const totalTime = Math.round((Date.now() - effectiveSessionStartTime) / 1000) // Convert to seconds
 
       console.log('Submitting practice session:', {
         user_id: user?.id,
@@ -645,6 +651,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
 
   // Calculate display time for current question - this runs on every tick
   const currentQuestion = questions[currentIndex];
+
+  // Compute the effective session start time - use ref for immediate updates during pause/resume
+  const effectiveSessionStartTime = sessionStartTimeRef.current;
 
   if (!currentQuestion) {
     return (
@@ -712,7 +721,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       {/* Mobile Ultra-Premium Main Timer - Fixed at top edge */}
       <div className="lg:hidden fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
         <TimerDisplay
-          startTime={sessionStartTime}
+          startTime={effectiveSessionStartTime}
           mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
           duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
           onTimeUp={handleSubmitTest}
@@ -728,7 +737,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         {/* Desktop Ultra-Premium Main Timer - Fixed at top edge */}
         <div className="hidden lg:block fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
           <TimerDisplay
-            startTime={sessionStartTime}
+            startTime={effectiveSessionStartTime}
             mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
             duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
             onTimeUp={handleSubmitTest}
@@ -749,7 +758,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             onAnswerChange={handleAnswerChange}
             onBookmark={handleBookmark}
             onReportError={() => setShowReportModal(true)}
-            sessionStartTime={sessionStartTime}
+            sessionStartTime={effectiveSessionStartTime}
             timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
             currentQuestionStartTime={currentQuestionStartRef.current}
             cumulativeTime={displayTime}
@@ -809,7 +818,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                     isPaused={isPaused}
                   />
                   <TimerDisplay
-                    startTime={sessionStartTime}
+                    startTime={effectiveSessionStartTime}
                     mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
                     duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
                     onTimeUp={handleSubmitTest}

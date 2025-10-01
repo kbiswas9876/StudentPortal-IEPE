@@ -93,7 +93,9 @@ export default function TimerDisplay({
   const getDisplayTime = () => {
     if (mode === 'countdown' && duration) {
       const totalTimeMs = duration * 60 * 1000
-      const elapsedMs = currentTime - (startTime || Date.now())
+      // Use current timestamp directly to prevent glitch during resume
+      const now = isPaused ? currentTime : Date.now()
+      const elapsedMs = now - (startTime || Date.now())
       const remainingMs = Math.max(0, totalTimeMs - elapsedMs)
       
       // Check if time is up
@@ -107,8 +109,9 @@ export default function TimerDisplay({
         isCritical: remainingMs < 60 * 1000 // Less than 1 minute
       }
     } else {
-      // Stopwatch mode - for per-question timer, show current session time + previously saved time
-      const currentSessionTime = currentTime - (startTime || Date.now())
+      // Stopwatch mode - use current timestamp directly to prevent glitch during resume
+      const now = isPaused ? currentTime : Date.now()
+      const currentSessionTime = now - (startTime || Date.now())
       const totalTime = currentSessionTime + initialElapsedTime
       
       
