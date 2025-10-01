@@ -69,8 +69,7 @@ export default function QuestionDisplay({
                   </svg>
                 </div>
                 <TimerDisplay
-                  startTime={currentQuestionStartTime}
-                  mode="stopwatch"
+                  milliseconds={cumulativeTime || 0}
                   size="small"
                   className="text-slate-600 dark:text-slate-400"
                 />

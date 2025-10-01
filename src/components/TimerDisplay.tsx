@@ -4,24 +4,49 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface TimerDisplayProps {
-  startTime: number
-  mode: 'stopwatch' | 'countdown'
+  milliseconds?: number // For per-question timer - receives final calculated milliseconds
+  startTime?: number // For main session timer
+  mode?: 'stopwatch' | 'countdown'
   duration?: number // in minutes, required for countdown mode
   size?: 'small' | 'medium' | 'large' | 'ultra'
   onTimeUp?: () => void
   className?: string
   variant?: 'default' | 'premium' | 'ultra-premium'
+  initialElapsedTime?: number // in milliseconds, for per-question timer
 }
 
 export default function TimerDisplay({ 
+  milliseconds,
   startTime, 
   mode, 
   duration, 
   size = 'medium',
   onTimeUp,
   className = '',
-  variant = 'default'
+  variant = 'default',
+  initialElapsedTime = 0
 }: TimerDisplayProps) {
+  // Simple format function for per-question timer
+  const formatTime = (ms: number): string => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  // If milliseconds prop is provided, this is a per-question timer - render directly
+  if (milliseconds !== undefined) {
+    // Debug logging for per-question timer
+    console.log('TimerDisplay received milliseconds:', milliseconds, 'formatted:', formatTime(milliseconds));
+    
+    return (
+      <span className="font-mono text-sm">
+        {formatTime(milliseconds)}
+      </span>
+    );
+  }
+
+  // Original logic for main session timer
   const [currentTime, setCurrentTime] = useState<number>(Date.now())
   const [previousTime, setPreviousTime] = useState<string>('')
 
@@ -33,7 +58,7 @@ export default function TimerDisplay({
     return () => clearInterval(interval)
   }, [])
 
-  const formatTime = (milliseconds: number) => {
+  const formatTimeComplex = (milliseconds: number) => {
     const totalSeconds = Math.floor(milliseconds / 1000)
     const hours = Math.floor(totalSeconds / 3600)
     const minutes = Math.floor((totalSeconds % 3600) / 60)
@@ -60,7 +85,7 @@ export default function TimerDisplay({
   const getDisplayTime = () => {
     if (mode === 'countdown' && duration) {
       const totalTimeMs = duration * 60 * 1000
-      const elapsedMs = currentTime - startTime
+      const elapsedMs = currentTime - (startTime || Date.now())
       const remainingMs = Math.max(0, totalTimeMs - elapsedMs)
       
       // Check if time is up
@@ -74,10 +99,24 @@ export default function TimerDisplay({
         isCritical: remainingMs < 60 * 1000 // Less than 1 minute
       }
     } else {
-      // Stopwatch mode
-      const elapsedMs = currentTime - startTime
+      // Stopwatch mode - for per-question timer, show current session time + previously saved time
+      const currentSessionTime = currentTime - (startTime || Date.now())
+      const totalTime = currentSessionTime + initialElapsedTime
+      
+      // Debug logging for per-question timer
+      if (initialElapsedTime > 0) {
+        console.log('TimerDisplay debug:', {
+          currentTime,
+          startTime,
+          currentSessionTime,
+          initialElapsedTime,
+          totalTime,
+          formattedTime: formatTimeWithTicks(totalTime)
+        })
+      }
+      
       return {
-        time: formatTimeWithTicks(elapsedMs),
+        time: formatTimeWithTicks(totalTime),
         isLowTime: false,
         isCritical: false
       }
@@ -200,7 +239,7 @@ export default function TimerDisplay({
           
           {/* Timer display with modern premium typography - stable */}
           <div
-            className={`font-black tracking-wider ${getSizeClasses()} ${getColorClasses()} relative`}
+            className={`font-black tracking-wider ${getSizeClasses()} ${getColorClasses()}`}
             style={{
               fontFamily: '"SF Pro Display", "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code", "Roboto Mono", "Source Code Pro", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace',
               textShadow: '0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1)',
@@ -212,19 +251,6 @@ export default function TimerDisplay({
             }}
           >
             {time}
-            {/* Subtle ticking indicator */}
-            <motion.div
-              className="absolute -top-1 -right-1 w-2 h-2 bg-current rounded-full opacity-60"
-              animate={{ 
-                scale: [0.8, 1.2, 0.8],
-                opacity: [0.3, 0.8, 0.3]
-              }}
-              transition={{ 
-                duration: 1,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
           </div>
         </div>
 

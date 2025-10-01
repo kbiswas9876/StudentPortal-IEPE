@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
@@ -61,9 +61,61 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showExitModal, setShowExitModal] = useState(false)
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false)
   
-  // Dual-Timer System State Management
-  const [timePerQuestion, setTimePerQuestion] = useState<Record<string, number>>({})
-  const [currentQuestionStartTime, setCurrentQuestionStartTime] = useState<number>(Date.now())
+  // Centralized Timer Architecture - Your Method Implementation
+  const [displayTime, setDisplayTime] = useState(0); // State for triggering re-renders of timer display
+  
+  // Refs for synchronous state management (prevents race conditions)
+  const cumulativeTimeRef = useRef<Record<string, number>>({}); // Stores cumulative time per question ID
+  const currentQuestionStartRef = useRef<number>(Date.now()); // Start time of current viewing session
+  const activeQuestionIdRef = useRef<string>(questions[0]?.id?.toString() || ''); // Current question ID
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Save time for current question (synchronous)
+  const saveCurrentQuestionTime = useCallback(() => {
+    const currentTime = Date.now();
+    const timeSpentThisSession = currentTime - currentQuestionStartRef.current;
+    const questionId = activeQuestionIdRef.current;
+    
+    // Add to cumulative time
+    const previousTime = cumulativeTimeRef.current[questionId] || 0;
+    cumulativeTimeRef.current[questionId] = previousTime + timeSpentThisSession;
+    
+    console.log(`Saved time for ${questionId}: ${cumulativeTimeRef.current[questionId]}ms total`);
+  }, []);
+  
+  // Initialize timer interval - runs only once on mount
+  useEffect(() => {
+    // Start the interval for updating display
+    intervalRef.current = setInterval(() => {
+      const currentTime = Date.now();
+      const timeSpentThisSession = currentTime - currentQuestionStartRef.current;
+      const questionId = activeQuestionIdRef.current;
+      const previousTime = cumulativeTimeRef.current[questionId] || 0;
+      const totalTime = previousTime + timeSpentThisSession;
+      
+      // Debug logging
+      if (Math.floor(totalTime / 1000) % 5 === 0) { // Log every 5 seconds
+        console.log('Timer interval update:', {
+          questionId,
+          previousTime,
+          timeSpentThisSession,
+          totalTime,
+          displayTime
+        });
+      }
+      
+      setDisplayTime(totalTime);
+    }, 100); // Update every 100ms for smooth display
+
+    // Cleanup
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      // Save current question time on unmount
+      saveCurrentQuestionTime();
+    };
+  }, []); // Only run once on mount
 
   // Initialize session states
   useEffect(() => {
@@ -86,13 +138,24 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         setCurrentIndex(savedSessionState?.currentIndex || 0)
         setSessionStartTime(savedSessionState?.sessionStartTime || Date.now())
         
-        // Restore per-question timing data
+        // Restore per-question timing data into ref
         if (savedSessionState?.timePerQuestion) {
           const restoredTimePerQuestion: Record<string, number> = {}
           Object.entries(savedSessionState.timePerQuestion).forEach(([questionId, timeInSeconds]) => {
             restoredTimePerQuestion[questionId] = (timeInSeconds as number) * 1000 // Convert back to milliseconds
           })
-          setTimePerQuestion(restoredTimePerQuestion)
+          cumulativeTimeRef.current = restoredTimePerQuestion
+        }
+        
+        // Set initial active question ID and start time
+        if (questions.length > 0) {
+          const initialQuestionId = questions[savedSessionState?.currentIndex || 0].id.toString()
+          activeQuestionIdRef.current = initialQuestionId
+          currentQuestionStartRef.current = Date.now()
+          
+          // Set initial display time
+          const initialTime = cumulativeTimeRef.current[initialQuestionId] || 0
+          setDisplayTime(initialTime)
         }
         
         setIsInitialized(true)
@@ -112,6 +175,15 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         }))
         setSessionStates(initialStates)
         setSessionStartTime(Date.now())
+        
+        // Set initial active question ID and start time for new session
+        if (questions.length > 0) {
+          const initialQuestionId = questions[0].id.toString()
+          activeQuestionIdRef.current = initialQuestionId
+          currentQuestionStartRef.current = Date.now()
+          setDisplayTime(0) // Start from 0 for new session
+        }
+        
         setIsInitialized(true)
       }
     }
@@ -157,30 +229,26 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  const currentQuestion = questions[currentIndex]
-
-  // Core per-question timing logic
-  useEffect(() => {
-    if (!currentQuestion) return
-
-    const questionId = currentQuestion.id.toString()
+  // Handle question navigation
+  const handleNavigation = useCallback((newIndex: number) => {
+    if (newIndex < 0 || newIndex >= questions.length || newIndex === currentIndex) return;
     
-    // Save time spent on previous question when navigating away
-    const savePreviousQuestionTime = () => {
-      if (currentQuestionStartTime) {
-        const timeSpent = Date.now() - currentQuestionStartTime
-        setTimePerQuestion(prev => ({
-          ...prev,
-          [questionId]: (prev[questionId] || 0) + timeSpent
-        }))
-      }
-    }
-
-    // Cleanup function to save time when component unmounts or question changes
-    return () => {
-      savePreviousQuestionTime()
-    }
-  }, [currentIndex, currentQuestion, currentQuestionStartTime])
+    // Save time for current question before switching
+    saveCurrentQuestionTime();
+    
+    // Update to new question
+    const newQuestionId = questions[newIndex].id.toString();
+    setCurrentIndex(newIndex);
+    activeQuestionIdRef.current = newQuestionId;
+    const newStartTime = Date.now();
+    currentQuestionStartRef.current = newStartTime;
+    
+    // Update display with previously saved time for this question
+    const previousTime = cumulativeTimeRef.current[newQuestionId] || 0;
+    setDisplayTime(previousTime);
+    
+    console.log(`Navigated to ${newQuestionId}, starting from ${previousTime}ms`);
+  }, [currentIndex, questions, saveCurrentQuestionTime]);
   const currentState = sessionStates[currentIndex] || {
     status: 'not_visited' as QuestionStatus,
     user_answer: null,
@@ -237,7 +305,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
 
     // Move to next question or show end-of-session modal
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1)
+      handleNavigation(currentIndex + 1)
     } else {
       // End of session - show modal
       setShowEndSessionModal(true)
@@ -252,7 +320,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
 
     // Move to next question or show end-of-session modal
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1)
+      handleNavigation(currentIndex + 1)
     } else {
       // End of session - show modal
       setShowEndSessionModal(true)
@@ -269,7 +337,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleReturnToStart = () => {
-    setCurrentIndex(0)
+    handleNavigation(0)
     setShowEndSessionModal(false)
   }
 
@@ -319,8 +387,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         }, {} as Record<string, string>),
         
         timePerQuestion: questions.reduce((acc, q, index) => {
-          const state = sessionStates[index]
-          const questionTime = timePerQuestion[q.id] || 0
+          const questionTime = cumulativeTimeRef.current[q.id.toString()] || 0
           if (questionTime > 0) {
             acc[q.id] = Math.floor(questionTime / 1000) // Convert to seconds
           }
@@ -450,6 +517,13 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     setIsSubmitting(true)
 
     try {
+      // Save current question time first
+      saveCurrentQuestionTime();
+      
+      // Get final time data
+      const finalTimeData = { ...cumulativeTimeRef.current };
+      console.log('Final Time Data to Submit:', finalTimeData);
+
       // Calculate final results
       const totalQuestions = questions.length
       const correctAnswers = sessionStates.filter((state, index) => {
@@ -500,7 +574,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             status: sessionStates[index].user_answer ? 
               (sessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
               'skipped',
-            time_taken: Math.round((timePerQuestion[question.id] || 0) / 1000) // Use new per-question timing data
+            time_taken: Math.round((cumulativeTimeRef.current[question.id.toString()] || 0) / 1000) // Use new per-question timing data
           })),
           score,
           total_time: totalTime,
@@ -531,19 +605,12 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleQuestionNavigation = (index: number) => {
-    // Save time spent on current question before navigating
-    if (currentQuestion && currentQuestionStartTime) {
-      const timeSpent = Date.now() - currentQuestionStartTime
-      const questionId = currentQuestion.id.toString()
-      setTimePerQuestion(prev => ({
-        ...prev,
-        [questionId]: (prev[questionId] || 0) + timeSpent
-      }))
-    }
-    
-    setCurrentIndex(index)
+    handleNavigation(index)
     setShowMobileSidebar(false) // Close mobile sidebar
   }
+
+  // Calculate display time for current question - this runs on every tick
+  const currentQuestion = questions[currentIndex];
 
   if (!currentQuestion) {
     return (
@@ -569,6 +636,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
 
   // Calculate answered questions for progress bar
   const answeredQuestions = sessionStates.filter(state => state.user_answer !== null).length
+
+  // Display time is now managed by the centralized timer interval
+  // No need to calculate here - it's updated every 100ms by the interval
 
   return (
     <div className="min-h-screen flex">
@@ -596,11 +666,11 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                 {mockTestData ? mockTestData.test.name : 'Practice Session'} - Question {currentIndex + 1} of {questions.length}
               </div>
               <TimerDisplay
-                startTime={currentQuestionStartTime}
-                mode="stopwatch"
-                size="small"
+                milliseconds={displayTime}
                 className="text-slate-600 dark:text-slate-400"
               />
+              {/* Debug: Show raw displayTime value */}
+              <span className="text-xs text-gray-500 ml-2">({displayTime}ms)</span>
             </div>
           </div>
         </div>
@@ -646,8 +716,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             onReportError={() => setShowReportModal(true)}
             sessionStartTime={sessionStartTime}
             timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
-            currentQuestionStartTime={currentQuestionStartTime}
-            cumulativeTime={timePerQuestion[currentQuestion.id] || 0}
+            currentQuestionStartTime={currentQuestionStartRef.current}
+            cumulativeTime={displayTime}
           />
         </div>
       </div>
@@ -698,11 +768,11 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                 </div>
                 <div className="flex items-center justify-between mt-4">
                   <TimerDisplay
-                    startTime={currentQuestionStartTime}
-                    mode="stopwatch"
-                    size="small"
+                    milliseconds={displayTime}
                     className="text-slate-600 dark:text-slate-400"
                   />
+                  {/* Debug: Show raw displayTime value */}
+                  <span className="text-xs text-gray-500 ml-2">({displayTime}ms)</span>
                   <TimerDisplay
                     startTime={sessionStartTime}
                     mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
@@ -769,6 +839,23 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         currentProgress={getCurrentProgress()}
         statusCounts={getStatusCounts()}
       />
+
+      {/* Debug Information Panel (Remove in production) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg font-mono text-sm max-w-md">
+          <div className="mb-2 font-bold">Debug Info:</div>
+          <div>Current Question: {currentQuestion?.id}</div>
+          <div>Active Question ID: {activeQuestionIdRef.current}</div>
+          <div>Display Time: {displayTime}ms</div>
+          <div>Current Index: {currentIndex}</div>
+          <div className="mt-2">
+            <div className="font-bold">Cumulative Times:</div>
+            <pre className="text-xs overflow-auto max-h-32">
+              {JSON.stringify(cumulativeTimeRef.current, null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
