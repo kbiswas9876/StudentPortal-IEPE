@@ -36,9 +36,6 @@ export default function TimerDisplay({
 
   // If milliseconds prop is provided, this is a per-question timer - render directly
   if (milliseconds !== undefined) {
-    // Debug logging for per-question timer
-    console.log('TimerDisplay received milliseconds:', milliseconds, 'formatted:', formatTime(milliseconds));
-    
     return (
       <span className="font-mono text-sm">
         {formatTime(milliseconds)}
@@ -103,17 +100,6 @@ export default function TimerDisplay({
       const currentSessionTime = currentTime - (startTime || Date.now())
       const totalTime = currentSessionTime + initialElapsedTime
       
-      // Debug logging for per-question timer
-      if (initialElapsedTime > 0) {
-        console.log('TimerDisplay debug:', {
-          currentTime,
-          startTime,
-          currentSessionTime,
-          initialElapsedTime,
-          totalTime,
-          formattedTime: formatTimeWithTicks(totalTime)
-        })
-      }
       
       return {
         time: formatTimeWithTicks(totalTime),

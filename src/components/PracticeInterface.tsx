@@ -80,7 +80,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     const previousTime = cumulativeTimeRef.current[questionId] || 0;
     cumulativeTimeRef.current[questionId] = previousTime + timeSpentThisSession;
     
-    console.log(`Saved time for ${questionId}: ${cumulativeTimeRef.current[questionId]}ms total`);
   }, []);
   
   // Initialize timer interval - runs only once on mount
@@ -93,16 +92,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       const previousTime = cumulativeTimeRef.current[questionId] || 0;
       const totalTime = previousTime + timeSpentThisSession;
       
-      // Debug logging
-      if (Math.floor(totalTime / 1000) % 5 === 0) { // Log every 5 seconds
-        console.log('Timer interval update:', {
-          questionId,
-          previousTime,
-          timeSpentThisSession,
-          totalTime,
-          displayTime
-        });
-      }
       
       setDisplayTime(totalTime);
     }, 100); // Update every 100ms for smooth display
@@ -160,12 +149,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         
         setIsInitialized(true)
         
-        console.log('Session state restored successfully with:', {
-          currentIndex: savedSessionState?.currentIndex,
-          sessionStartTime: savedSessionState?.sessionStartTime,
-          userAnswers: Object.keys(savedSessionState?.userAnswers || {}).length,
-          questionStatuses: Object.keys(savedSessionState?.questionStatuses || {}).length
-        })
       } else {
         // Initialize new session - NEW SESSION MODE
         const initialStates: SessionState[] = questions.map(() => ({
@@ -247,7 +230,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     const previousTime = cumulativeTimeRef.current[newQuestionId] || 0;
     setDisplayTime(previousTime);
     
-    console.log(`Navigated to ${newQuestionId}, starting from ${previousTime}ms`);
   }, [currentIndex, questions, saveCurrentQuestionTime]);
   const currentState = sessionStates[currentIndex] || {
     status: 'not_visited' as QuestionStatus,
@@ -522,7 +504,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       
       // Get final time data
       const finalTimeData = { ...cumulativeTimeRef.current };
-      console.log('Final Time Data to Submit:', finalTimeData);
 
       // Calculate final results
       const totalQuestions = questions.length
@@ -669,8 +650,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                 milliseconds={displayTime}
                 className="text-slate-600 dark:text-slate-400"
               />
-              {/* Debug: Show raw displayTime value */}
-              <span className="text-xs text-gray-500 ml-2">({displayTime}ms)</span>
             </div>
           </div>
         </div>
@@ -771,8 +750,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                     milliseconds={displayTime}
                     className="text-slate-600 dark:text-slate-400"
                   />
-                  {/* Debug: Show raw displayTime value */}
-                  <span className="text-xs text-gray-500 ml-2">({displayTime}ms)</span>
                   <TimerDisplay
                     startTime={sessionStartTime}
                     mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
@@ -840,22 +817,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         statusCounts={getStatusCounts()}
       />
 
-      {/* Debug Information Panel (Remove in production) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg font-mono text-sm max-w-md">
-          <div className="mb-2 font-bold">Debug Info:</div>
-          <div>Current Question: {currentQuestion?.id}</div>
-          <div>Active Question ID: {activeQuestionIdRef.current}</div>
-          <div>Display Time: {displayTime}ms</div>
-          <div>Current Index: {currentIndex}</div>
-          <div className="mt-2">
-            <div className="font-bold">Cumulative Times:</div>
-            <pre className="text-xs overflow-auto max-h-32">
-              {JSON.stringify(cumulativeTimeRef.current, null, 2)}
-            </pre>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
