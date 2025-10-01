@@ -25,6 +25,8 @@ export default function PracticePage() {
   const testMode = searchParams.get('testMode') as 'practice' | 'timed' | 'mock' || 'practice'
   const timeLimit = searchParams.get('timeLimit')
   const mockTestId = searchParams.get('mockTestId')
+  const isSavedSession = searchParams.get('savedSession') === 'true'
+  const savedSessionData = searchParams.get('sessionData')
 
   useEffect(() => {
     if (authLoading) return
@@ -34,8 +36,14 @@ export default function PracticePage() {
       return
     }
 
-    // Check if this is a mock test or regular practice
-    if (mockTestId) {
+    // Check if this is a saved session, mock test, or regular practice
+    if (isSavedSession && savedSessionData) {
+      // Saved session mode
+      if (!questionsFetchedRef.current) {
+        questionsFetchedRef.current = true
+        restoreSavedSession()
+      }
+    } else if (mockTestId) {
       // Mock test mode
       if (!questionsFetchedRef.current) {
         questionsFetchedRef.current = true
@@ -103,6 +111,30 @@ export default function PracticePage() {
     } catch (error) {
       console.error('Error fetching mock test data:', error)
       setError(error instanceof Error ? error.message : 'Failed to fetch mock test data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const restoreSavedSession = () => {
+    try {
+      setLoading(true)
+      console.log('Restoring saved session:', savedSessionData)
+
+      const sessionData = JSON.parse(savedSessionData!)
+      
+      // Restore questions from saved session
+      setQuestions(sessionData.questions)
+      
+      // Restore mock test data if it was a mock test
+      if (sessionData.mockTestData) {
+        setMockTestData(sessionData.mockTestData)
+      }
+      
+      console.log('Saved session restored successfully')
+    } catch (error) {
+      console.error('Error restoring saved session:', error)
+      setError('Failed to restore saved session')
     } finally {
       setLoading(false)
     }

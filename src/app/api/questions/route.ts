@@ -25,6 +25,8 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { bookCode, chapterName, mode, values } = body
 
+    console.log('Questions API - Received request:', { bookCode, chapterName, mode, values })
+
     if (!bookCode || !chapterName) {
       return NextResponse.json({ error: 'Book code and chapter name are required' }, { status: 400 })
     }
@@ -32,6 +34,15 @@ export async function POST(request: Request) {
     // Check cache first, then fetch from database if not cached
     let bookName = bookCache.get(bookCode)
     if (!bookName) {
+      // First, let's see what books are available
+      const { data: allBooks, error: allBooksError } = await supabaseAdmin
+        .from('book_sources')
+        .select('code, name')
+      
+      if (!allBooksError && allBooks) {
+        console.log('Available books in database:', allBooks)
+      }
+
       const { data: bookData, error: bookError } = await supabaseAdmin
         .from('book_sources')
         .select('name')
@@ -40,6 +51,7 @@ export async function POST(request: Request) {
 
       if (bookError || !bookData) {
         console.error('Error fetching book name:', bookError)
+        console.error('Looking for bookCode:', bookCode)
         return NextResponse.json({ error: 'Book not found' }, { status: 404 })
       }
       

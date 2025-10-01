@@ -14,6 +14,8 @@ import ActionBar from './ActionBar'
 import ProgressBar from './ProgressBar'
 import EndSessionModal from './EndSessionModal'
 import ReportErrorModal from './ReportErrorModal'
+import ExitSessionModal from './ExitSessionModal'
+import ZenModeBackButton from './ZenModeBackButton'
 import KatexRenderer from './ui/KatexRenderer'
 import { FlagIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline'
 
@@ -56,6 +58,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [isInitialized, setIsInitialized] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [showEndSessionModal, setShowEndSessionModal] = useState(false)
+  const [showExitModal, setShowExitModal] = useState(false)
   const [isFocusMode, setIsFocusMode] = useState(false)
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false)
 
@@ -226,6 +229,74 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
 
   const handleStayHere = () => {
     setShowEndSessionModal(false)
+  }
+
+  const handleExitWithoutSaving = () => {
+    setShowExitModal(false)
+    router.push('/dashboard')
+  }
+
+  const handleSaveAndExit = async (sessionName: string) => {
+    try {
+      if (!user) return
+
+      // Create session state object
+      const sessionState = {
+        questions: questions.map((q, index) => ({
+          id: q.id,
+          question_text: q.question_text,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          selectedAnswer: sessionStates[index]?.user_answer,
+          status: sessionStates[index]?.status,
+          timeSpent: sessionStates[index]?.time_taken,
+          isBookmarked: sessionStates[index]?.is_bookmarked
+        })),
+        currentIndex,
+        sessionStartTime,
+        timeSpent: Date.now() - sessionStartTime,
+        testMode,
+        timeLimitInMinutes,
+        mockTestData
+      }
+
+      // Save to database
+      const response = await fetch('/api/saved-sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          sessionName,
+          sessionState
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save session')
+      }
+
+      // Close modal and redirect
+      setShowExitModal(false)
+      router.push('/dashboard')
+    } catch (error) {
+      console.error('Error saving session:', error)
+      toast.error('Failed to save session. Please try again.')
+    }
+  }
+
+  const getCurrentProgress = () => {
+    const answered = sessionStates.filter(state => state.user_answer !== null).length
+    const total = questions.length
+    const timeSpent = Math.floor((Date.now() - sessionStartTime) / 1000)
+    const minutes = Math.floor(timeSpent / 60)
+    const seconds = timeSpent % 60
+    return {
+      answered,
+      total,
+      timeSpent: `${minutes}:${seconds.toString().padStart(2, '0')}`
+    }
   }
 
   const handleBookmark = async () => {
@@ -592,6 +663,18 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           questionText={currentQuestion.question_text}
         />
       )}
+
+      {/* Zen Mode Back Button */}
+      <ZenModeBackButton onClick={() => setShowExitModal(true)} />
+
+      {/* Exit Session Modal */}
+      <ExitSessionModal
+        isOpen={showExitModal}
+        onClose={() => setShowExitModal(false)}
+        onExitWithoutSaving={handleExitWithoutSaving}
+        onSaveAndExit={handleSaveAndExit}
+        currentProgress={getCurrentProgress()}
+      />
     </div>
   )
 }

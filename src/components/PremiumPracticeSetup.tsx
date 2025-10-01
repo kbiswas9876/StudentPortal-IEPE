@@ -21,13 +21,15 @@ interface PremiumPracticeSetupProps {
   onSessionStart: (config: PracticeSessionConfig) => void
   onTotalQuestionsChange: (total: number) => void
   onSessionConfigChange: (config: PracticeSessionConfig | null) => void
+  sessionLoading?: boolean
 }
 
 export default function PremiumPracticeSetup({
   books,
   onSessionStart,
   onTotalQuestionsChange,
-  onSessionConfigChange
+  onSessionConfigChange,
+  sessionLoading = false
 }: PremiumPracticeSetupProps) {
   const [selectedBook, setSelectedBook] = useState<string | null>(null)
   const [chapters, setChapters] = useState<Record<string, ChapterData[]>>({})
@@ -399,6 +401,7 @@ export default function PremiumPracticeSetup({
         totalQuestions={getTotalQuestions()}
         onStartSession={handleStartSession}
         disabled={getTotalQuestions() === 0}
+        loading={sessionLoading}
       />
     </div>
   )

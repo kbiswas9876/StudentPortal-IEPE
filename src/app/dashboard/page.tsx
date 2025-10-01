@@ -9,6 +9,7 @@ import { Database } from '@/types/database'
 import { PracticeSessionConfig, QuestionSelection } from '@/types/practice'
 import { debounce } from '@/lib/development-utils'
 import PremiumPracticeSetup from '@/components/PremiumPracticeSetup'
+import SavedSessionsManager from '@/components/SavedSessionsManager'
 import AccessHub from '@/components/AccessHub'
 import SupabaseTest from '@/components/SupabaseTest'
 import DashboardSkeletonLoader from '@/components/DashboardSkeletonLoader'
@@ -28,6 +29,7 @@ export default function DashboardPage() {
   const [totalQuestions, setTotalQuestions] = useState(0)
   const [sessionLoading, setSessionLoading] = useState(false)
   const [currentSessionConfig, setCurrentSessionConfig] = useState<PracticeSessionConfig | null>(null)
+  const [activeTab, setActiveTab] = useState<'practice' | 'saved'>('practice')
   
   // Ref to track if data has been fetched to prevent duplicate calls
   const dataFetchedRef = useRef(false)
@@ -173,6 +175,18 @@ export default function DashboardPage() {
     await handleSessionStart(currentSessionConfig)
   }
 
+  const handleResumeSession = (sessionState: any) => {
+    console.log('Resuming saved session:', sessionState)
+    
+    // Navigate to practice page with the saved session state
+    const queryParams = new URLSearchParams({
+      savedSession: 'true',
+      sessionData: JSON.stringify(sessionState)
+    })
+    
+    router.push(`/practice?${queryParams.toString()}`)
+  }
+
 
   const fetchQuestionIds = async (config: PracticeSessionConfig): Promise<string[]> => {
     const allQuestionIds: string[] = []
@@ -252,18 +266,62 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <PremiumPracticeSetup
-          books={books}
-          onSessionStart={handleSessionStart}
-          onTotalQuestionsChange={(total) => {
-            console.log('Dashboard: Total questions changed to:', total)
-            setTotalQuestions(total)
-          }}
-          onSessionConfigChange={(config) => {
-            console.log('Dashboard: Session config changed:', config)
-            setCurrentSessionConfig(config)
-          }}
-        />
+        <div className="container mx-auto px-4 py-8">
+          {/* Tab Navigation */}
+          <div className="mb-8">
+            <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
+              <button
+                onClick={() => setActiveTab('practice')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'practice'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                }`}
+              >
+                Practice Setup
+              </button>
+              <button
+                onClick={() => setActiveTab('saved')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'saved'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                }`}
+              >
+                Saved Sessions
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'practice' ? (
+            <PremiumPracticeSetup
+              books={books}
+              onSessionStart={handleSessionStart}
+              onTotalQuestionsChange={(total) => {
+                console.log('Dashboard: Total questions changed to:', total)
+                setTotalQuestions(total)
+              }}
+              onSessionConfigChange={(config) => {
+                console.log('Dashboard: Session config changed:', config)
+                setCurrentSessionConfig(config)
+              }}
+              sessionLoading={sessionLoading}
+            />
+          ) : (
+            <div className="max-w-4xl">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                  Saved Practice Sessions
+                </h2>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Resume your saved practice sessions or manage them here.
+                </p>
+              </div>
+              <SavedSessionsManager onResumeSession={handleResumeSession} />
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
