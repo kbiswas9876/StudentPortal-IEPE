@@ -15,6 +15,9 @@ import ProgressBar from './ProgressBar'
 import EndSessionModal from './EndSessionModal'
 import ReportErrorModal from './ReportErrorModal'
 import ExitSessionModal from './ExitSessionModal'
+import PauseModal from './PauseModal'
+import SubmissionConfirmationModal from './SubmissionConfirmationModal'
+import AutoSubmissionOverlay from './AutoSubmissionOverlay'
 import ZenModeBackButton from './ZenModeBackButton'
 import KatexRenderer from './ui/KatexRenderer'
 import { FlagIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline'
@@ -59,6 +62,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showReportModal, setShowReportModal] = useState(false)
   const [showEndSessionModal, setShowEndSessionModal] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
+  const [showPauseModal, setShowPauseModal] = useState(false)
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false)
+  const [showAutoSubmissionOverlay, setShowAutoSubmissionOverlay] = useState(false)
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false)
   
   // Centralized Timer Architecture - Your Method Implementation
@@ -85,13 +91,13 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     const previousTime = cumulativeTimeRef.current[questionId] || 0;
     cumulativeTimeRef.current[questionId] = previousTime + timeSpentThisSession;
     
-  }, []);
+  }, []); // Empty dependency array since we only use refs
   
   // Timer interval with pause/resume functionality
   useEffect(() => {
     let timerId: NodeJS.Timeout | null = null;
 
-    if (!showExitModal && !isPaused) {
+    if (!showExitModal && !showPauseModal && !isPaused) {
       // RESUMING - Start the interval for updating display
       timerId = setInterval(() => {
         const currentTime = Date.now();
@@ -119,18 +125,18 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       }
       // Note: We don't save time here as it's handled by the pause/resume logic
     };
-  }, [showExitModal, isPaused, saveCurrentQuestionTime]); // Depend on modal state
+  }, [showExitModal, showPauseModal, isPaused]); // Depend on modal state
 
   // Handle timer pause/resume for both main session and per-question timers
   useEffect(() => {
-    if (showExitModal && !isPaused) {
+    if ((showExitModal || showPauseModal) && !isPaused) {
       // PAUSING - Record when we paused and save current question time
       setTimeWhenPaused(Date.now());
       setIsPaused(true);
       
       // Save the current question time before pausing
       saveCurrentQuestionTime();
-    } else if (!showExitModal && isPaused) {
+    } else if (!showExitModal && !showPauseModal && isPaused) {
       // RESUMING - Adjust main session timer and reset per-question timer
       const pausedDuration = Date.now() - timeWhenPaused;
       
@@ -150,7 +156,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       
       setIsPaused(false);
     }
-  }, [showExitModal, isPaused, timeWhenPaused, saveCurrentQuestionTime]);
+  }, [showExitModal, showPauseModal, isPaused, timeWhenPaused]);
 
   // Initialize session states
   useEffect(() => {
@@ -552,6 +558,40 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     }
   }
 
+  // Handle pause functionality
+  const handlePause = () => {
+    setShowPauseModal(true)
+  }
+
+  const handleResume = () => {
+    setShowPauseModal(false)
+  }
+
+  const handlePauseExit = () => {
+    setShowPauseModal(false)
+    setShowExitModal(true)
+  }
+
+  // Handle manual submission with confirmation
+  const handleManualSubmit = () => {
+    setShowSubmissionModal(true)
+  }
+
+  const handleConfirmSubmit = async () => {
+    setShowSubmissionModal(false)
+    await handleSubmitTest()
+  }
+
+  const handleCancelSubmit = () => {
+    setShowSubmissionModal(false)
+  }
+
+  // Handle auto-submission when time is up
+  const handleAutoSubmit = async () => {
+    setShowAutoSubmissionOverlay(true)
+    await handleSubmitTest()
+  }
+
   const handleSubmitTest = async () => {
     if (isSubmitting) return
 
@@ -724,11 +764,13 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           startTime={effectiveSessionStartTime}
           mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
           duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-          onTimeUp={handleSubmitTest}
+          onTimeUp={handleAutoSubmit}
           size="large"
           variant="ultra-premium"
           className="shadow-2xl hover:shadow-3xl"
           isPaused={isPaused}
+          onPause={handlePause}
+          showPauseButton={true}
         />
       </div>
 
@@ -740,11 +782,13 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             startTime={effectiveSessionStartTime}
             mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
             duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-            onTimeUp={handleSubmitTest}
+            onTimeUp={handleAutoSubmit}
             size="ultra"
             variant="ultra-premium"
             className="shadow-2xl hover:shadow-3xl"
             isPaused={isPaused}
+            onPause={handlePause}
+            showPauseButton={true}
           />
         </div>
         
@@ -774,7 +818,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           sessionStates={sessionStates}
           currentIndex={currentIndex}
           onQuestionSelect={handleQuestionNavigation}
-          onSubmitTest={handleSubmitTest}
+          onSubmitTest={handleManualSubmit}
           isSubmitting={isSubmitting}
           mockTestData={mockTestData}
         />
@@ -821,11 +865,13 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                     startTime={effectiveSessionStartTime}
                     mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
                     duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-                    onTimeUp={handleSubmitTest}
+                    onTimeUp={handleAutoSubmit}
                     size="large"
                     variant="premium"
                     className="shadow-lg"
                     isPaused={isPaused}
+                    onPause={handlePause}
+                    showPauseButton={true}
                   />
                 </div>
               </div>
@@ -837,7 +883,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                   sessionStates={sessionStates}
                   currentIndex={currentIndex}
                   onQuestionSelect={handleQuestionNavigation}
-                  onSubmitTest={handleSubmitTest}
+                  onSubmitTest={handleManualSubmit}
                   isSubmitting={isSubmitting}
                 />
               </div>
@@ -884,6 +930,35 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         currentProgress={getCurrentProgress()}
         statusCounts={getStatusCounts()}
       />
+
+      {/* Pause Modal */}
+      <PauseModal
+        isOpen={showPauseModal}
+        onResume={handleResume}
+        onExit={handlePauseExit}
+      />
+
+      {/* Submission Confirmation Modal */}
+      <SubmissionConfirmationModal
+        isOpen={showSubmissionModal}
+        onCancel={handleCancelSubmit}
+        onSubmit={handleConfirmSubmit}
+        timeRemaining={testMode === 'timed' && timeLimitInMinutes ? 
+          (() => {
+            const totalTimeMs = timeLimitInMinutes * 60 * 1000
+            const elapsedMs = Date.now() - effectiveSessionStartTime
+            const remainingMs = Math.max(0, totalTimeMs - elapsedMs)
+            const minutes = Math.floor(remainingMs / 60000)
+            const seconds = Math.floor((remainingMs % 60000) / 1000)
+            return `${minutes}m ${seconds}s`
+          })() : undefined
+        }
+        statusCounts={getStatusCounts()}
+        isSubmitting={isSubmitting}
+      />
+
+      {/* Auto Submission Overlay */}
+      <AutoSubmissionOverlay isVisible={showAutoSubmissionOverlay} />
 
     </div>
   )

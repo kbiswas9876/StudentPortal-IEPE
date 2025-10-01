@@ -14,6 +14,8 @@ interface TimerDisplayProps {
   variant?: 'default' | 'premium' | 'ultra-premium'
   initialElapsedTime?: number // in milliseconds, for per-question timer
   isPaused?: boolean // Whether the timer should appear paused (stop animations)
+  onPause?: () => void // Callback for pause button click
+  showPauseButton?: boolean // Whether to show the pause button
 }
 
 export default function TimerDisplay({ 
@@ -26,7 +28,9 @@ export default function TimerDisplay({
   className = '',
   variant = 'default',
   initialElapsedTime = 0,
-  isPaused = false
+  isPaused = false,
+  onPause,
+  showPauseButton = false
 }: TimerDisplayProps) {
   // Simple format function for per-question timer
   const formatTime = (ms: number): string => {
@@ -79,7 +83,8 @@ export default function TimerDisplay({
   }
 
   const formatTimeWithTicks = (milliseconds: number) => {
-    const totalSeconds = Math.floor(milliseconds / 1000)
+    // Use Math.ceil to ensure we don't round down and show 0 when there's still time left
+    const totalSeconds = Math.ceil(milliseconds / 1000)
     const hours = Math.floor(totalSeconds / 3600)
     const minutes = Math.floor((totalSeconds % 3600) / 60)
     const seconds = totalSeconds % 60
@@ -97,11 +102,6 @@ export default function TimerDisplay({
       const now = isPaused ? currentTime : Date.now()
       const elapsedMs = now - (startTime || Date.now())
       const remainingMs = Math.max(0, totalTimeMs - elapsedMs)
-      
-      // Check if time is up
-      if (remainingMs === 0 && onTimeUp) {
-        onTimeUp()
-      }
       
       return {
         time: formatTimeWithTicks(remainingMs),
@@ -124,6 +124,21 @@ export default function TimerDisplay({
   }
 
   const { time, isLowTime, isCritical } = getDisplayTime()
+
+  // Handle time-up logic in useEffect to avoid setState during render
+  useEffect(() => {
+    if (mode === 'countdown' && duration && onTimeUp && !isPaused) {
+      const totalTimeMs = duration * 60 * 1000
+      const now = Date.now()
+      const elapsedMs = now - (startTime || Date.now())
+      const remainingMs = totalTimeMs - elapsedMs
+      
+      // Only trigger when time is actually up (not just rounded down)
+      if (remainingMs <= 0) {
+        onTimeUp()
+      }
+    }
+  }, [currentTime, mode, duration, onTimeUp, startTime, isPaused])
 
   const getSizeClasses = () => {
     switch (size) {
@@ -252,6 +267,25 @@ export default function TimerDisplay({
           >
             {time}
           </div>
+
+          {/* Pause Button */}
+          {showPauseButton && onPause && (
+            <motion.button
+              onClick={onPause}
+              className="ml-2 p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Pause Session"
+            >
+              <svg 
+                className="w-4 h-4 text-slate-600 dark:text-slate-300" 
+                fill="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+              </svg>
+            </motion.button>
+          )}
         </div>
 
         {/* Premium glow effect for critical time */}
