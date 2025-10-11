@@ -155,7 +155,7 @@ export default function PremiumBookCard({
                   </p>
                 </div>
               ) : (
-                <div className="max-h-80 sm:max-h-96 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
+                <div className="max-h-80 sm:max-h-96 overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
                   {chapters.map((chapter, index) => {
                     const config = chapterConfigs[chapter.chapter_name] || {
                       selected: false,

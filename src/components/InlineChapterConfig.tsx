@@ -22,34 +22,34 @@ export default function InlineChapterConfig({
       animate={{ opacity: 1, width: 'auto' }}
       exit={{ opacity: 0, width: 0 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="flex items-center space-x-2 ml-3"
+      className="flex items-center space-x-2 ml-3 pl-3 border-l-2 border-slate-200 dark:border-slate-600"
     >
-      {/* Mode Selection - Compact Inline */}
-      <div className="flex bg-slate-100 dark:bg-slate-700 rounded-md p-0.5">
+      {/* Mode Selection - Professional Compact Design */}
+      <div className="flex bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-700 dark:to-slate-800 rounded-lg p-0.5 shadow-sm border border-slate-200 dark:border-slate-600">
         <button
           onClick={() => onConfigChange({ ...config, mode: 'quantity' })}
-          className={`px-2.5 py-1 text-xs font-medium rounded-sm transition-all whitespace-nowrap ${
+          className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap ${
             config.mode === 'quantity'
-              ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+              ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-md border border-blue-200 dark:border-blue-500'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/50 dark:hover:bg-slate-700/50'
           }`}
         >
           Quantity
         </button>
         <button
           onClick={() => onConfigChange({ ...config, mode: 'range' })}
-          className={`px-2.5 py-1 text-xs font-medium rounded-sm transition-all whitespace-nowrap ${
+          className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all whitespace-nowrap ${
             config.mode === 'range'
-              ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+              ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-400 shadow-md border border-blue-200 dark:border-blue-500'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/50 dark:hover:bg-slate-700/50'
           }`}
         >
           Range
         </button>
       </div>
 
-      {/* Input Field - Truly Inline & Compact */}
-      <div className="flex items-center space-x-1.5">
+      {/* Input Field - Enhanced Professional Design */}
+      <div className="flex items-center space-x-1.5 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-600">
         {config.mode === 'quantity' ? (
           <motion.div
             key="quantity"
@@ -67,9 +67,9 @@ export default function InlineChapterConfig({
                 ...config,
                 values: { count: Math.min(parseInt(e.target.value) || 1, questionCount) }
               })}
-              className="w-12 px-1.5 py-1 text-xs text-center border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="w-12 px-1.5 py-1 text-xs text-center font-semibold border border-slate-300 dark:border-slate-500 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
             />
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
               / {questionCount}
             </span>
           </motion.div>
@@ -93,9 +93,9 @@ export default function InlineChapterConfig({
                   end: config.values.end || 1
                 }
               })}
-              className="w-10 px-1 py-1 text-xs text-center border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="w-10 px-1 py-1 text-xs text-center font-semibold border border-slate-300 dark:border-slate-500 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
             />
-            <span className="text-xs text-slate-500 dark:text-slate-400">-</span>
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">-</span>
             <input
               type="number"
               min="1"
@@ -108,7 +108,7 @@ export default function InlineChapterConfig({
                   end: Math.min(parseInt(e.target.value) || 1, questionCount)
                 }
               })}
-              className="w-10 px-1 py-1 text-xs text-center border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="w-10 px-1 py-1 text-xs text-center font-semibold border border-slate-300 dark:border-slate-500 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
             />
           </motion.div>
         )}

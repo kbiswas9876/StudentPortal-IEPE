@@ -248,7 +248,7 @@ export default function PremiumPracticeSetup({
         </motion.div>
 
         {/* Mobile-First Layout */}
-        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-8 lg:min-h-[calc(100vh-16rem)] pb-24 sm:pb-20 lg:pb-0">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-8 lg:min-h-[calc(100vh-16rem)] pb-24 sm:pb-20">
           {/* Mobile: Books & Chapters First, Desktop: Left Column (wider - 75% of space) */}
           <div className="lg:col-span-9 flex flex-col">
             <motion.div
@@ -396,7 +396,7 @@ export default function PremiumPracticeSetup({
         </div>
       </div>
 
-      {/* Sticky Action Footer */}
+      {/* Sticky Action Footer - Always Visible on All Screen Sizes */}
       <StickyActionFooter
         totalQuestions={getTotalQuestions()}
         onStartSession={handleStartSession}
