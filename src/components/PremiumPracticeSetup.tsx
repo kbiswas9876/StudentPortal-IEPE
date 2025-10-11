@@ -263,7 +263,7 @@ export default function PremiumPracticeSetup({
               
               {/* Mobile: Full height, Desktop: Scrollable */}
               <div className="flex-1 lg:overflow-y-auto lg:pr-2">
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
                   {books.map((book) => (
                     <PremiumBookCard
                       key={book.id}
