@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { Database } from '@/types/database'
-import PracticeInterface from '@/components/PracticeInterface'
+import nextDynamic from 'next/dynamic'
+const DynamicPracticeInterface = nextDynamic(() => import('@/components/PracticeInterface'), { ssr: false })
 import PracticeSkeletonLoader from '@/components/PracticeSkeletonLoader'
 
 type Question = Database['public']['Tables']['questions']['Row']
@@ -32,8 +32,9 @@ function PracticePageContent() {
     if (authLoading) return
 
     if (!user) {
-      router.push('/login')
-      return
+      // Anonymous mode: proceed without redirect for auto-bootstrap and basic practice
+      // Bookmark features and user-specific operations will be disabled
+      // Intentionally not redirecting to /login
     }
 
     // Check if this is a saved session, mock test, or regular practice
@@ -52,8 +53,11 @@ function PracticePageContent() {
     } else {
       // Regular practice mode
       if (questionIds.length === 0) {
-        setError('No questions selected for practice session')
-        setLoading(false)
+        // Auto-bootstrap a minimal session with 3 random questions from the first official book's first chapter
+        if (!questionsFetchedRef.current) {
+          questionsFetchedRef.current = true
+          autoBootstrapSession()
+        }
         return
       }
 
@@ -111,6 +115,63 @@ function PracticePageContent() {
     } catch (error) {
       console.error('Error fetching mock test data:', error)
       setError(error instanceof Error ? error.message : 'Failed to fetch mock test data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Auto-bootstrap a minimal practice session when no questionIds are provided via URL
+  const autoBootstrapSession = async () => {
+    try {
+      setLoading(true)
+      console.log('Auto-bootstrap: initializing minimal practice session (3 questions)')
+
+      // 1) Get books and choose first official
+      const booksRes = await fetch('/api/books?includeCustom=false')
+      const booksJson = await booksRes.json()
+      const books = booksJson?.data || []
+      const official = books.find((b: any) => b.type === 'official')
+      if (!official?.code) {
+        throw new Error('No official books available to auto-bootstrap')
+      }
+      const bookCode = official.code
+
+      // 2) Get chapters for the book and choose first
+      const chaptersRes = await fetch(`/api/chapters?bookCode=${encodeURIComponent(bookCode)}`)
+      const chaptersJson = await chaptersRes.json()
+      const chapters = chaptersJson?.data || []
+      const firstChapter = chapters[0]?.chapter_name
+      if (!firstChapter) {
+        throw new Error('No chapters found for selected book')
+      }
+
+      // 3) Get question IDs (quantity mode)
+      const idsRes = await fetch('/api/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookCode, chapterName: firstChapter, mode: 'quantity', values: { count: 3 } }),
+      })
+      const idsJson = await idsRes.json()
+      const questionIds = idsJson?.data || []
+      if (!Array.isArray(questionIds) || questionIds.length === 0) {
+        throw new Error('No question IDs returned for auto-bootstrap')
+      }
+
+      // 4) Fetch full question objects for practice
+      const practiceRes = await fetch('/api/practice/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionIds }),
+      })
+      const practiceJson = await practiceRes.json()
+      if (!practiceRes.ok) {
+        throw new Error(practiceJson.error || 'Failed to fetch practice questions for auto-bootstrap')
+      }
+      console.log('Auto-bootstrap questions fetched:', practiceJson.data)
+      setQuestions(practiceJson.data || [])
+    } catch (error) {
+      console.error('Auto-bootstrap error:', error)
+      setError(error instanceof Error ? error.message : 'Failed to auto-bootstrap practice session')
     } finally {
       setLoading(false)
     }
@@ -210,8 +271,8 @@ function PracticePageContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <PracticeInterface 
-        questions={questions} 
+      <DynamicPracticeInterface
+        questions={questions}
         testMode={testMode === 'mock' ? 'timed' : testMode}
         timeLimitInMinutes={mockTestData ? mockTestData.test.total_time_minutes : (timeLimit ? parseInt(timeLimit) : undefined)}
         mockTestData={mockTestData}

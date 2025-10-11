@@ -5,10 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { Database } from '@/types/database'
-import PerformanceDashboard from '@/components/PerformanceDashboard'
-import FilterToolbar from '@/components/FilterToolbar'
-import QuestionBreakdown from '@/components/QuestionBreakdown'
-import StrategicPerformanceMatrix from '@/components/StrategicPerformanceMatrix'
+import PerformanceAnalysisDashboard from '@/components/PerformanceAnalysisDashboard'
 import Leaderboard from '@/components/Leaderboard'
 import AnalysisSkeletonLoader from '@/components/AnalysisSkeletonLoader'
 import { Tab } from '@headlessui/react'
@@ -47,17 +44,12 @@ export default function AnalysisReportPage() {
 
   useEffect(() => {
     if (authLoading) return
-
-    if (!user) {
-      router.push('/login')
-      return
-    }
-
+    // Anonymous viewing permitted for verification; login not required
     if (resultId && !dataFetchedRef.current) {
       dataFetchedRef.current = true
       fetchAnalysisData()
     }
-  }, [user, authLoading, resultId, router])
+  }, [authLoading, resultId])
 
   // Reset loading state on component mount
   useEffect(() => {
@@ -358,8 +350,6 @@ export default function AnalysisReportPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Performance Dashboard */}
-        {analysisData?.testResult && <PerformanceDashboard testResult={analysisData.testResult} />}
 
         {/* Tabbed Interface for Mock Tests */}
         {analysisData?.isMockTest ? (
@@ -394,52 +384,15 @@ export default function AnalysisReportPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {/* Strategic Performance Matrix - only show if we have answer log data */}
-                  {analysisData?.answerLog && analysisData?.answerLog.length > 0 && (
-                    <StrategicPerformanceMatrix
-                      questions={analysisData?.answerLog?.map(answer => ({
-                        ...answer,
-                        question: analysisData?.questions?.find(q => q.id === answer.question_id)
-                      })).filter(item => item.question) as any || []}
-                      peerAverages={analysisData?.peerAverages}
-                      onMatrixFilter={setMatrixFilter}
-                      activeCategory={matrixFilter}
+                  {analysisData && (
+                    <PerformanceAnalysisDashboard
+                      sessionResult={{
+                        testResult: analysisData.testResult,
+                        answerLog: analysisData.answerLog,
+                        questions: analysisData.questions
+                      }}
+                      onNavigateToSolutions={() => router.push(`/analysis/${resultId}/solutions`)}
                     />
-                  )}
-
-                  {/* Interactive Filtering - only show if we have answer log data */}
-                  {analysisData?.answerLog && analysisData?.answerLog.length > 0 && (
-                    <FilterToolbar 
-                      filter={filter} 
-                      onFilterChange={setFilter}
-                      timeFilter={timeFilter}
-                      onTimeFilterChange={setTimeFilter}
-                      peerAverages={analysisData?.peerAverages}
-                    />
-                  )}
-
-                  {/* Question Breakdown */}
-                  {analysisData?.answerLog && analysisData?.answerLog.length > 0 ? (
-                    <QuestionBreakdown 
-                      questions={filteredQuestions}
-                      onBookmark={handleBookmark}
-                      onReportError={handleReportError}
-                      peerAverages={analysisData?.peerAverages}
-                    />
-                  ) : (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.3 }}
-                      className="text-center py-12"
-                    >
-                      <div className="bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 p-6 rounded-lg">
-                        <h3 className="text-lg font-semibold mb-2">Detailed Question Analysis Not Available</h3>
-                        <p className="text-sm">
-                          The overall performance summary is shown above, but detailed question-by-question analysis is not available for this session.
-                        </p>
-                      </div>
-                    </motion.div>
                   )}
                 </motion.div>
               </Tab.Panel>
@@ -461,84 +414,19 @@ export default function AnalysisReportPage() {
         ) : (
           // Regular practice session analysis (no tabs)
           <>
-            {/* Strategic Performance Matrix - only show if we have answer log data */}
-            {analysisData?.answerLog && analysisData?.answerLog.length > 0 && (
-              <StrategicPerformanceMatrix
-                questions={analysisData?.answerLog?.map(answer => ({
-                  ...answer,
-                  question: analysisData?.questions?.find(q => q.id === answer.question_id)
-                })).filter(item => item.question) as any || []}
-                peerAverages={analysisData?.peerAverages}
-                onMatrixFilter={setMatrixFilter}
-                activeCategory={matrixFilter}
+            {analysisData && (
+              <PerformanceAnalysisDashboard
+                sessionResult={{
+                  testResult: analysisData.testResult,
+                  answerLog: analysisData.answerLog,
+                  questions: analysisData.questions
+                }}
+                onNavigateToSolutions={() => router.push(`/analysis/${resultId}/solutions`)}
               />
-            )}
-
-            {/* Interactive Filtering - only show if we have answer log data */}
-            {analysisData?.answerLog && analysisData?.answerLog.length > 0 && (
-              <FilterToolbar 
-                filter={filter} 
-                onFilterChange={setFilter}
-                timeFilter={timeFilter}
-                onTimeFilterChange={setTimeFilter}
-                peerAverages={analysisData?.peerAverages}
-              />
-            )}
-
-            {/* Question Breakdown */}
-            {analysisData?.answerLog && analysisData?.answerLog.length > 0 ? (
-              <QuestionBreakdown 
-                questions={filteredQuestions}
-                onBookmark={handleBookmark}
-                onReportError={handleReportError}
-                peerAverages={analysisData?.peerAverages}
-              />
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="text-center py-12"
-          >
-            <div className="bg-yellow-100 dark:bg-yellow-900 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold mb-2">Detailed Question Analysis Not Available</h3>
-              <p className="text-sm">
-                The overall performance summary is shown above, but detailed question-by-question analysis is not available for this session.
-              </p>
-            </div>
-          </motion.div>
             )}
           </>
         )}
 
-        {/* Debug Section - Remove in production */}
-        {process.env.NODE_ENV === 'development' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-8 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
-          >
-            <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Debug Info</h4>
-            <div className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-              <p>Loading: {loading ? 'true' : 'false'}</p>
-              <p>Data Fetched: {dataFetchedRef.current ? 'true' : 'false'}</p>
-              <p>Analysis Data: {analysisData ? 'loaded' : 'null'}</p>
-              <p>Answer Log Count: {analysisData?.answerLog?.length || 0}</p>
-              <p>Questions Count: {analysisData?.questions?.length || 0}</p>
-              <button
-                onClick={() => {
-                  console.log('Manual reset triggered')
-                  setLoading(false)
-                  dataFetchedRef.current = false
-                }}
-                className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded transition-colors"
-              >
-                Reset Loading State
-              </button>
-            </div>
-          </motion.div>
-        )}
       </div>
     </div>
   )

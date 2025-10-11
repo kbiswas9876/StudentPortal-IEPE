@@ -9,9 +9,8 @@ const nextConfig = {
     // number of pages that should be kept simultaneously without being disposed
     pagesBufferLength: 2,
   },
-  // Disable fast refresh for better stability
+  // Disable optimizePackageImports to avoid vendor-chunks resolution issues in dev
   experimental: {
-    optimizePackageImports: ['framer-motion', '@headlessui/react'],
   },
   // Turbopack configuration (moved from experimental)
   turbopack: {
