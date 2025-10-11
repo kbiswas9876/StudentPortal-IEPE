@@ -230,8 +230,8 @@ export default function PremiumPracticeSetup({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto px-4 py-4 sm:py-8">
+    <div className="w-full">
+      <div className="w-full px-0 py-0">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -248,9 +248,9 @@ export default function PremiumPracticeSetup({
         </motion.div>
 
         {/* Mobile-First Layout */}
-        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-5 lg:gap-8 lg:min-h-[calc(100vh-16rem)] pb-24 sm:pb-20 lg:pb-0">
-          {/* Mobile: Books & Chapters First, Desktop: Left Column */}
-          <div className="lg:col-span-3 flex flex-col">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-8 lg:min-h-[calc(100vh-16rem)] pb-24 sm:pb-20 lg:pb-0">
+          {/* Mobile: Books & Chapters First, Desktop: Left Column (wider) */}
+          <div className="lg:col-span-8 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -263,7 +263,7 @@ export default function PremiumPracticeSetup({
               
               {/* Mobile: Full height, Desktop: Scrollable */}
               <div className="flex-1 lg:overflow-y-auto lg:pr-2">
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
                   {books.map((book) => (
                     <PremiumBookCard
                       key={book.id}
@@ -283,7 +283,7 @@ export default function PremiumPracticeSetup({
           </div>
 
           {/* Mobile: Settings Second, Desktop: Right Column */}
-          <div className="lg:col-span-2 flex flex-col">
+          <div className="lg:col-span-4 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}

@@ -266,7 +266,7 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full px-6 py-8 max-w-[1920px] mx-auto">
           {/* Tab Navigation */}
           <div className="mb-8">
             <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
