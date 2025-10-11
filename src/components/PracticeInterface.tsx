@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
-import Timer from './Timer'
+import TimerDisplay from './TimerDisplay'
 import QuestionPalette from './QuestionPalette'
 import PremiumStatusPanel from './PremiumStatusPanel'
 import QuestionDisplay from './QuestionDisplay'
@@ -16,6 +16,10 @@ import EndSessionModal from './EndSessionModal'
 import ReportErrorModal from './ReportErrorModal'
 import ExitSessionModal from './ExitSessionModal'
 import ZenModeBackButton from './ZenModeBackButton'
+import PauseOverlay from './PauseOverlay'
+import PauseModal from './PauseModal'
+import SubmissionConfirmationModal from './SubmissionConfirmationModal'
+import AutoSubmissionOverlay from './AutoSubmissionOverlay'
 import KatexRenderer from './ui/KatexRenderer'
 import { FlagIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline'
 
@@ -26,7 +30,6 @@ export type QuestionStatus = 'not_visited' | 'unanswered' | 'answered' | 'marked
 export type SessionState = {
   status: QuestionStatus
   user_answer: string | null
-  time_taken: number
   is_bookmarked: boolean
 }
 
@@ -54,7 +57,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [currentIndex, setCurrentIndex] = useState(0)
   const [sessionStates, setSessionStates] = useState<SessionState[]>([])
   const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now())
-  const [currentQuestionStartTime, setCurrentQuestionStartTime] = useState<number>(Date.now())
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -62,20 +64,132 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showEndSessionModal, setShowEndSessionModal] = useState(false)
   const [showExitModal, setShowExitModal] = useState(false)
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false)
+  const [showPauseModal, setShowPauseModal] = useState(false)
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false)
+  const [showAutoSubmissionOverlay, setShowAutoSubmissionOverlay] = useState(false)
+  const [isSessionPaused, setIsSessionPaused] = useState(false)
+  
+  // Centralized Timer Architecture - Your Method Implementation
+  const [displayTime, setDisplayTime] = useState(0); // State for triggering re-renders of timer display
+  
+  // Timer pause state management
+  const [isPaused, setIsPaused] = useState(false);
+  const [timeWhenPaused, setTimeWhenPaused] = useState(0);
+  
+  // Pause functionality
+  const handlePauseSession = () => {
+    setIsSessionPaused(true);
+    setShowPauseModal(true);
+    // The existing pause logic will handle timer pausing
+  };
+
+  const handleResumeSession = () => {
+    setIsSessionPaused(false);
+    setShowPauseModal(false);
+    // The existing resume logic will handle timer resuming
+  };
+
+  const handlePauseExit = () => {
+    setShowPauseModal(false);
+    setIsSessionPaused(false); // Remove the pause overlay
+    setShowExitModal(true);
+  };
+  
+  // Refs for synchronous state management (prevents race conditions)
+  const cumulativeTimeRef = useRef<Record<string, number>>({}); // Stores cumulative time per question ID
+  const currentQuestionStartRef = useRef<number>(Date.now()); // Start time of current viewing session
+  const activeQuestionIdRef = useRef<string>(questions[0]?.id?.toString() || ''); // Current question ID
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionStartTimeRef = useRef<number>(Date.now()); // Ref to store current session start time for immediate access
+
+  // Save time for current question (synchronous)
+  const saveCurrentQuestionTime = useCallback(() => {
+    const currentTime = Date.now();
+    const timeSpentThisSession = currentTime - currentQuestionStartRef.current;
+    const questionId = activeQuestionIdRef.current;
+    
+    // Add to cumulative time
+    const previousTime = cumulativeTimeRef.current[questionId] || 0;
+    cumulativeTimeRef.current[questionId] = previousTime + timeSpentThisSession;
+    
+  }, []);
+  
+  // Timer interval with pause/resume functionality
+  useEffect(() => {
+    let timerId: NodeJS.Timeout | null = null;
+
+    if (!showExitModal && !isPaused && !isSessionPaused) {
+      // RESUMING - Start the interval for updating display
+      timerId = setInterval(() => {
+        const currentTime = Date.now();
+        const timeSpentThisSession = currentTime - currentQuestionStartRef.current;
+        const questionId = activeQuestionIdRef.current;
+        const previousTime = cumulativeTimeRef.current[questionId] || 0;
+        const totalTime = previousTime + timeSpentThisSession;
+        
+        setDisplayTime(totalTime);
+      }, 100); // Update every 100ms for smooth display
+      
+      intervalRef.current = timerId;
+    } else {
+      // PAUSING - Clear the interval to freeze timers
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    // Cleanup
+    return () => {
+      if (timerId) {
+        clearInterval(timerId);
+      }
+      // Note: We don't save time here as it's handled by the pause/resume logic
+    };
+  }, [showExitModal, isPaused, isSessionPaused, saveCurrentQuestionTime]); // Depend on modal state
+
+  // Handle timer pause/resume for both main session and per-question timers
+  useEffect(() => {
+    if ((showExitModal || isSessionPaused) && !isPaused) {
+      // PAUSING - Record when we paused and save current question time
+      setTimeWhenPaused(Date.now());
+      setIsPaused(true);
+      
+      // Save the current question time before pausing
+      saveCurrentQuestionTime();
+    } else if (!showExitModal && !isSessionPaused && isPaused) {
+      // RESUMING - Adjust main session timer and reset per-question timer
+      const pausedDuration = Date.now() - timeWhenPaused;
+      
+      // Adjust main session timer - update ref immediately to prevent glitch
+      const newStartTime = sessionStartTimeRef.current + pausedDuration;
+      sessionStartTimeRef.current = newStartTime;
+      setSessionStartTime(newStartTime);
+      
+      // CRITICAL FIX: Reset per-question timer start time to current time
+      // The cumulative time is already saved, so we just need to reset the current session
+      currentQuestionStartRef.current = Date.now();
+      
+      // Update display with the saved cumulative time for current question
+      const questionId = activeQuestionIdRef.current;
+      const savedTime = cumulativeTimeRef.current[questionId] || 0;
+      setDisplayTime(savedTime);
+      
+      setIsPaused(false);
+    }
+  }, [showExitModal, isSessionPaused, isPaused, timeWhenPaused, saveCurrentQuestionTime]);
 
   // Initialize session states
   useEffect(() => {
     if (questions.length > 0) {
       if (savedSessionState) {
         // Restore saved session state - RE-HYDRATION MODE
-        console.log('Restoring saved session state:', savedSessionState)
         
         const restoredStates: SessionState[] = questions.map((q, index) => {
           const questionId = q.id
           return {
             status: (savedSessionState?.questionStatuses?.[questionId] as QuestionStatus) || 'not_visited',
             user_answer: savedSessionState?.userAnswers?.[questionId] || null,
-            time_taken: (savedSessionState?.timePerQuestion?.[questionId] || 0) * 1000, // Convert back to milliseconds
             is_bookmarked: savedSessionState?.bookmarkedQuestions?.[questionId] || false
           }
         })
@@ -83,36 +197,67 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         // RE-HYDRATE ALL STATE FROM SAVED SESSION
         setSessionStates(restoredStates)
         setCurrentIndex(savedSessionState?.currentIndex || 0)
-        setSessionStartTime(savedSessionState?.sessionStartTime || Date.now())
-        setCurrentQuestionStartTime(Date.now())
+        
+        // --- The Core Fix: Main Session Timer State Persistence ---
+        // Instead of using the old startTime, we calculate a NEW adjusted startTime.
+        // This implements the "Adjusted Start Time" trick to pause/resume the main timer.
+        const savedMainTimerValue = savedSessionState?.mainTimerValue || 0; // This is in seconds
+        const savedMainTimerValueMs = savedMainTimerValue * 1000; // Convert to milliseconds
+        const adjustedStartTime = Date.now() - savedMainTimerValueMs;
+        
+        // Use this new adjusted start time to initialize the session
+        // The timer component will now calculate: Date.now() - adjustedStartTime = savedMainTimerValueMs
+        // This effectively "pauses" and "resumes" the timer across sessions
+        setSessionStartTime(adjustedStartTime);
+        sessionStartTimeRef.current = adjustedStartTime; // Keep ref in sync
+        
+        // Restore per-question timing data into ref
+        if (savedSessionState?.timePerQuestion) {
+          const restoredTimePerQuestion: Record<string, number> = {}
+          Object.entries(savedSessionState.timePerQuestion).forEach(([questionId, timeInSeconds]) => {
+            restoredTimePerQuestion[questionId] = (timeInSeconds as number) * 1000 // Convert back to milliseconds
+          })
+          cumulativeTimeRef.current = restoredTimePerQuestion
+        }
+        
+        // Set initial active question ID and start time
+        if (questions.length > 0) {
+          const initialQuestionId = questions[savedSessionState?.currentIndex || 0].id.toString()
+          activeQuestionIdRef.current = initialQuestionId
+          currentQuestionStartRef.current = Date.now()
+          
+          // Set initial display time
+          const initialTime = cumulativeTimeRef.current[initialQuestionId] || 0
+          setDisplayTime(initialTime)
+        }
+        
         setIsInitialized(true)
         
-        console.log('Session state restored successfully with:', {
-          currentIndex: savedSessionState?.currentIndex,
-          sessionStartTime: savedSessionState?.sessionStartTime,
-          userAnswers: Object.keys(savedSessionState?.userAnswers || {}).length,
-          questionStatuses: Object.keys(savedSessionState?.questionStatuses || {}).length
-        })
       } else {
         // Initialize new session - NEW SESSION MODE
         const initialStates: SessionState[] = questions.map(() => ({
           status: 'not_visited',
           user_answer: null,
-          time_taken: 0,
           is_bookmarked: false
         }))
         setSessionStates(initialStates)
-        setSessionStartTime(Date.now())
-        setCurrentQuestionStartTime(Date.now())
+        const initialStartTime = Date.now();
+        setSessionStartTime(initialStartTime);
+        sessionStartTimeRef.current = initialStartTime; // Keep ref in sync
+        
+        // Set initial active question ID and start time for new session
+        if (questions.length > 0) {
+          const initialQuestionId = questions[0].id.toString()
+          activeQuestionIdRef.current = initialQuestionId
+          currentQuestionStartRef.current = Date.now()
+          setDisplayTime(0) // Start from 0 for new session
+        }
+        
         setIsInitialized(true)
       }
     }
   }, [questions, savedSessionState])
 
-  // Update current question start time when index changes
-  useEffect(() => {
-    setCurrentQuestionStartTime(Date.now())
-  }, [currentIndex])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -153,11 +298,28 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  const currentQuestion = questions[currentIndex]
+  // Handle question navigation
+  const handleNavigation = useCallback((newIndex: number) => {
+    if (newIndex < 0 || newIndex >= questions.length || newIndex === currentIndex) return;
+    
+    // Save time for current question before switching
+    saveCurrentQuestionTime();
+    
+    // Update to new question
+    const newQuestionId = questions[newIndex].id.toString();
+    setCurrentIndex(newIndex);
+    activeQuestionIdRef.current = newQuestionId;
+    const newStartTime = Date.now();
+    currentQuestionStartRef.current = newStartTime;
+    
+    // Update display with previously saved time for this question
+    const previousTime = cumulativeTimeRef.current[newQuestionId] || 0;
+    setDisplayTime(previousTime);
+    
+  }, [currentIndex, questions, saveCurrentQuestionTime]);
   const currentState = sessionStates[currentIndex] || {
     status: 'not_visited' as QuestionStatus,
     user_answer: null,
-    time_taken: 0,
     is_bookmarked: false
   }
 
@@ -178,6 +340,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     })
   }, [])
 
+
   const handleAnswerChange = (answer: string) => {
     // Only update status if not already marked for review
     // If marked for review and user changes answer, keep it marked
@@ -193,9 +356,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleSaveAndNext = () => {
-    // Record time spent on current question
-    const timeSpent = Date.now() - currentQuestionStartTime
-    
     // Determine status based on current state and user answer
     let newStatus: QuestionStatus
     if (currentState.status === 'marked_for_review') {
@@ -208,13 +368,12 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     }
     
     updateSessionState(currentIndex, {
-      time_taken: currentState.time_taken + timeSpent,
       status: newStatus
     })
 
     // Move to next question or show end-of-session modal
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1)
+      handleNavigation(currentIndex + 1)
     } else {
       // End of session - show modal
       setShowEndSessionModal(true)
@@ -222,17 +381,14 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleMarkForReviewAndNext = () => {
-    // Record time spent on current question
-    const timeSpent = Date.now() - currentQuestionStartTime
     updateSessionState(currentIndex, {
-      status: 'marked_for_review',
-      time_taken: currentState.time_taken + timeSpent
+      status: 'marked_for_review'
       // Keep existing user_answer - don't change it
     })
 
     // Move to next question or show end-of-session modal
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1)
+      handleNavigation(currentIndex + 1)
     } else {
       // End of session - show modal
       setShowEndSessionModal(true)
@@ -249,7 +405,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleReturnToStart = () => {
-    setCurrentIndex(0)
+    handleNavigation(0)
     setShowEndSessionModal(false)
   }
 
@@ -280,8 +436,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         currentIndex,
         
         // Timer data
-        sessionStartTime,
-        mainTimerValue: Math.floor((Date.now() - sessionStartTime) / 1000),
+        sessionStartTime: effectiveSessionStartTime,
+        mainTimerValue: Math.floor((Date.now() - effectiveSessionStartTime) / 1000), // Save in seconds for database efficiency
         
         // User progress data - capture ALL live state
         userAnswers: questions.reduce((acc, q, index) => {
@@ -299,9 +455,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         }, {} as Record<string, string>),
         
         timePerQuestion: questions.reduce((acc, q, index) => {
-          const state = sessionStates[index]
-          if (state?.time_taken) {
-            acc[q.id] = Math.floor(state.time_taken / 1000) // Convert to seconds
+          const questionTime = cumulativeTimeRef.current[q.id.toString()] || 0
+          if (questionTime > 0) {
+            acc[q.id] = Math.floor(questionTime / 1000) // Convert to seconds
           }
           return acc
         }, {} as Record<string, number>),
@@ -361,7 +517,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const getCurrentProgress = () => {
     const answered = sessionStates.filter(state => state.user_answer !== null).length
     const total = questions.length
-    const timeSpent = Math.floor((Date.now() - sessionStartTime) / 1000)
+    const timeSpent = Math.floor((Date.now() - effectiveSessionStartTime) / 1000)
     const minutes = Math.floor(timeSpent / 60)
     const seconds = timeSpent % 60
     return {
@@ -426,9 +582,23 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const handleSubmitTest = async () => {
     if (isSubmitting) return
 
+    // Show confirmation modal for manual submission
+    setShowSubmissionModal(true)
+  }
+
+  const handleConfirmSubmission = async () => {
+    if (isSubmitting) return
+
     setIsSubmitting(true)
+    setShowSubmissionModal(false)
 
     try {
+      // Save current question time first
+      saveCurrentQuestionTime();
+      
+      // Get final time data
+      const finalTimeData = { ...cumulativeTimeRef.current };
+
       // Calculate final results
       const totalQuestions = questions.length
       const correctAnswers = sessionStates.filter((state, index) => {
@@ -454,7 +624,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0
       }
       
-      const totalTime = Math.round((Date.now() - sessionStartTime) / 1000) // Convert to seconds
+      const totalTime = Math.round((Date.now() - effectiveSessionStartTime) / 1000) // Convert to seconds
 
       console.log('Submitting practice session:', {
         user_id: user?.id,
@@ -479,7 +649,101 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             status: sessionStates[index].user_answer ? 
               (sessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
               'skipped',
-            time_taken: Math.round(sessionStates[index].time_taken / 1000) // Convert to seconds
+            time_taken: Math.round((cumulativeTimeRef.current[question.id.toString()] || 0) / 1000) // Use new per-question timing data
+          })),
+          score,
+          total_time: totalTime,
+          total_questions: totalQuestions,
+          correct_answers: correctAnswers,
+          incorrect_answers: incorrectAnswers,
+          skipped_answers: skippedAnswers,
+          // Mock test specific fields
+          session_type: mockTestData ? 'mock_test' : 'practice',
+          mock_test_id: mockTestData ? mockTestData.test.id : null
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('Test submitted successfully:', result)
+        // Redirect to analysis report
+        router.push(`/analysis/${result.test_id}`)
+      } else {
+        const errorData = await response.json()
+        console.error('Test submission failed:', errorData)
+        throw new Error(errorData.error || 'Failed to submit test')
+      }
+    } catch (error) {
+      console.error('Error submitting test:', error)
+      setIsSubmitting(false)
+      setShowAutoSubmissionOverlay(false)
+    }
+  }
+
+  const handleAutoSubmission = async () => {
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+    setShowAutoSubmissionOverlay(true)
+
+    try {
+      // Save current question time first
+      saveCurrentQuestionTime();
+      
+      // Get final time data
+      const finalTimeData = { ...cumulativeTimeRef.current };
+
+      // Calculate final results
+      const totalQuestions = questions.length
+      const correctAnswers = sessionStates.filter((state, index) => {
+        const question = questions[index]
+        return state.user_answer === question.correct_option
+      }).length
+      const incorrectAnswers = sessionStates.filter((state, index) => {
+        const question = questions[index]
+        return state.user_answer && state.user_answer !== question.correct_option
+      }).length
+      const skippedAnswers = sessionStates.filter(state => !state.user_answer).length
+
+      // Calculate score based on mock test rules or default percentage
+      let score: number
+      if (mockTestData) {
+        // Mock test scoring: use actual marks
+        const totalMarks = (correctAnswers * mockTestData.test.marks_per_correct) + 
+                          (incorrectAnswers * mockTestData.test.marks_per_incorrect)
+        const maxMarks = totalQuestions * mockTestData.test.marks_per_correct
+        score = maxMarks > 0 ? Math.round((totalMarks / maxMarks) * 100) : 0
+      } else {
+        // Regular practice scoring: percentage based
+        score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0
+      }
+      
+      const totalTime = Math.round((Date.now() - effectiveSessionStartTime) / 1000) // Convert to seconds
+
+      console.log('Submitting practice session:', {
+        user_id: user?.id,
+        total_questions: totalQuestions,
+        correct_answers: correctAnswers,
+        incorrect_answers: incorrectAnswers,
+        skipped_answers: skippedAnswers,
+        score
+      })
+
+      // Save test result
+      const response = await fetch('/api/practice/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+          questions: questions.map((question, index) => ({
+            question_id: question.id, // Use numeric ID from questions table
+            user_answer: sessionStates[index].user_answer,
+            status: sessionStates[index].user_answer ? 
+              (sessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
+              'skipped',
+            time_taken: Math.round((cumulativeTimeRef.current[question.id.toString()] || 0) / 1000) // Use new per-question timing data
           })),
           score,
           total_time: totalTime,
@@ -510,15 +774,15 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleQuestionNavigation = (index: number) => {
-    // Record time spent on current question
-    const timeSpent = Date.now() - currentQuestionStartTime
-    updateSessionState(currentIndex, {
-      time_taken: currentState.time_taken + timeSpent
-    })
-
-    setCurrentIndex(index)
+    handleNavigation(index)
     setShowMobileSidebar(false) // Close mobile sidebar
   }
+
+  // Calculate display time for current question - this runs on every tick
+  const currentQuestion = questions[currentIndex];
+
+  // Compute the effective session start time - use ref for immediate updates during pause/resume
+  const effectiveSessionStartTime = sessionStartTimeRef.current;
 
   if (!currentQuestion) {
     return (
@@ -545,6 +809,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   // Calculate answered questions for progress bar
   const answeredQuestions = sessionStates.filter(state => state.user_answer !== null).length
 
+  // Display time is now managed by the centralized timer interval
+  // No need to calculate here - it's updated every 100ms by the interval
+
   return (
     <div className="min-h-screen flex">
       {/* Progress Bar - Top of Screen */}
@@ -566,16 +833,54 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <div className="text-sm font-medium text-slate-600 dark:text-slate-300">
-              {mockTestData ? mockTestData.test.name : 'Practice Session'} - Question {currentIndex + 1} of {questions.length}
+            <div className="flex items-center space-x-3">
+              <div className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                {mockTestData ? mockTestData.test.name : 'Practice Session'} - Question {currentIndex + 1} of {questions.length}
+              </div>
+              <TimerDisplay
+                milliseconds={displayTime}
+                className="text-slate-600 dark:text-slate-400"
+                isPaused={isPaused}
+              />
             </div>
           </div>
-          <Timer sessionStartTime={sessionStartTime} />
         </div>
+      </div>
+
+      {/* Mobile Ultra-Premium Main Timer - Fixed at top edge */}
+      <div className="lg:hidden fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
+        <TimerDisplay
+          startTime={effectiveSessionStartTime}
+          mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
+          duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
+          onTimeUp={handleAutoSubmission}
+          size="large"
+          variant="ultra-premium"
+          className="shadow-2xl hover:shadow-3xl"
+          isPaused={isPaused}
+          onPause={handlePauseSession}
+          showPauseButton={true}
+        />
       </div>
 
       {/* Main Content Area */}
       <div className={`flex-1 pt-28 lg:pt-12 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4'}`}>
+        {/* Desktop Ultra-Premium Main Timer - Fixed at top edge */}
+        <div className="hidden lg:block fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
+          <TimerDisplay
+            startTime={effectiveSessionStartTime}
+            mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
+            duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
+            onTimeUp={handleAutoSubmission}
+            size="ultra"
+            variant="ultra-premium"
+            className="shadow-2xl hover:shadow-3xl"
+            isPaused={isPaused}
+            onPause={handlePauseSession}
+            showPauseButton={true}
+          />
+        </div>
+        
         <div className="h-screen overflow-y-auto">
           <QuestionDisplay
             question={currentQuestion}
@@ -586,8 +891,11 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
             onAnswerChange={handleAnswerChange}
             onBookmark={handleBookmark}
             onReportError={() => setShowReportModal(true)}
-            sessionStartTime={sessionStartTime}
+            sessionStartTime={effectiveSessionStartTime}
             timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
+            currentQuestionStartTime={currentQuestionStartRef.current}
+            cumulativeTime={displayTime}
+            isPaused={isPaused}
           />
         </div>
       </div>
@@ -636,10 +944,23 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
                     </svg>
                   </button>
                 </div>
-                <Timer 
-                  sessionStartTime={sessionStartTime} 
-                  duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-                />
+                <div className="flex items-center justify-between mt-4">
+                  <TimerDisplay
+                    milliseconds={displayTime}
+                    className="text-slate-600 dark:text-slate-400"
+                    isPaused={isPaused}
+                  />
+                  <TimerDisplay
+                    startTime={effectiveSessionStartTime}
+                    mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
+                    duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
+                    onTimeUp={handleSubmitTest}
+                    size="large"
+                    variant="premium"
+                    className="shadow-lg"
+                    isPaused={isPaused}
+                  />
+                </div>
               </div>
               
               {/* Mobile Question Palette - Full Height with Proper Flex Layout */}
@@ -696,6 +1017,32 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         currentProgress={getCurrentProgress()}
         statusCounts={getStatusCounts()}
       />
+
+      {/* Pause Overlay */}
+      <PauseOverlay isVisible={showPauseModal}>
+        <PauseModal
+          isOpen={showPauseModal}
+          onResume={handleResumeSession}
+          onExit={handlePauseExit}
+        />
+      </PauseOverlay>
+
+      {/* Submission Confirmation Modal */}
+      <SubmissionConfirmationModal
+        isOpen={showSubmissionModal}
+        onCancel={() => setShowSubmissionModal(false)}
+        onSubmit={handleConfirmSubmission}
+        timeRemaining={testMode === 'timed' && timeLimitInMinutes ? 
+          `${Math.floor((timeLimitInMinutes * 60 - (Date.now() - effectiveSessionStartTime) / 1000) / 60)}m ${Math.floor(((timeLimitInMinutes * 60 - (Date.now() - effectiveSessionStartTime) / 1000) % 60))}s` : 
+          undefined
+        }
+        statusCounts={getStatusCounts()}
+        isSubmitting={isSubmitting}
+      />
+
+      {/* Auto Submission Overlay */}
+      <AutoSubmissionOverlay isVisible={showAutoSubmissionOverlay} />
+
     </div>
   )
 }

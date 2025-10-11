@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Database } from '@/types/database'
 import { FlagIcon } from '@heroicons/react/24/outline'
 import KatexRenderer from './ui/KatexRenderer'
-import Timer from './Timer'
+import TimerDisplay from './TimerDisplay'
 
 type Question = Database['public']['Tables']['questions']['Row']
 
@@ -20,6 +20,9 @@ interface QuestionDisplayProps {
   onReportError?: () => void
   sessionStartTime?: number
   timeLimitInMinutes?: number
+  currentQuestionStartTime?: number
+  cumulativeTime?: number
+  isPaused?: boolean
 }
 
 export default function QuestionDisplay({
@@ -32,7 +35,10 @@ export default function QuestionDisplay({
   onBookmark,
   onReportError,
   sessionStartTime,
-  timeLimitInMinutes
+  timeLimitInMinutes,
+  currentQuestionStartTime,
+  cumulativeTime,
+  isPaused = false
 }: QuestionDisplayProps) {
   const [isBookmarking, setIsBookmarking] = useState(false)
 
@@ -56,10 +62,20 @@ export default function QuestionDisplay({
               Question {questionNumber} of {totalQuestions}
             </div>
             
-            {/* Session Timer - Immediately to the right of Question X of Y */}
-            {sessionStartTime && (
-              <div className="hidden lg:block">
-                <Timer sessionStartTime={sessionStartTime} duration={timeLimitInMinutes} />
+            {/* Per-Question Timer - Immediately to the right of Question X of Y */}
+            {currentQuestionStartTime && (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <TimerDisplay
+                  milliseconds={cumulativeTime || 0}
+                  size="small"
+                  className="text-slate-600 dark:text-slate-400"
+                  isPaused={isPaused}
+                />
               </div>
             )}
           </div>
