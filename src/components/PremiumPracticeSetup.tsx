@@ -249,8 +249,8 @@ export default function PremiumPracticeSetup({
 
         {/* Mobile-First Layout */}
         <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-8 lg:min-h-[calc(100vh-16rem)] pb-24 sm:pb-20 lg:pb-0">
-          {/* Mobile: Books & Chapters First, Desktop: Left Column (wider) */}
-          <div className="lg:col-span-8 flex flex-col">
+          {/* Mobile: Books & Chapters First, Desktop: Left Column (wider - 75% of space) */}
+          <div className="lg:col-span-9 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -282,8 +282,8 @@ export default function PremiumPracticeSetup({
             </motion.div>
           </div>
 
-          {/* Mobile: Settings Second, Desktop: Right Column */}
-          <div className="lg:col-span-4 flex flex-col">
+          {/* Mobile: Settings Second, Desktop: Right Column (narrower - 25% of space) */}
+          <div className="lg:col-span-3 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
