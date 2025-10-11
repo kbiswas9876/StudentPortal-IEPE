@@ -54,6 +54,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const { showToast } = useToast()
   const router = useRouter()
   
+  // Generate unique session key based on question set for sessionStorage
+  const sessionKey = useRef(`practice_session_${questions.map(q => q.id).join('_')}`).current
+  
   const [currentIndex, setCurrentIndex] = useState(0)
   const [sessionStates, setSessionStates] = useState<SessionState[]>([])
   const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now())
@@ -101,6 +104,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const activeQuestionIdRef = useRef<string>(questions[0]?.id?.toString() || ''); // Current question ID
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const sessionStartTimeRef = useRef<number>(Date.now()); // Ref to store current session start time for immediate access
+  const persistenceTimerRef = useRef<NodeJS.Timeout | null>(null); // Timer for auto-save
 
   // Save time for current question (synchronous)
   const saveCurrentQuestionTime = useCallback(() => {
@@ -112,7 +116,69 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     const previousTime = cumulativeTimeRef.current[questionId] || 0;
     cumulativeTimeRef.current[questionId] = previousTime + timeSpentThisSession;
     
+    // CRITICAL FIX: Reset the start time ref so the next save only adds NEW time
+    // Without this, the same time period gets added multiple times, causing accelerated timer
+    currentQuestionStartRef.current = currentTime;
+    
   }, []);
+  
+  // ===== CRITICAL FIX: State Persistence Functions =====
+  // These functions save and restore ALL session state to sessionStorage
+  // This prevents state loss on tab switches, re-mounts, or page refreshes
+  
+  const saveStateToSessionStorage = useCallback(() => {
+    if (typeof window === 'undefined' || !isInitialized) return;
+    
+    try {
+      // Save current question time before persisting
+      saveCurrentQuestionTime();
+      
+      const persistedState = {
+        currentIndex,
+        sessionStates,
+        sessionStartTime: sessionStartTimeRef.current,
+        cumulativeTime: cumulativeTimeRef.current,
+        activeQuestionId: activeQuestionIdRef.current,
+        currentQuestionStartTime: currentQuestionStartRef.current,
+        timestamp: Date.now(),
+        testMode,
+        timeLimitInMinutes,
+      };
+      
+      sessionStorage.setItem(sessionKey, JSON.stringify(persistedState));
+      console.log('💾 State persisted to sessionStorage');
+    } catch (error) {
+      console.error('Failed to persist state:', error);
+    }
+  }, [currentIndex, sessionStates, isInitialized, sessionKey, saveCurrentQuestionTime, testMode, timeLimitInMinutes]);
+  
+  const restoreStateFromSessionStorage = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    
+    try {
+      const stored = sessionStorage.getItem(sessionKey);
+      if (!stored) return null;
+      
+      const persistedState = JSON.parse(stored);
+      console.log('🔄 Restoring state from sessionStorage:', persistedState);
+      
+      return persistedState;
+    } catch (error) {
+      console.error('Failed to restore state:', error);
+      return null;
+    }
+  }, [sessionKey]);
+  
+  const clearSessionStorage = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      sessionStorage.removeItem(sessionKey);
+      console.log('🗑️ Session storage cleared');
+    } catch (error) {
+      console.error('Failed to clear session storage:', error);
+    }
+  }, [sessionKey]);
   
   // Timer interval with pause/resume functionality
   useEffect(() => {
@@ -179,11 +245,39 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     }
   }, [showExitModal, isSessionPaused, isPaused, timeWhenPaused, saveCurrentQuestionTime]);
 
-  // Initialize session states
+  // Initialize session states - ENHANCED WITH SESSIONSTORAGE PERSISTENCE
   useEffect(() => {
     if (questions.length > 0) {
-      if (savedSessionState) {
-        // Restore saved session state - RE-HYDRATION MODE
+      // STEP 1: Check sessionStorage first (highest priority - survives re-mounts)
+      const persistedState = restoreStateFromSessionStorage();
+      
+      if (persistedState) {
+        // RESTORE FROM SESSIONSTORAGE - This handles tab switches and re-mounts
+        console.log('✅ RESTORING FROM SESSIONSTORAGE');
+        
+        setSessionStates(persistedState.sessionStates);
+        setCurrentIndex(persistedState.currentIndex);
+        
+        // Restore timer state with adjusted start time
+        const elapsedTime = Date.now() - persistedState.timestamp;
+        const adjustedStartTime = persistedState.sessionStartTime + elapsedTime;
+        setSessionStartTime(adjustedStartTime);
+        sessionStartTimeRef.current = adjustedStartTime;
+        
+        // Restore per-question timing data
+        cumulativeTimeRef.current = persistedState.cumulativeTime;
+        activeQuestionIdRef.current = persistedState.activeQuestionId;
+        currentQuestionStartRef.current = Date.now();
+        
+        // Set initial display time
+        const initialTime = cumulativeTimeRef.current[persistedState.activeQuestionId] || 0;
+        setDisplayTime(initialTime);
+        
+        setIsInitialized(true);
+        
+      } else if (savedSessionState) {
+        // STEP 2: Restore from saved session (database restore)
+        console.log('✅ RESTORING FROM SAVED SESSION');
         
         const restoredStates: SessionState[] = questions.map((q, index) => {
           const questionId = q.id
@@ -234,7 +328,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         setIsInitialized(true)
         
       } else {
-        // Initialize new session - NEW SESSION MODE
+        // STEP 3: Initialize new session - NEW SESSION MODE
+        console.log('✅ INITIALIZING NEW SESSION');
+        
         // First, initialize with default bookmark state (false)
         const initialStates: SessionState[] = questions.map(() => ({
           status: 'not_visited',
@@ -286,8 +382,32 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         setIsInitialized(true)
       }
     }
-  }, [questions, savedSessionState, user])
+  }, [questions, savedSessionState, user, restoreStateFromSessionStorage])
 
+
+  // ===== AUTO-SAVE EFFECT: Persist state on every change =====
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    // Save state on every state change
+    saveStateToSessionStorage();
+    
+    // Also set up periodic auto-save (every 2 seconds as a safety net)
+    if (persistenceTimerRef.current) {
+      clearInterval(persistenceTimerRef.current);
+    }
+    
+    persistenceTimerRef.current = setInterval(() => {
+      saveStateToSessionStorage();
+    }, 2000);
+    
+    return () => {
+      if (persistenceTimerRef.current) {
+        clearInterval(persistenceTimerRef.current);
+        persistenceTimerRef.current = null;
+      }
+    };
+  }, [currentIndex, sessionStates, isInitialized, saveStateToSessionStorage]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -716,6 +836,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       if (response.ok) {
         const result = await response.json()
         console.log('Test submitted successfully:', result)
+        // Clear sessionStorage since session is complete
+        clearSessionStorage()
         // Redirect to analysis report
         router.push(`/analysis/${result.test_id}`)
       } else {
@@ -810,6 +932,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       if (response.ok) {
         const result = await response.json()
         console.log('Test submitted successfully:', result)
+        // Clear sessionStorage since session is complete
+        clearSessionStorage()
         // Redirect to analysis report
         router.push(`/analysis/${result.test_id}`)
       } else {
