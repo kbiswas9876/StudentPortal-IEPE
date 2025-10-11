@@ -288,7 +288,7 @@ export default function PremiumPracticeSetup({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex-1 flex flex-col space-y-4 lg:max-h-[calc(100vh-20rem)] lg:overflow-y-auto lg:pr-2"
+              className="flex-1 flex flex-col space-y-4 lg:max-h-[calc(100vh-20rem)] lg:overflow-y-auto lg:pr-2 lg:border-t lg:border-b lg:border-slate-200 dark:lg:border-slate-700 lg:pt-4 lg:pb-4"
             >
               {/* Card 1: Session Settings */}
               <motion.div

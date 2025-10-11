@@ -171,9 +171,10 @@ export default function PremiumBookCard({
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        {/* Single line layout with checkbox, chapter info, and inline controls */}
-                        <div className="flex items-center flex-wrap gap-y-2">
-                          <div className="flex items-center flex-1 min-w-0">
+                        {/* Robust two-line layout for professional appearance */}
+                        <div className="space-y-2">
+                          {/* First Line: Checkbox and Chapter Info */}
+                          <div className="flex items-center">
                             <CustomCheckbox
                               checked={config.selected}
                               onChange={(selected) => handleChapterSelect(chapter.chapter_name, selected)}
@@ -183,12 +184,12 @@ export default function PremiumBookCard({
                                 {chapter.chapter_name}
                               </h4>
                               <p className="text-xs text-slate-600 dark:text-slate-400">
-                                {chapter.count} questions
+                                {chapter.count} questions available
                               </p>
                             </div>
                           </div>
                           
-                          {/* Inline controls appear on the same line */}
+                          {/* Second Section: Configuration Controls (appears when selected) */}
                           <AnimatePresence>
                             {config.selected && (
                               <InlineChapterConfig
