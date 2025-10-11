@@ -89,13 +89,12 @@ export default function PremiumStatusPanel({
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
           }}
         >
-          {/* Premium Card Toggle Button - Always Visible */}
+          {/* Premium Card Toggle Button - Always Visible (When Panel is Expanded) */}
           <motion.button
             onClick={() => setIsCollapsed(true)}
-            className="absolute -left-12 top-1/2 -translate-y-1/2 w-10 h-20 bg-gradient-to-br from-white to-slate-50 dark:from-slate-50 dark:to-slate-100 border border-slate-200/60 dark:border-slate-300/60 rounded-r-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 z-30 group backdrop-blur-md"
+            className="absolute -left-12 top-1/2 -translate-y-1/2 w-10 h-20 bg-gradient-to-br from-white to-slate-50 dark:from-slate-50 dark:to-slate-100 border border-slate-200/60 dark:border-slate-300/60 rounded-l-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 z-30 group backdrop-blur-md"
             style={{
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-              transform: 'rotate(180deg)'
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
             }}
             whileHover={{ 
               scale: 1.05,
@@ -112,7 +111,8 @@ export default function PremiumStatusPanel({
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
-                whileHover={{ scale: 1.2, rotate: 5 }}
+                style={{ transform: 'rotate(180deg)' }}
+                whileHover={{ scale: 1.2, rotate: 185 }}
                 transition={{ duration: 0.2 }}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
