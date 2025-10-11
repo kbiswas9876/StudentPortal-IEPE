@@ -50,7 +50,7 @@ interface PracticeInterfaceProps {
 }
 
 export default function PracticeInterface({ questions, testMode = 'practice', timeLimitInMinutes, mockTestData, savedSessionState }: PracticeInterfaceProps) {
-  const { user } = useAuth()
+  const { user, session } = useAuth()
   const { showToast } = useToast()
   const router = useRouter()
   
@@ -235,6 +235,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         
       } else {
         // Initialize new session - NEW SESSION MODE
+        // First, initialize with default bookmark state (false)
         const initialStates: SessionState[] = questions.map(() => ({
           status: 'not_visited',
           user_answer: null,
@@ -253,10 +254,39 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           setDisplayTime(0) // Start from 0 for new session
         }
         
+         // Then, fetch actual bookmark status for these questions if user is logged in
+         if (user) {
+           const questionIds = questions.map(q => q.question_id)
+           fetch('/api/practice/check-bookmarks', {
+             method: 'POST',
+             headers: {
+               'Content-Type': 'application/json',
+               ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+             },
+             body: JSON.stringify({ questionIds })
+           })
+             .then(response => response.json())
+             .then(data => {
+               if (data.bookmarks) {
+                 // Update session states with actual bookmark status (keyed by question_id)
+                 setSessionStates(prevStates =>
+                   prevStates.map((state, index) => ({
+                     ...state,
+                     is_bookmarked: data.bookmarks[questions[index].question_id] || false
+                   }))
+                 )
+               }
+             })
+             .catch(error => {
+               console.error('Error checking bookmarks:', error)
+               // Continue with default bookmark state (false) if API fails
+             })
+         }
+        
         setIsInitialized(true)
       }
     }
-  }, [questions, savedSessionState])
+  }, [questions, savedSessionState, user])
 
 
   // Keyboard shortcuts
@@ -546,37 +576,57 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleBookmark = async () => {
-    if (!user || !currentQuestion) return
+    if (!user || !currentQuestion) return;
 
-    try {
-      const response = await fetch('/api/practice/bookmark', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          questionId: currentQuestion.id
-        })
+    // Optimistic UI: toggle immediately
+    const prev = currentState.is_bookmarked;
+    const optimistic = !prev;
+    updateSessionState(currentIndex, { is_bookmarked: optimistic });
+
+    // Background operation: sync with server (return promise so callers can await)
+    return fetch('/api/practice/bookmark', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      },
+      body: JSON.stringify({
+        questionId: currentQuestion.question_id,
+      }),
+    })
+      .then(async (response) => {
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to update bookmark');
+        }
+
+        // Server truth: if mismatch, align UI
+        if (typeof result.bookmarked === 'boolean' && result.bookmarked !== optimistic) {
+          updateSessionState(currentIndex, { is_bookmarked: result.bookmarked });
+        }
+
+        // Subtle success toast
+        showToast({
+          type: 'success',
+          title: (typeof result.bookmarked === 'boolean' ? result.bookmarked : optimistic)
+            ? 'Saved to Revision Hub'
+            : 'Removed from Revision Hub',
+          message: (typeof result.bookmarked === 'boolean' ? result.bookmarked : optimistic)
+            ? 'Question added to your revision hub for later review'
+            : 'Question removed from your revision hub',
+          duration: 2500,
+        });
       })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to bookmark question')
-      }
-
-      // Update the session state to reflect the bookmark status
-      updateSessionState(currentIndex, { is_bookmarked: !currentState.is_bookmarked })
-      
-      // Show success toast
-      showToast({
-        type: 'success',
-        title: 'Question Bookmarked',
-        message: 'Added to your revision hub for later review'
-      })
-    } catch (error) {
-      console.error('Error bookmarking question:', error)
-    }
+      .catch((error) => {
+        console.error('Error bookmarking question:', error);
+        // Revert on failure
+        updateSessionState(currentIndex, { is_bookmarked: prev });
+        showToast({
+          type: 'error',
+          title: 'Bookmark Failed',
+          message: 'Unable to update bookmark status. Please try again.',
+        });
+      });
   }
 
   const handleSubmitTest = async () => {

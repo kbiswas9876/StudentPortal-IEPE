@@ -156,7 +156,7 @@ export default function QuestionBreakdown({ questions, onBookmark, onReportError
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => onBookmark(item.question_id.toString())}
+                      onClick={() => onBookmark(item.question?.question_id || '')}
                       className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
                       title="Bookmark for later"
                     >

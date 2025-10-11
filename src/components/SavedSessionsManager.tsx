@@ -29,18 +29,20 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
   const [sessionToDelete, setSessionToDelete] = useState<SavedSession | null>(null)
 
   useEffect(() => {
-    if (user) {
-      fetchSavedSessions()
+    if (user?.id) {
+      fetchSavedSessions(user.id)
+    } else {
+      setSavedSessions([])
     }
-  }, [user])
+  }, [user?.id])
 
-  const fetchSavedSessions = async () => {
+  const fetchSavedSessions = async (userId: string) => {
     try {
       setLoading(true)
       const { data, error } = await supabase
         .from('saved_practice_sessions')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', userId)
         .order('updated_at', { ascending: false })
 
       if (error) {

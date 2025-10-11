@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Database } from '@/types/database'
-import { FlagIcon } from '@heroicons/react/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import KatexRenderer from './ui/KatexRenderer'
 import TimerDisplay from './TimerDisplay'
 
@@ -94,48 +94,70 @@ export default function QuestionDisplay({
         </div>
         
         <div className="flex items-center space-x-2">
-          {/* Bookmark Button - Icon Only with Visual State Change */}
+          {/* Bookmark Button - Enhanced Premium Design */}
           <motion.button
             onClick={handleBookmark}
             disabled={isBookmarking}
             className={`
-              p-2 rounded-lg border-2 transition-all duration-200
+              relative group p-2.5 rounded-xl border-2 transition-all duration-300
               ${isBookmarked 
-                ? 'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400' 
-                : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-900 hover:text-amber-600 dark:hover:text-amber-400'
+                ? 'bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/40 dark:to-amber-800/40 border-amber-400 dark:border-amber-600 text-amber-600 dark:text-amber-400 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/30' 
+                : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600 dark:hover:text-amber-400 hover:shadow-md'
               }
             `}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            title={isBookmarked ? 'Remove Bookmark' : 'Bookmark Question'}
+            whileHover={{ scale: 1.08, y: -2 }}
+            whileTap={{ scale: 0.92 }}
+            title={isBookmarked ? 'Remove from Revision Hub' : 'Save to Revision Hub'}
           >
+            {/* Animated glow effect for bookmarked state */}
+            {isBookmarked && (
+              <motion.div
+                className="absolute inset-0 rounded-xl bg-amber-400/20 dark:bg-amber-500/20"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: [0, 0.5, 0], scale: [0.8, 1.2, 0.8] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              />
+            )}
+            
             <motion.svg
-              className="w-5 h-5"
+              className="w-5 h-5 relative z-10"
               fill={isBookmarked ? 'currentColor' : 'none'}
               stroke={isBookmarked ? 'none' : 'currentColor'}
               viewBox="0 0 24 24"
-              animate={isBookmarking ? { rotate: 360 } : {}}
-              transition={{ duration: 0.5 }}
+              animate={isBookmarking ? { rotate: [0, -10, 10, -10, 10, 0], y: [0, -2, 0] } : {}}
+              transition={{ duration: 0.6 }}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isBookmarked ? 0 : 2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={isBookmarked ? 0 : 2.5} 
+                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" 
+              />
             </motion.svg>
+            
+            {/* Tooltip on hover */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileHover={{ opacity: 1, y: 0 }}
+              className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap bg-slate-900 dark:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-xl z-50"
+            >
+              {isBookmarked ? 'Remove from Revision Hub' : 'Save to Revision Hub'}
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 dark:bg-slate-700 rotate-45" />
+            </motion.div>
           </motion.button>
 
-          {/* Report Question Button - Red Circle Speech Bubble with Exclamation */}
+          {/* Report Error - Premium Ghost Button */}
           {onReportError && (
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               onClick={onReportError}
-              className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
+              className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
               title="Report an issue with this question (Alt + R)"
+              aria-label="Report error for this question"
             >
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" fill="currentColor" />
-                <path d="M8 6h8c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2H8c-1.1 0-2-.9-2-2V8c0-1.1.9-2 2-2z" fill="white" />
-                <path d="M12 8v2M12 12h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M10 18l2-2 2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ExclamationTriangleIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <span className="text-sm">Report</span>
             </motion.button>
           )}
         </div>

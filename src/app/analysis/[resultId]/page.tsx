@@ -146,7 +146,7 @@ export default function AnalysisReportPage() {
 
   const handleBookmark = async (questionId: string) => {
     if (!user) return
-
+  
     try {
       const response = await fetch('/api/practice/bookmark', {
         method: 'POST',
@@ -154,8 +154,7 @@ export default function AnalysisReportPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question_id: questionId,
-          user_id: user.id
+          questionId: questionId
         })
       })
 
