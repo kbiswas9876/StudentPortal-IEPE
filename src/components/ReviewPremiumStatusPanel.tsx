@@ -514,41 +514,6 @@ export default function ReviewPremiumStatusPanel({
             />
           </motion.div>
 
-          {/* Section 4: Premium Action Button */}
-          {onViewAllQuestions && (
-            <motion.div 
-              className="p-5 border-t border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/20 dark:via-slate-800/20 dark:to-slate-700/20 rounded-b-2xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.4 }}
-            >
-              <motion.button
-                onClick={onViewAllQuestions}
-                className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 text-white rounded-xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-3 shadow-2xl hover:shadow-blue-500/25 whitespace-nowrap"
-                whileHover={{ 
-                  scale: 1.02,
-                  y: -2
-                }}
-                whileTap={{ scale: 0.98 }}
-                style={{
-                  boxShadow: '0 20px 40px -12px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)'
-                }}
-              >
-                <motion.svg 
-                  className="w-6 h-6 flex-shrink-0" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </motion.svg>
-                <span className="font-bold tracking-wide">View All Questions</span>
-              </motion.button>
-            </motion.div>
-          )}
         </motion.div>
       ) : (
         // --- Panel Collapsed State - Premium Toggle Button ---

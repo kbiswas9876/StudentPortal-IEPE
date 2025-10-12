@@ -448,7 +448,6 @@ const handleNext = () => {
                   console.debug('[Solutions] Palette select', { index })
                   setCurrentQuestionIndex(index)
                 }}
-                onViewAllQuestions={handleViewAllQuestions}
                 bookmarkedMap={bookmarkedMap}
                 hideInternalToggle={true}
                 timePerQuestion={timePerQuestion}
@@ -514,6 +513,7 @@ const handleNext = () => {
           }}
           canPrev={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos > 0; })()}
           canNext={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos < filteredIndices.length - 1; })()}
+          onViewAllQuestions={handleViewAllQuestions}
         />
       )}
     </div>

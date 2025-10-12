@@ -11,6 +11,7 @@ interface QuestionNavigationFooterProps {
   onNext: () => void
   canPrev: boolean
   canNext: boolean
+  onViewAllQuestions?: () => void
 }
 
 export default function QuestionNavigationFooter({
@@ -21,7 +22,8 @@ export default function QuestionNavigationFooter({
   onPrev,
   onNext,
   canPrev,
-  canNext
+  canNext,
+  onViewAllQuestions
 }: QuestionNavigationFooterProps) {
   
   const displayPosition = filteredPosition !== undefined ? filteredPosition : currentIndex + 1
@@ -41,7 +43,7 @@ export default function QuestionNavigationFooter({
             <motion.button
               onClick={onPrev}
               disabled={!canPrev}
-              className={`px-4 sm:px-6 py-3 rounded-xl border-2 transition-all duration-200 flex items-center gap-2 font-medium text-sm sm:text-base
+              className={`px-3 sm:px-4 py-2 rounded-lg border-2 transition-all duration-200 flex items-center gap-2 font-medium text-sm
                 ${!canPrev
                   ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-600 cursor-not-allowed'
                   : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm hover:shadow-md'
@@ -61,7 +63,7 @@ export default function QuestionNavigationFooter({
             <motion.button
               onClick={onNext}
               disabled={!canNext}
-              className={`px-4 sm:px-6 py-3 rounded-xl border-2 transition-all duration-200 flex items-center gap-2 font-medium text-sm sm:text-base
+              className={`px-3 sm:px-4 py-2 rounded-lg border-2 transition-all duration-200 flex items-center gap-2 font-medium text-sm
                 ${!canNext
                   ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-600 cursor-not-allowed'
                   : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm hover:shadow-md'
@@ -96,6 +98,23 @@ export default function QuestionNavigationFooter({
               {Math.round(progressPercentage)}%
             </span>
           </div>
+
+          {/* View All Questions Button */}
+          {onViewAllQuestions && (
+            <motion.button
+              onClick={onViewAllQuestions}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              aria-label="View all questions"
+              title="View All Questions"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              <span className="hidden sm:inline">View All</span>
+            </motion.button>
+          )}
         </div>
       </div>
     </motion.div>
