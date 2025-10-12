@@ -122,21 +122,27 @@ export default function PremiumStatusPanel({
       let visible = true
 
       // Performance Matrix filter - USES ACTUAL TIMING DATA NOW
-      if (activePerformanceFilter && state.user_answer) {
-        const isCorrect = state.user_answer === question.correct_option
-        
-        // CRITICAL FIX: Get ACTUAL time taken from timePerQuestion prop
-        const timeInMs = timePerQuestion[question.id.toString()] || 0
-        const timeTakenInSeconds = Math.floor(timeInMs / 1000)
-        
-        // Use the advanced 5-tier algorithm for accurate speed categorization
-        const difficulty = question.difficulty as AdvancedDifficulty
-        const speedCategory = getAdvancedSpeedCategory(timeTakenInSeconds, difficulty)
+      // CRITICAL FIX: When Performance Matrix filter is active, exclude ALL questions that don't match the criteria
+      if (activePerformanceFilter) {
+        // If no user answer (skipped), hide the question when any Performance Matrix filter is active
+        if (!state.user_answer) {
+          visible = false
+        } else {
+          const isCorrect = state.user_answer === question.correct_option
+          
+          // CRITICAL FIX: Get ACTUAL time taken from timePerQuestion prop
+          const timeInMs = timePerQuestion[question.id.toString()] || 0
+          const timeTakenInSeconds = Math.floor(timeInMs / 1000)
+          
+          // Use the advanced 5-tier algorithm for accurate speed categorization
+          const difficulty = question.difficulty as AdvancedDifficulty
+          const speedCategory = getAdvancedSpeedCategory(timeTakenInSeconds, difficulty)
 
-        if (activePerformanceFilter === 'correct-fast' && !(isCorrect && speedCategory === 'Fast')) visible = false
-        else if (activePerformanceFilter === 'correct-slow' && !(isCorrect && speedCategory === 'Slow')) visible = false
-        else if (activePerformanceFilter === 'incorrect-fast' && !(!isCorrect && speedCategory === 'Fast')) visible = false
-        else if (activePerformanceFilter === 'incorrect-slow' && !(!isCorrect && speedCategory === 'Slow')) visible = false
+          if (activePerformanceFilter === 'correct-fast' && !(isCorrect && speedCategory === 'Fast')) visible = false
+          else if (activePerformanceFilter === 'correct-slow' && !(isCorrect && speedCategory === 'Slow')) visible = false
+          else if (activePerformanceFilter === 'incorrect-fast' && !(!isCorrect && speedCategory === 'Fast')) visible = false
+          else if (activePerformanceFilter === 'incorrect-slow' && !(!isCorrect && speedCategory === 'Slow')) visible = false
+        }
       }
 
       // Status filter

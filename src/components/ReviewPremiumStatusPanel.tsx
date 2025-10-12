@@ -102,20 +102,26 @@ export default function ReviewPremiumStatusPanel({
       let visible = true
 
       // Performance Matrix filter - USES ACTUAL TIMING DATA NOW
-      if (activePerformanceFilter && state.status !== 'skipped') {
-        const isCorrect = state.status === 'correct'
-        
-        // CRITICAL FIX: Get ACTUAL time taken from timePerQuestion prop (already in seconds)
-        const timeTakenInSeconds = timePerQuestion[question.id.toString()] || 0
-        
-        // Use the advanced 5-tier algorithm for accurate speed categorization
-        const difficulty = question.difficulty as AdvancedDifficulty
-        const speedCategory = getAdvancedSpeedCategory(timeTakenInSeconds, difficulty)
+      // CRITICAL FIX: When Performance Matrix filter is active, exclude ALL questions that don't match the criteria
+      if (activePerformanceFilter) {
+        // If skipped, hide the question when any Performance Matrix filter is active
+        if (state.status === 'skipped') {
+          visible = false
+        } else {
+          const isCorrect = state.status === 'correct'
+          
+          // CRITICAL FIX: Get ACTUAL time taken from timePerQuestion prop (already in seconds)
+          const timeTakenInSeconds = timePerQuestion[question.id.toString()] || 0
+          
+          // Use the advanced 5-tier algorithm for accurate speed categorization
+          const difficulty = question.difficulty as AdvancedDifficulty
+          const speedCategory = getAdvancedSpeedCategory(timeTakenInSeconds, difficulty)
 
-        if (activePerformanceFilter === 'correct-fast' && !(isCorrect && speedCategory === 'Fast')) visible = false
-        else if (activePerformanceFilter === 'correct-slow' && !(isCorrect && speedCategory === 'Slow')) visible = false
-        else if (activePerformanceFilter === 'incorrect-fast' && !(!isCorrect && speedCategory === 'Fast')) visible = false
-        else if (activePerformanceFilter === 'incorrect-slow' && !(!isCorrect && speedCategory === 'Slow')) visible = false
+          if (activePerformanceFilter === 'correct-fast' && !(isCorrect && speedCategory === 'Fast')) visible = false
+          else if (activePerformanceFilter === 'correct-slow' && !(isCorrect && speedCategory === 'Slow')) visible = false
+          else if (activePerformanceFilter === 'incorrect-fast' && !(!isCorrect && speedCategory === 'Fast')) visible = false
+          else if (activePerformanceFilter === 'incorrect-slow' && !(!isCorrect && speedCategory === 'Slow')) visible = false
+        }
       }
 
       // Status filter
@@ -132,7 +138,8 @@ export default function ReviewPremiumStatusPanel({
       if (difficultyFilter !== 'All' && question.difficulty !== difficultyFilter) visible = false
 
       // CRITICAL FIX: Bookmarks filter - Fixed to work correctly
-      if (bookmarksOnly && !bookmarkedMap?.[question.id.toString()]) visible = false
+      // Use question.question_id (string) as the key, not question.id (number)
+      if (bookmarksOnly && !bookmarkedMap?.[question.question_id]) visible = false
 
       return { index, question, state, visible }
     })

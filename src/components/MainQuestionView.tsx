@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import KatexRenderer from './ui/KatexRenderer'
 import { Database } from '@/types/database'
-import { Star, Bookmark, Flag } from 'lucide-react'
+import { Flag } from 'lucide-react'
 
 type TestResult = Database['public']['Tables']['test_results']['Row']
 type AnswerLog = Database['public']['Tables']['answer_log']['Row']
@@ -126,6 +126,49 @@ export default function MainQuestionView({
       {/* Question Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
+          {/* Premium Bookmark Button - Repositioned to top-left */}
+          {onToggleBookmark && (
+            <motion.button
+              onClick={onToggleBookmark}
+              className={`
+                relative group p-3 rounded-xl border-2 transition-all duration-300
+                ${isBookmarked 
+                  ? 'bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/40 dark:to-amber-800/40 border-amber-400 dark:border-amber-600 text-amber-600 dark:text-amber-400 shadow-lg shadow-amber-200/50 dark:shadow-amber-900/30' 
+                  : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:text-amber-600 dark:hover:text-amber-400 hover:shadow-md'
+                }
+              `}
+              whileHover={{ scale: 1.08, y: -2 }}
+              whileTap={{ scale: 0.92 }}
+              title={isBookmarked ? 'Remove from Revision Hub' : 'Save to Revision Hub'}
+            >
+              {/* Animated glow effect for bookmarked state */}
+              {isBookmarked && (
+                <motion.div
+                  className="absolute inset-0 rounded-xl bg-amber-400/20 dark:bg-amber-500/20"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: [0, 0.5, 0], scale: [0.8, 1.2, 0.8] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                />
+              )}
+              
+              <motion.svg
+                className="w-6 h-6 relative z-10"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                />
+              </motion.svg>
+            </motion.button>
+          )}
+
           <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-lg font-semibold">
             Question {currentIndex + 1} of {totalQuestions}
           </div>
@@ -154,22 +197,8 @@ export default function MainQuestionView({
           )}
         </div>
 
-        {/* Inline Actions: Bookmark + Report Error */}
+        {/* Inline Actions: Report Error only (bookmark moved to top-left) */}
         <div className="flex items-center gap-1">
-          {/* Bookmark star (amber when active) */}
-          <button
-            onClick={onToggleBookmark}
-            className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-            aria-label={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
-            title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
-          >
-            {isBookmarked ? (
-              <Star className="w-5 h-5 text-amber-500" />
-            ) : (
-              <Bookmark className="w-5 h-5 text-slate-500 dark:text-slate-300" />
-            )}
-          </button>
-
           {/* Report error flag */}
           <button
             onClick={onReportError}
