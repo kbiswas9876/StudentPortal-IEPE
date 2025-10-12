@@ -7,7 +7,7 @@ import { Database } from '@/types/database'
  // AnalysisSkeletonLoader dynamically imported below to avoid server bundling framer-motion
 import nextDynamic from 'next/dynamic'
 // Dynamically import client-only components to avoid server bundling framer-motion
-const DynamicQuestionPalette = nextDynamic(() => import('@/components/QuestionPalette'), { ssr: false })
+const DynamicPremiumStatusPanel = nextDynamic(() => import('@/components/PremiumStatusPanel'), { ssr: false })
 const DynamicMainQuestionView = nextDynamic(() => import('@/components/MainQuestionView'), { ssr: false })
 const DynamicAnalysisSkeletonLoader = nextDynamic(() => import('@/components/AnalysisSkeletonLoader'), { ssr: false })
 const DynamicZenModeBackButton = nextDynamic(() => import('@/components/ZenModeBackButton'), { ssr: false })
@@ -16,6 +16,7 @@ const DynamicReportErrorModal = nextDynamic(() => import('@/components/ReportErr
 // Local type alias to avoid importing from StrategicPerformanceMatrix which uses framer-motion
 type QuadrantKey = 'strengths' | 'needsSpeed' | 'carelessErrors' | 'weaknesses'
 import { isFastBasedOnDifficultyOrGeneric } from '@/lib/config/time-benchmarks'
+import type { QuestionStatus } from '@/components/PracticeInterface'
  // ZenModeBackButton dynamically imported above
  // ReportErrorModal dynamically imported above
 
@@ -163,6 +164,18 @@ export default function DetailedSolutionReviewPage() {
       return { status }
     }) ?? []
 
+  // Map review states to PremiumStatusPanel sessionStates format
+  const premiumSessionStates =
+    sessionData?.questions.map((q, index) => {
+      const rv = reviewStates[index]?.status
+      const status =
+        rv === 'correct' ? 'answered' :
+        rv === 'incorrect' ? 'unanswered' :
+        'not_visited'
+      const is_bookmarked = !!bookmarkedMap[String(q.question_id)]
+      return { status: status as QuestionStatus, user_answer: null, is_bookmarked }
+    }) ?? []
+
   // Build combined data of answers joined with questions
   type CombinedItem = AnswerLog & { question: Question }
   const combinedData: CombinedItem[] = (sessionData?.answerLog || [])
@@ -200,34 +213,11 @@ export default function DetailedSolutionReviewPage() {
     { strengths: 0, needsSpeed: 0, carelessErrors: 0, weaknesses: 0 }
   )
 
-  // Compute filtered indices for navigation & palette display
+  // For Part 1: Show all questions without filtering
   const filteredIndices = useMemo(() => {
     if (!sessionData) return []
-    return sessionData.questions
-      .map((question, index) => {
-        // status filter via reviewStates
-        const review = reviewStates[index]?.status ?? 'skipped'
-        if (statusFilter !== 'all' && review !== statusFilter) return null
-
-        // difficulty filter
-        if (difficultyFilter !== 'all' && question.difficulty !== difficultyFilter) return null
-
-        // quadrant filter
-        const ans = sessionData.answerLog.find((a) => a.question_id === question.id)
-        const item = ans ? ({ ...(ans as AnswerLog), question } as CombinedItem) : null
-        const quadrant = item ? getQuadrantForItem(item) : null
-        if (selectedQuadrant !== 'all' && quadrant !== selectedQuadrant) return null
-
-        // bookmark filter (map keyed by question_id)
-        if (bookmarkOnly) {
-          const isBk = !!bookmarkedMap[String(question.question_id)]
-          if (!isBk) return null
-        }
-
-        return index
-      })
-      .filter((i): i is number => typeof i === 'number')
-  }, [sessionData, reviewStates, statusFilter, difficultyFilter, selectedQuadrant, bookmarkOnly, bookmarkedMap])
+    return sessionData.questions.map((_, index) => index)
+  }, [sessionData])
 
   // Ensure current index stays valid within filtered set
   useEffect(() => {
@@ -340,6 +330,12 @@ const handleNext = () => {
     setBookmarkOnly(false)
   }
 
+  // Handler for "View All Questions" button (stub for Part 1)
+  const handleViewAllQuestions = () => {
+    console.log('View All Questions clicked - functionality to be implemented in later parts')
+    // TODO: This will show a modal or expanded view in future parts
+  }
+
   const totalQuestions = sessionData?.questions.length ?? 0
   const currentQuestion = sessionData?.questions[currentQuestionIndex]
 
@@ -358,9 +354,9 @@ const handleNext = () => {
         </header>
 
         {/* Unified two-column layout: main left, palette right */}
-        <div className="flex gap-6">
+        <div className="flex">
           {/* Left column */}
-          <div className="flex-1 lg:w-3/4">
+          <div className="flex-1 lg:w-3/4 pt-28 lg:pt-12">
             {sessionData && (
               filteredIndices.length === 0 ? (
                 <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md p-6">
@@ -398,29 +394,21 @@ const handleNext = () => {
           </div>
 
           {/* Right sidebar (desktop only) */}
-          <div className="hidden lg:block w-1/4">
-            <div className="sticky top-24 h-[calc(100vh-8rem)]">
-              {sessionData && (
-                <DynamicQuestionPalette
-                  questions={sessionData.questions}
-                  reviewStates={reviewStates}
-                  currentIndex={currentQuestionIndex}
-                  onQuestionSelect={(index: number) => { console.debug('[Solutions] Palette select', { index }); setCurrentQuestionIndex(index) }}
-                  // Enhanced palette controls
-                  showFilters={true}
-                  matrixCounts={matrixCounts}
-                  onQuadrantChange={handleQuadrantChange}
-                  statusFilter={statusFilter}
-                  onStatusFilterChange={handleStatusChange}
-                  difficultyFilter={difficultyFilter}
-                  onDifficultyFilterChange={handleDifficultyChange}
-                  bookmarkOnly={bookmarkOnly}
-                  onBookmarkOnlyChange={handleBookmarkOnlyChange}
-                  filteredIndices={filteredIndices}
-                  bookmarkedMap={bookmarkedMap}
-                />
-              )}
-            </div>
+          <div className="hidden lg:block fixed right-0 top-0 h-screen w-1/4 p-0">
+            {sessionData && (
+              <DynamicPremiumStatusPanel
+                questions={sessionData.questions}
+                sessionStates={premiumSessionStates}
+                currentIndex={currentQuestionIndex}
+                onQuestionSelect={(index: number) => {
+                  console.debug('[Solutions] Palette select', { index })
+                  setCurrentQuestionIndex(index)
+                }}
+                onSubmitTest={handleViewAllQuestions}
+                isSubmitting={false}
+                submitLabel="View All Questions"
+              />
+            )}
           </div>
         </div>
 

@@ -16,6 +16,7 @@ export default function StatusLegend({
   answeredCount,
   notAnsweredCount,
   notVisitedCount,
+  // keep unused to match existing prop signature
   markedCount,
   markedAndAnsweredCount,
   bookmarkedCount = 0,
@@ -26,49 +27,31 @@ export default function StatusLegend({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className={`p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 ${className}`}
+      className={`p-5 bg-slate-50/90 dark:bg-slate-800/90 rounded-xl border border-slate-200/60 dark:border-slate-700/60 ${className}`}
     >
-      <div className="grid grid-cols-2 gap-2">
-        {/* Column 1: Answered, Marked, Marked and Answered */}
-        <div className="space-y-1.5">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-6 bg-green-500 rounded flex items-center justify-center">
-              <span className="text-sm font-bold text-white">{answeredCount}</span>
-            </div>
-            <span className="text-xs text-slate-700 dark:text-slate-300">Answered</span>
+      <div className="grid grid-cols-3 gap-3">
+        {/* Correct */}
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center shadow-sm">
+            <span className="text-sm font-extrabold text-white">{answeredCount}</span>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-6 bg-purple-500 rounded flex items-center justify-center">
-              <span className="text-sm font-bold text-white">{markedCount}</span>
-            </div>
-            <span className="text-xs text-slate-700 dark:text-slate-300">Marked</span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-6 bg-purple-500 rounded flex items-center justify-center relative">
-              <span className="text-sm font-bold text-white">{markedAndAnsweredCount}</span>
-              <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-            </div>
-            <span className="text-xs text-slate-700 dark:text-slate-300">Marked and Answered</span>
-          </div>
+          <span className="text-sm text-slate-700 dark:text-slate-300">Correct</span>
         </div>
-        
-        {/* Column 2: Not Visited, Not Answered */}
-        <div className="space-y-1.5">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-6 bg-slate-400 rounded flex items-center justify-center">
-              <span className="text-sm font-bold text-white">{notVisitedCount}</span>
-            </div>
-            <span className="text-xs text-slate-700 dark:text-slate-300">Not Visited</span>
+
+        {/* Incorrect */}
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center shadow-sm">
+            <span className="text-sm font-extrabold text-white">{notAnsweredCount}</span>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-6 bg-red-500 rounded flex items-center justify-center">
-              <span className="text-sm font-bold text-white">{notAnsweredCount}</span>
-            </div>
-            <span className="text-xs text-slate-700 dark:text-slate-300">Not Answered</span>
+          <span className="text-sm text-slate-700 dark:text-slate-300">Incorrect</span>
+        </div>
+
+        {/* Skipped */}
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-slate-400 rounded-md flex items-center justify-center shadow-sm">
+            <span className="text-sm font-extrabold text-white">{notVisitedCount}</span>
           </div>
+          <span className="text-sm text-slate-700 dark:text-slate-300">Skipped</span>
         </div>
       </div>
     </motion.div>

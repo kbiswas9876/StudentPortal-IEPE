@@ -20,6 +20,7 @@ interface PremiumStatusPanelProps {
   onQuestionSelect: (index: number) => void
   onSubmitTest?: () => void
   isSubmitting?: boolean
+  submitLabel?: string
   mockTestData?: any
 }
 
@@ -30,6 +31,7 @@ export default function PremiumStatusPanel({
   onQuestionSelect,
   onSubmitTest,
   isSubmitting = false,
+  submitLabel = 'Submit Test',
   mockTestData
 }: PremiumStatusPanelProps) {
   // State for panel collapse/expand
@@ -275,21 +277,21 @@ export default function PremiumStatusPanel({
           <motion.button
             onClick={onSubmitTest}
             disabled={isSubmitting}
-            className="w-full px-6 py-4 bg-gradient-to-r from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 disabled:from-red-400 disabled:via-red-500 disabled:to-red-600 text-white rounded-xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-3 shadow-2xl hover:shadow-red-500/25 disabled:shadow-none"
-            whileHover={{ 
+            className="w-full px-6 py-4 bg-gradient-to-r from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 disabled:from-red-400 disabled:via-red-500 disabled:to-red-600 text-white rounded-xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-3 shadow-2xl hover:shadow-red-500/25 disabled:shadow-none whitespace-nowrap"
+            whileHover={{
               scale: isSubmitting ? 1 : 1.02,
               y: -2
             }}
             whileTap={{ scale: 0.98 }}
             style={{
-              boxShadow: isSubmitting 
-                ? '0 8px 25px -8px rgba(239, 68, 68, 0.3)' 
+              boxShadow: isSubmitting
+                ? '0 8px 25px -8px rgba(239, 68, 68, 0.3)'
                 : '0 20px 40px -12px rgba(239, 68, 68, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)'
             }}
           >
             {isSubmitting ? (
               <>
-                <motion.div 
+                <motion.div
                   className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -298,10 +300,10 @@ export default function PremiumStatusPanel({
               </>
             ) : (
               <>
-                <motion.svg 
-                  className="w-6 h-6" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <motion.svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                   initial={{ scale: 0.8 }}
                   animate={{ scale: 1 }}
@@ -309,7 +311,7 @@ export default function PremiumStatusPanel({
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </motion.svg>
-                <span className="font-bold tracking-wide">Submit Test</span>
+                <span className="font-bold tracking-wide">{submitLabel}</span>
               </>
             )}
           </motion.button>

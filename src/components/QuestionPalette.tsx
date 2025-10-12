@@ -43,6 +43,13 @@ interface QuestionPaletteProps {
   onSubmitTest?: () => void
   isSubmitting?: boolean
 
+  // Optional custom action button (review mode)
+  customActionButton?: {
+    label: string
+    onClick: () => void
+    variant?: 'primary' | 'secondary'
+  }
+
   // New: Filtering support (provided by parent - Solutions page)
   // If provided, only these indices will be displayed and navigated
   filteredIndices?: number[]
@@ -76,6 +83,7 @@ export default function QuestionPalette({
   onQuestionSelect,
   onSubmitTest,
   isSubmitting = false,
+  customActionButton,
 
   // New props with sensible defaults
   filteredIndices,
@@ -392,6 +400,27 @@ export default function QuestionPalette({
                 <span>Submit Test</span>
               </>
             )}
+          </motion.button>
+        </div>
+      )}
+
+      {/* Section 5: Custom Action Button (review mode) */}
+      {customActionButton && !onSubmitTest && (
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+          <motion.button
+            onClick={customActionButton.onClick}
+            className={`w-full px-4 py-3 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl ${
+              customActionButton.variant === 'secondary'
+                ? 'bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white'
+                : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+            }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+            <span>{customActionButton.label}</span>
           </motion.button>
         </div>
       )}
