@@ -67,6 +67,9 @@ export default function DetailedSolutionReviewPage() {
 
   // Prevent duplicate fetches during re-renders
   const dataFetchedRef = useRef(false)
+  
+  // Prevent concurrent bookmark requests (race condition fix)
+  const bookmarkInProgressRef = useRef(false)
 
   useEffect(() => {
     if (authLoading) return
@@ -282,11 +285,17 @@ const handleNext = () => {
 }
 
 
-  // Inline bookmark toggle (optimistic)
+  // Inline bookmark toggle (optimistic) with race condition protection
   const handleToggleBookmark = async () => {
     if (!sessionData || !user) return
     const q = sessionData.questions[currentQuestionIndex]
     if (!q) return
+
+    // Prevent concurrent requests (race condition fix)
+    if (bookmarkInProgressRef.current) {
+      console.debug('Bookmark request already in progress, ignoring duplicate click')
+      return
+    }
 
     const key = String(q.question_id)
     const prev = !!bookmarkedMap[key]
@@ -294,6 +303,7 @@ const handleNext = () => {
     setBookmarkedMap((m) => ({ ...m, [key]: optimistic }))
 
     try {
+      bookmarkInProgressRef.current = true
       const response = await fetch('/api/practice/bookmark', {
         method: 'POST',
         headers: {
@@ -313,6 +323,8 @@ const handleNext = () => {
       console.error('Error bookmarking:', e)
       // revert
       setBookmarkedMap((m) => ({ ...m, [key]: prev }))
+    } finally {
+      bookmarkInProgressRef.current = false
     }
   }
 

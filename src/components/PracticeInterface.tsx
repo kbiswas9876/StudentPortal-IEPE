@@ -105,6 +105,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const sessionStartTimeRef = useRef<number>(Date.now()); // Ref to store current session start time for immediate access
   const persistenceTimerRef = useRef<NodeJS.Timeout | null>(null); // Timer for auto-save
+  const bookmarkInProgressRef = useRef(false); // Prevent concurrent bookmark requests (race condition fix)
 
   // Save time for current question (synchronous)
   const saveCurrentQuestionTime = useCallback(() => {
@@ -698,12 +699,19 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const handleBookmark = async () => {
     if (!user || !currentQuestion) return;
 
+    // Prevent concurrent requests (race condition fix)
+    if (bookmarkInProgressRef.current) {
+      console.debug('Bookmark request already in progress, ignoring duplicate click');
+      return;
+    }
+
     // Optimistic UI: toggle immediately
     const prev = currentState.is_bookmarked;
     const optimistic = !prev;
     updateSessionState(currentIndex, { is_bookmarked: optimistic });
 
     // Background operation: sync with server (return promise so callers can await)
+    bookmarkInProgressRef.current = true;
     return fetch('/api/practice/bookmark', {
       method: 'POST',
       headers: {
@@ -746,6 +754,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           title: 'Bookmark Failed',
           message: 'Unable to update bookmark status. Please try again.',
         });
+      })
+      .finally(() => {
+        bookmarkInProgressRef.current = false;
       });
   }
 

@@ -154,6 +154,17 @@ export async function POST(request: Request) {
         .insert([{ question_id: questionIdText, user_id: user.id }] as any)
 
       if (insertError) {
+        // Race condition handling: if duplicate key error (23505), treat as success
+        // This happens when concurrent requests both try to insert the same bookmark
+        if (insertError.code === '23505') {
+          console.warn('Bookmark already exists (race condition handled):', {
+            user_id: user.id,
+            question_id: questionIdText
+          })
+          // Return success since the bookmark exists (which was the intended outcome)
+          return NextResponse.json({ message: 'Bookmark already exists', bookmarked: true })
+        }
+        
         console.error('Error adding bookmark:', {
           error: insertError,
           code: insertError.code,
