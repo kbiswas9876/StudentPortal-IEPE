@@ -23,7 +23,7 @@ import type { QuestionStatus } from '@/components/PracticeInterface'
  // ZenModeBackButton dynamically imported above
  // ReportErrorModal dynamically imported above
 
- import { ChevronLeft, ChevronRight } from 'lucide-react'
+ import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 type TestResult = Database['public']['Tables']['test_results']['Row']
 type AnswerLog = Database['public']['Tables']['answer_log']['Row']
 type Question = Database['public']['Tables']['questions']['Row']
@@ -362,8 +362,20 @@ const handleNext = () => {
         <span>⬅️</span>
         <span>Back to Analysis</span>
       </Link>
+
+      {/* Mobile Floating Action Button for Status Panel */}
+      <button
+        onClick={() => setIsRightPanelCollapsed(!isRightPanelCollapsed)}
+        className="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+        aria-label="Toggle questions panel"
+        title="Show Questions"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      </button>
       {/* Left column: main content */}
-      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4'} pt-6 lg:pt-6 pb-20`}>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} pt-6 lg:pt-6 pb-20`}>
 
         {/* Main question view */}
         <div className="px-4">
@@ -406,9 +418,19 @@ const handleNext = () => {
 
       {/* Right column: Premium Status Panel */}
       {!isRightPanelCollapsed && (
-        <div className="hidden lg:block w-1/4 h-screen p-6 pb-20">
+        <div className="lg:block w-full lg:w-1/4 xl:w-1/4 2xl:w-1/4 h-screen p-4 lg:p-6 pb-20 fixed lg:relative top-0 right-0 z-40 lg:z-auto bg-white dark:bg-slate-800 lg:bg-transparent">
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl h-full flex flex-col relative backdrop-blur-sm">
-            {/* Collapse control (external) */}
+            {/* Mobile close button */}
+            <button
+              onClick={() => setIsRightPanelCollapsed(true)}
+              className="lg:hidden absolute top-4 right-4 z-50 w-8 h-8 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-full flex items-center justify-center transition-colors"
+              aria-label="Close panel"
+              title="Close"
+            >
+              <X className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+            </button>
+
+            {/* Desktop collapse control (external) */}
             <button
               onClick={() => setIsRightPanelCollapsed(true)}
               aria-label="Collapse status panel"

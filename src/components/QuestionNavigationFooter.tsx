@@ -41,7 +41,7 @@ export default function QuestionNavigationFooter({
             <motion.button
               onClick={onPrev}
               disabled={!canPrev}
-              className={`px-6 py-3 rounded-xl border-2 transition-all duration-200 flex items-center gap-2 font-medium
+              className={`px-4 sm:px-6 py-3 rounded-xl border-2 transition-all duration-200 flex items-center gap-2 font-medium text-sm sm:text-base
                 ${!canPrev
                   ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-600 cursor-not-allowed'
                   : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm hover:shadow-md'
@@ -61,7 +61,7 @@ export default function QuestionNavigationFooter({
             <motion.button
               onClick={onNext}
               disabled={!canNext}
-              className={`px-6 py-3 rounded-xl border-2 transition-all duration-200 flex items-center gap-2 font-medium
+              className={`px-4 sm:px-6 py-3 rounded-xl border-2 transition-all duration-200 flex items-center gap-2 font-medium text-sm sm:text-base
                 ${!canNext
                   ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-600 cursor-not-allowed'
                   : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm hover:shadow-md'
@@ -80,11 +80,11 @@ export default function QuestionNavigationFooter({
           </div>
 
           {/* Progress Indicator */}
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400">
               {displayPosition} of {displayTotal}
             </span>
-            <div className="w-40 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+            <div className="w-24 sm:w-40 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
               <motion.div
                 className="h-full bg-gradient-to-r from-blue-500 to-green-500"
                 initial={{ width: 0 }}

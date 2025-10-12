@@ -97,12 +97,12 @@ export default function ViewAllQuestionsModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col"
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[80vh] sm:max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
                 All Questions
               </h2>
               <button
@@ -114,10 +114,10 @@ export default function ViewAllQuestionsModal({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               <div className="space-y-4">
                 {questions.map((question, index) => {
-                  const status = reviewStates[index] || 'skipped'
+                  const status = reviewStates[index]?.status || 'skipped'
                   const timeTaken = timePerQuestion[question.id.toString()] || 0
                   
                   return (
@@ -176,15 +176,15 @@ export default function ViewAllQuestionsModal({
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span>Correct: {reviewStates.filter(s => s === 'correct').length}</span>
+                    <span>Correct: {reviewStates.filter(s => s?.status === 'correct').length}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <XCircle className="w-4 h-4 text-red-600" />
-                    <span>Incorrect: {reviewStates.filter(s => s === 'incorrect').length}</span>
+                    <span>Incorrect: {reviewStates.filter(s => s?.status === 'incorrect').length}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-500" />
-                    <span>Skipped: {reviewStates.filter(s => s === 'skipped').length}</span>
+                    <span>Skipped: {reviewStates.filter(s => s?.status === 'skipped').length}</span>
                   </div>
                 </div>
               </div>
