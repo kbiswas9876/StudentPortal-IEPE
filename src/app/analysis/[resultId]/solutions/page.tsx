@@ -13,6 +13,8 @@ const DynamicMainQuestionView = nextDynamic(() => import('@/components/MainQuest
 const DynamicAnalysisSkeletonLoader = nextDynamic(() => import('@/components/AnalysisSkeletonLoader'), { ssr: false })
 const DynamicZenModeBackButton = nextDynamic(() => import('@/components/ZenModeBackButton'), { ssr: false })
 const DynamicReportErrorModal = nextDynamic(() => import('@/components/ReportErrorModal'), { ssr: false })
+const DynamicViewAllQuestionsModal = nextDynamic(() => import('@/components/ViewAllQuestionsModal'), { ssr: false })
+const DynamicQuestionNavigationFooter = nextDynamic(() => import('@/components/QuestionNavigationFooter'), { ssr: false })
 
 // Local type alias to avoid importing from StrategicPerformanceMatrix which uses framer-motion
 type QuadrantKey = 'strengths' | 'needsSpeed' | 'carelessErrors' | 'weaknesses'
@@ -64,6 +66,9 @@ export default function DetailedSolutionReviewPage() {
 
   // Report modal
   const [showReportModal, setShowReportModal] = useState(false)
+  
+  // View All Questions modal
+  const [showViewAllModal, setShowViewAllModal] = useState(false)
 
   // Bookmark map keyed by questions.question_id (string)
   const [bookmarkedMap, setBookmarkedMap] = useState<Record<string, boolean>>({})
@@ -342,10 +347,9 @@ const handleNext = () => {
     setBookmarkOnly(false)
   }
 
-  // Handler for "View All Questions" button (stub for Part 1)
+  // Handler for "View All Questions" button
   const handleViewAllQuestions = () => {
-    console.log('View All Questions clicked - functionality to be implemented in later parts')
-    // TODO: This will show a modal or expanded view in future parts
+    setShowViewAllModal(true)
   }
 
   const totalQuestions = sessionData?.questions.length ?? 0
@@ -359,7 +363,7 @@ const handleNext = () => {
         <span>Back to Analysis</span>
       </Link>
       {/* Left column: main content */}
-      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4'} pt-6 lg:pt-6`}>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4'} pt-6 lg:pt-6 pb-20`}>
 
         {/* Main question view */}
         <div className="px-4">
@@ -402,7 +406,7 @@ const handleNext = () => {
 
       {/* Right column: Premium Status Panel */}
       {!isRightPanelCollapsed && (
-        <div className="hidden lg:block w-1/4 h-screen p-6">
+        <div className="hidden lg:block w-1/4 h-screen p-6 pb-20">
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl h-full flex flex-col relative backdrop-blur-sm">
             {/* Collapse control (external) */}
             <button
@@ -449,6 +453,45 @@ const handleNext = () => {
           onClose={() => setShowReportModal(false)}
           questionId={currentQuestion.id}
           questionText={currentQuestion.question_text}
+        />
+      )}
+
+      {/* View All Questions Modal */}
+      {sessionData && (
+        <DynamicViewAllQuestionsModal
+          isOpen={showViewAllModal}
+          onClose={() => setShowViewAllModal(false)}
+          questions={sessionData.questions}
+          reviewStates={reviewStates}
+          timePerQuestion={timePerQuestion}
+          onQuestionSelect={(index: number) => {
+            setCurrentQuestionIndex(index)
+            setShowViewAllModal(false)
+          }}
+        />
+      )}
+
+      {/* Navigation Footer */}
+      {sessionData && (
+        <DynamicQuestionNavigationFooter
+          currentIndex={currentQuestionIndex}
+          totalQuestions={sessionData.questions.length}
+          filteredPosition={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos >= 0 ? pos + 1 : 1; })()}
+          filteredTotal={filteredIndices.length}
+          onPrev={() => {
+            const currentPos = filteredIndices.findIndex(i => i === currentQuestionIndex)
+            if (currentPos > 0) {
+              setCurrentQuestionIndex(filteredIndices[currentPos - 1])
+            }
+          }}
+          onNext={() => {
+            const currentPos = filteredIndices.findIndex(i => i === currentQuestionIndex)
+            if (currentPos < filteredIndices.length - 1) {
+              setCurrentQuestionIndex(filteredIndices[currentPos + 1])
+            }
+          }}
+          canPrev={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos > 0; })()}
+          canNext={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos < filteredIndices.length - 1; })()}
         />
       )}
     </div>

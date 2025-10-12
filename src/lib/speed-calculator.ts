@@ -24,6 +24,7 @@ type AdvancedDifficulty = 'Easy' | 'Easy-Moderate' | 'Moderate' | 'Moderate-Hard
 type Difficulty = 'Easy' | 'Medium' | 'Hard' | null | undefined;
 
 type SpeedCategory = 'Fast' | 'Slow';
+type AdvancedSpeedCategory = 'Fast' | 'Average' | 'Slow';
 
 /**
  * ADVANCED 5-TIER ALGORITHM (Part 2 Implementation)
@@ -62,6 +63,52 @@ export function getAdvancedSpeedCategory(timeTakenInSeconds: number, difficulty:
 }
 
 /**
+ * ADVANCED 3-TIER ALGORITHM (Part 3 Implementation)
+ * Determines if the time taken is Fast, Average, or Slow based on a five-tier difficulty model.
+ * This provides more nuanced feedback for correct answers.
+ *
+ * @param timeTakenInSeconds - The time the user took to answer.
+ * @param difficulty - The difficulty level from the five-tier model.
+ * @returns 'Fast', 'Average', or 'Slow'.
+ */
+export function getAdvancedThreeTierSpeedCategory(timeTakenInSeconds: number, difficulty: AdvancedDifficulty): AdvancedSpeedCategory {
+  let threshold: number;
+
+  switch (difficulty) {
+    case 'Easy':
+      threshold = ADVANCED_TIME_THRESHOLDS['Easy'];
+      break;
+    case 'Easy-Moderate':
+      threshold = ADVANCED_TIME_THRESHOLDS['Easy-Moderate'];
+      break;
+    case 'Moderate':
+      threshold = ADVANCED_TIME_THRESHOLDS['Moderate'];
+      break;
+    case 'Moderate-Hard':
+      threshold = ADVANCED_TIME_THRESHOLDS['Moderate-Hard'];
+      break;
+    case 'Hard':
+      threshold = ADVANCED_TIME_THRESHOLDS['Hard'];
+      break;
+    default:
+      threshold = ADVANCED_TIME_THRESHOLDS['default'];
+      break;
+  }
+
+  // Three-tier system: Fast (< 75%), Average (75-125%), Slow (> 125%)
+  const fastThreshold = threshold * 0.75;
+  const slowThreshold = threshold * 1.25;
+
+  if (timeTakenInSeconds < fastThreshold) {
+    return 'Fast';
+  } else if (timeTakenInSeconds <= slowThreshold) {
+    return 'Average';
+  } else {
+    return 'Slow';
+  }
+}
+
+/**
  * LEGACY 3-TIER ALGORITHM (Deprecated - kept for backward compatibility)
  * Use getAdvancedSpeedCategory() for new implementations.
  * 
@@ -91,4 +138,4 @@ export function getSpeedCategory(timeTakenInSeconds: number, difficulty: Difficu
 }
 
 export { TIME_THRESHOLDS, ADVANCED_TIME_THRESHOLDS };
-export type { Difficulty, AdvancedDifficulty, SpeedCategory };
+export type { Difficulty, AdvancedDifficulty, SpeedCategory, AdvancedSpeedCategory };

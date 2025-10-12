@@ -41,6 +41,7 @@ export default function ReviewPremiumStatusPanel({
   const [statusFilter, setStatusFilter] = useState<string>('All')
   const [difficultyFilter, setDifficultyFilter] = useState<string>('All')
   const [bookmarksOnly, setBookmarksOnly] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   // When external page controls collapse, hide internal toggle UI and keep panel visible
   const showCollapsed = !hideInternalToggle && isCollapsed
 
@@ -268,8 +269,8 @@ export default function ReviewPremiumStatusPanel({
                 onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-fast' ? null : 'correct-fast')}
                 className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                   activePerformanceFilter === 'correct-fast' 
-                    ? 'bg-green-100 border-green-500 text-green-800 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300' 
-                    : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/30'
+                    ? 'bg-green-500 border-green-600 text-white shadow-lg' 
+                    : 'bg-green-100 border-green-300 text-green-800 hover:bg-green-200 dark:bg-green-900/40 dark:border-green-600 dark:text-green-200 dark:hover:bg-green-900/60'
                 }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -285,8 +286,8 @@ export default function ReviewPremiumStatusPanel({
                 onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-slow' ? null : 'correct-slow')}
                 className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                   activePerformanceFilter === 'correct-slow' 
-                    ? 'bg-yellow-100 border-yellow-500 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-400 dark:text-yellow-300' 
-                    : 'bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/30'
+                    ? 'bg-yellow-500 border-yellow-600 text-white shadow-lg' 
+                    : 'bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900/60'
                 }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -302,8 +303,8 @@ export default function ReviewPremiumStatusPanel({
                 onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-fast' ? null : 'incorrect-fast')}
                 className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                   activePerformanceFilter === 'incorrect-fast' 
-                    ? 'bg-orange-100 border-orange-500 text-orange-800 dark:bg-orange-900/30 dark:border-orange-400 dark:text-orange-300' 
-                    : 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30'
+                    ? 'bg-orange-500 border-orange-600 text-white shadow-lg' 
+                    : 'bg-orange-100 border-orange-300 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-200 dark:hover:bg-orange-900/60'
                 }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -319,8 +320,8 @@ export default function ReviewPremiumStatusPanel({
                 onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-slow' ? null : 'incorrect-slow')}
                 className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                   activePerformanceFilter === 'incorrect-slow' 
-                    ? 'bg-red-100 border-red-500 text-red-800 dark:bg-red-900/30 dark:border-red-400 dark:text-red-300' 
-                    : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/30'
+                    ? 'bg-red-500 border-red-600 text-white shadow-lg' 
+                    : 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:border-red-600 dark:text-red-200 dark:hover:bg-red-900/60'
                 }`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -333,64 +334,100 @@ export default function ReviewPremiumStatusPanel({
             </div>
           </motion.div>
 
-          {/* Section 3: Advanced Filter Controls */}
+          {/* Section 3: Compact Filter Button */}
           <motion.div 
             className="p-5 border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/20 dark:via-slate-800/20 dark:to-slate-700/20"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.4 }}
           >
-            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Advanced Filters</h4>
-            <div className="space-y-3">
-              {/* Two-column layout for Status and Difficulty filters */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Status Filter */}
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Status</label>
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="All">All</option>
-                    <option value="Correct">Correct</option>
-                    <option value="Incorrect">Incorrect</option>
-                    <option value="Skipped">Skipped</option>
-                  </select>
+            <div className="relative">
+              <motion.button
+                onClick={() => setShowFilters(!showFilters)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                  </svg>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Advanced Filters</span>
                 </div>
-
-                {/* Difficulty Filter */}
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Difficulty</label>
-                  <select
-                    value={difficultyFilter}
-                    onChange={(e) => setDifficultyFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="All">All</option>
-                    <option value="Easy">Easy</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Hard">Hard</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Bookmarks Only Toggle */}
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Bookmarks only</label>
-                <button
-                  onClick={() => setBookmarksOnly(!bookmarksOnly)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    bookmarksOnly ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-600'
-                  }`}
+                <svg 
+                  className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${showFilters ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      bookmarksOnly ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </motion.button>
+
+              {/* Filter Popover */}
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full left-0 right-0 mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 shadow-lg z-50"
+                  >
+                    <div className="space-y-3">
+                      {/* Two-column layout for Status and Difficulty filters */}
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Status Filter */}
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Status</label>
+                          <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="All">All</option>
+                            <option value="Correct">Correct</option>
+                            <option value="Incorrect">Incorrect</option>
+                            <option value="Skipped">Skipped</option>
+                          </select>
+                        </div>
+
+                        {/* Difficulty Filter */}
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Difficulty</label>
+                          <select
+                            value={difficultyFilter}
+                            onChange={(e) => setDifficultyFilter(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="All">All</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Bookmarks Only Toggle */}
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Bookmarks only</label>
+                        <button
+                          onClick={() => setBookmarksOnly(!bookmarksOnly)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            bookmarksOnly ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-600'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              bookmarksOnly ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
 

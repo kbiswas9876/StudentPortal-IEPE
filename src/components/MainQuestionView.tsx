@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import KatexRenderer from './ui/KatexRenderer'
 import { Database } from '@/types/database'
 import { Flag } from 'lucide-react'
+import { getAdvancedSpeedCategory, getAdvancedThreeTierSpeedCategory, type AdvancedDifficulty, type AdvancedSpeedCategory } from '@/lib/speed-calculator'
 
 type TestResult = Database['public']['Tables']['test_results']['Row']
 type AnswerLog = Database['public']['Tables']['answer_log']['Row']
@@ -92,6 +93,37 @@ export default function MainQuestionView({
     }
   }
 
+  const getQuestionHeaderClasses = (s: 'correct' | 'incorrect' | 'skipped') => {
+    switch (s) {
+      case 'correct':
+        return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+      case 'incorrect':
+        return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+      default:
+        return 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200'
+    }
+  }
+
+  const getSpeedColor = (timeTakenSeconds: number, difficulty: string | null) => {
+    // Only apply color-coding to correct answers
+    if (status !== 'correct') {
+      return 'text-gray-500 dark:text-gray-400'
+    }
+    
+    const speedCategory = getAdvancedThreeTierSpeedCategory(timeTakenSeconds, difficulty as AdvancedDifficulty)
+    
+    // Three-tier color system for correct answers only
+    if (speedCategory === 'Fast') {
+      return 'text-green-600 dark:text-green-400' // Fast - Green
+    } else if (speedCategory === 'Average') {
+      return 'text-yellow-600 dark:text-yellow-400' // Average - Yellow/Amber
+    } else if (speedCategory === 'Slow') {
+      return 'text-red-600 dark:text-red-400' // Slow - Red
+    }
+    
+    return 'text-gray-500 dark:text-gray-400'
+  }
+
   const getStatusLabel = (s: 'correct' | 'incorrect' | 'skipped') => {
     switch (s) {
       case 'correct':
@@ -169,7 +201,7 @@ export default function MainQuestionView({
             </motion.button>
           )}
 
-          <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-lg font-semibold">
+          <div className={`px-3 py-1 rounded-lg font-semibold ${getQuestionHeaderClasses(status)}`}>
             Question {currentIndex + 1} of {totalQuestions}
           </div>
 
@@ -177,11 +209,13 @@ export default function MainQuestionView({
             {getStatusLabel(status)}
           </div>
 
-          <div className="flex items-center space-x-2 text-slate-600 dark:text-slate-400">
+          <div className="flex items-center space-x-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="font-mono text-sm">{formatTime(timeTakenSeconds)}</span>
+            <span className={`font-mono text-base font-semibold ${getSpeedColor(timeTakenSeconds, question.difficulty)}`}>
+              {formatTime(timeTakenSeconds)}
+            </span>
           </div>
 
           {question.difficulty && (
@@ -330,58 +364,6 @@ export default function MainQuestionView({
         </div>
       )}
 
-      {/* Navigation Controls */}
-      <div className="mt-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onPrev}
-              disabled={isPrevDisabled}
-              className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2
-                ${isPrevDisabled
-                  ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-600 cursor-not-allowed'
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'}
-              `}
-              aria-label="Previous question"
-              title="Previous"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="text-sm">Previous</span>
-            </button>
-
-            <button
-              onClick={onNext}
-              disabled={isNextDisabled}
-              className={`px-4 py-2 rounded-lg border transition-colors flex items-center gap-2
-                ${isNextDisabled
-                  ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-600 cursor-not-allowed'
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'}
-              `}
-              aria-label="Next question"
-              title="Next"
-            >
-              <span className="text-sm">Next</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-600 dark:text-slate-400">
-              {displayPosition} / {displayTotal}
-            </span>
-            <div className="w-32 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-blue-500 to-green-500"
-                style={{ width: `${filteredProgress}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
