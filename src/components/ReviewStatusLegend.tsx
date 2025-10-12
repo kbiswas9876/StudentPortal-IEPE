@@ -25,26 +25,26 @@ export default function ReviewStatusLegend({
       <div className="grid grid-cols-3 gap-3">
         {/* Correct */}
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-md flex items-center justify-center shadow-sm bg-green-500">
+          <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center shadow-sm">
             <span className="text-sm font-extrabold text-white">{correctCount}</span>
           </div>
-          <span className="text-sm text-slate-700 dark:text-slate-300">Correct</span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Correct</span>
         </div>
 
         {/* Incorrect */}
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-md flex items-center justify-center shadow-sm bg-red-500">
+          <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center shadow-sm">
             <span className="text-sm font-extrabold text-white">{incorrectCount}</span>
           </div>
-          <span className="text-sm text-slate-700 dark:text-slate-300">Incorrect</span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Incorrect</span>
         </div>
 
         {/* Skipped */}
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-md flex items-center justify-center shadow-sm bg-slate-400">
+          <div className="w-8 h-8 bg-slate-400 rounded-md flex items-center justify-center shadow-sm">
             <span className="text-sm font-extrabold text-white">{skippedCount}</span>
           </div>
-          <span className="text-sm text-slate-700 dark:text-slate-300">Skipped</span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Skipped</span>
         </div>
       </div>
     </motion.div>

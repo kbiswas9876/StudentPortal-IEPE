@@ -181,6 +181,13 @@ export default function DetailedSolutionReviewPage() {
       return { status: status as QuestionStatus, user_answer: null, is_bookmarked }
     }) ?? []
 
+  // CRITICAL FIX: Create timing map from answerLog for Performance Matrix stability
+  // Maps question.id to time_taken in seconds (answerLog already stores in seconds)
+  const timePerQuestion: Record<string, number> = {}
+  sessionData?.answerLog.forEach((answer) => {
+    timePerQuestion[answer.question_id.toString()] = answer.time_taken
+  })
+
   // Build combined data of answers joined with questions
   type CombinedItem = AnswerLog & { question: Question }
   const combinedData: CombinedItem[] = (sessionData?.answerLog || [])
@@ -418,6 +425,7 @@ const handleNext = () => {
                 onViewAllQuestions={handleViewAllQuestions}
                 bookmarkedMap={bookmarkedMap}
                 hideInternalToggle={true}
+                timePerQuestion={timePerQuestion}
               />
             )}
           </div>

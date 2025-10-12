@@ -1127,6 +1127,7 @@ useEffect(() => {
           onSubmitTest={handleSubmitTest}
           isSubmitting={isSubmitting}
           mockTestData={mockTestData}
+          timePerQuestion={cumulativeTimeRef.current}
         />
       </div>
 

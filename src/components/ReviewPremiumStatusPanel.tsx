@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
 import ReviewStatusLegend from './ReviewStatusLegend'
+import { getAdvancedSpeedCategory, type AdvancedDifficulty, type SpeedCategory } from '@/lib/speed-calculator'
 
 type Question = Database['public']['Tables']['questions']['Row']
 type ReviewStatus = 'correct' | 'incorrect' | 'skipped'
@@ -18,6 +19,7 @@ interface ReviewPremiumStatusPanelProps {
   onViewAllQuestions?: () => void
   bookmarkedMap?: Record<string, boolean>
   hideInternalToggle?: boolean
+  timePerQuestion?: Record<string, number> // CRITICAL FIX: Actual timing data (in seconds from answer_log)
 }
 
 export default function ReviewPremiumStatusPanel({
@@ -28,9 +30,16 @@ export default function ReviewPremiumStatusPanel({
   onViewAllQuestions,
   bookmarkedMap,
   hideInternalToggle = false,
+  timePerQuestion = {} // CRITICAL FIX: Default to empty object if not provided
 }: ReviewPremiumStatusPanelProps) {
   // State for panel collapse/expand
   const [isCollapsed, setIsCollapsed] = useState(false)
+  
+  // Filter states
+  const [activePerformanceFilter, setActivePerformanceFilter] = useState<string | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string>('All')
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('All')
+  const [bookmarksOnly, setBookmarksOnly] = useState(false)
   // When external page controls collapse, hide internal toggle UI and keep panel visible
   const showCollapsed = !hideInternalToggle && isCollapsed
 
@@ -54,6 +63,80 @@ export default function ReviewPremiumStatusPanel({
   const correctCount = reviewStates.filter(s => s.status === 'correct').length
   const incorrectCount = reviewStates.filter(s => s.status === 'incorrect').length
   const skippedCount = reviewStates.filter(s => s.status === 'skipped').length
+
+  // CRITICAL FIX: Performance Matrix calculations using ACTUAL timing data
+  // This calculation is now stable and deterministic - depends only on questions, reviewStates, and timePerQuestion
+  const performanceMatrix = useMemo(() => {
+    let correctFast = 0, correctSlow = 0, incorrectFast = 0, incorrectSlow = 0
+
+    questions.forEach((question, index) => {
+      const state = reviewStates[index]
+      if (!state || state.status === 'skipped') return
+
+      // Determine if answer is correct
+      const isCorrect = state.status === 'correct'
+      
+      // CRITICAL FIX: Get ACTUAL time taken from timePerQuestion prop (already in seconds)
+      const timeTakenInSeconds = timePerQuestion[question.id.toString()] || 0
+      
+      // Use the advanced 5-tier algorithm for accurate speed categorization
+      const difficulty = question.difficulty as AdvancedDifficulty
+      const speedCategory = getAdvancedSpeedCategory(timeTakenInSeconds, difficulty)
+
+      if (isCorrect && speedCategory === 'Fast') correctFast++
+      else if (isCorrect && speedCategory === 'Slow') correctSlow++
+      else if (!isCorrect && speedCategory === 'Fast') incorrectFast++
+      else if (!isCorrect && speedCategory === 'Slow') incorrectSlow++
+    })
+
+    return { correctFast, correctSlow, incorrectFast, incorrectSlow }
+  }, [questions, reviewStates, timePerQuestion])
+
+  // CRITICAL FIX: Filter questions based on active filters with ACTUAL timing data
+  // This ensures consistent and accurate filtering across all filter types
+  const filteredQuestions = useMemo(() => {
+    return questions.map((question, index) => {
+      const state = reviewStates[index]
+      if (!state) return { index, question, state, visible: false }
+
+      let visible = true
+
+      // Performance Matrix filter - USES ACTUAL TIMING DATA NOW
+      if (activePerformanceFilter && state.status !== 'skipped') {
+        const isCorrect = state.status === 'correct'
+        
+        // CRITICAL FIX: Get ACTUAL time taken from timePerQuestion prop (already in seconds)
+        const timeTakenInSeconds = timePerQuestion[question.id.toString()] || 0
+        
+        // Use the advanced 5-tier algorithm for accurate speed categorization
+        const difficulty = question.difficulty as AdvancedDifficulty
+        const speedCategory = getAdvancedSpeedCategory(timeTakenInSeconds, difficulty)
+
+        if (activePerformanceFilter === 'correct-fast' && !(isCorrect && speedCategory === 'Fast')) visible = false
+        else if (activePerformanceFilter === 'correct-slow' && !(isCorrect && speedCategory === 'Slow')) visible = false
+        else if (activePerformanceFilter === 'incorrect-fast' && !(!isCorrect && speedCategory === 'Fast')) visible = false
+        else if (activePerformanceFilter === 'incorrect-slow' && !(!isCorrect && speedCategory === 'Slow')) visible = false
+      }
+
+      // Status filter
+      if (statusFilter !== 'All') {
+        const statusMap: Record<string, string> = {
+          'Correct': 'correct',
+          'Incorrect': 'incorrect',
+          'Skipped': 'skipped'
+        }
+        if (statusMap[statusFilter] && state.status !== statusMap[statusFilter]) visible = false
+      }
+
+      // Difficulty filter
+      if (difficultyFilter !== 'All' && question.difficulty !== difficultyFilter) visible = false
+
+      // CRITICAL FIX: Bookmarks filter - Fixed to work correctly
+      if (bookmarksOnly && !bookmarkedMap?.[question.id.toString()]) visible = false
+
+      return { index, question, state, visible }
+    })
+  }, [questions, reviewStates, activePerformanceFilter, statusFilter, difficultyFilter, bookmarksOnly, bookmarkedMap, timePerQuestion])
 
   return (
     <AnimatePresence>
@@ -163,7 +246,147 @@ export default function ReviewPremiumStatusPanel({
             </div>
           </motion.div>
 
-          {/* Section 2: Premium Question Grid */}
+          {/* Section 2: Performance Matrix */}
+          <motion.div 
+            className="p-5 border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/30 dark:via-slate-800/30 dark:to-slate-700/30"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.4 }}
+          >
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Performance Matrix</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {/* Correct & Fast */}
+              <motion.button
+                onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-fast' ? null : 'correct-fast')}
+                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+                  activePerformanceFilter === 'correct-fast' 
+                    ? 'bg-green-100 border-green-500 text-green-800 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300' 
+                    : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/30'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium">Correct & Fast</span>
+                  <span className="text-sm font-bold">{performanceMatrix.correctFast}</span>
+                </div>
+              </motion.button>
+
+              {/* Correct & Slow */}
+              <motion.button
+                onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-slow' ? null : 'correct-slow')}
+                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+                  activePerformanceFilter === 'correct-slow' 
+                    ? 'bg-yellow-100 border-yellow-500 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-400 dark:text-yellow-300' 
+                    : 'bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-400 dark:hover:bg-yellow-900/30'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium">Correct & Slow</span>
+                  <span className="text-sm font-bold">{performanceMatrix.correctSlow}</span>
+                </div>
+              </motion.button>
+
+              {/* Incorrect & Fast */}
+              <motion.button
+                onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-fast' ? null : 'incorrect-fast')}
+                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+                  activePerformanceFilter === 'incorrect-fast' 
+                    ? 'bg-orange-100 border-orange-500 text-orange-800 dark:bg-orange-900/30 dark:border-orange-400 dark:text-orange-300' 
+                    : 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/30'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium">Incorrect & Fast</span>
+                  <span className="text-sm font-bold">{performanceMatrix.incorrectFast}</span>
+                </div>
+              </motion.button>
+
+              {/* Incorrect & Slow */}
+              <motion.button
+                onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-slow' ? null : 'incorrect-slow')}
+                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+                  activePerformanceFilter === 'incorrect-slow' 
+                    ? 'bg-red-100 border-red-500 text-red-800 dark:bg-red-900/30 dark:border-red-400 dark:text-red-300' 
+                    : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/30'
+                }`}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium">Incorrect & Slow</span>
+                  <span className="text-sm font-bold">{performanceMatrix.incorrectSlow}</span>
+                </div>
+              </motion.button>
+            </div>
+          </motion.div>
+
+          {/* Section 3: Advanced Filter Controls */}
+          <motion.div 
+            className="p-5 border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/20 dark:via-slate-800/20 dark:to-slate-700/20"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+          >
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Advanced Filters</h4>
+            <div className="space-y-3">
+              {/* Two-column layout for Status and Difficulty filters */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Status Filter */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Status</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="All">All</option>
+                    <option value="Correct">Correct</option>
+                    <option value="Incorrect">Incorrect</option>
+                    <option value="Skipped">Skipped</option>
+                  </select>
+                </div>
+
+                {/* Difficulty Filter */}
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Difficulty</label>
+                  <select
+                    value={difficultyFilter}
+                    onChange={(e) => setDifficultyFilter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="All">All</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Bookmarks Only Toggle */}
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Bookmarks only</label>
+                <button
+                  onClick={() => setBookmarksOnly(!bookmarksOnly)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    bookmarksOnly ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      bookmarksOnly ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Section 4: Premium Question Grid */}
           <motion.div 
             className="flex-1 p-5 overflow-y-auto min-h-0"
             initial={{ opacity: 0 }}
@@ -171,7 +394,9 @@ export default function ReviewPremiumStatusPanel({
             transition={{ delay: 0.2, duration: 0.4 }}
           >
             <div className="grid grid-cols-5 gap-3">
-              {questions.map((_, index) => {
+              {filteredQuestions
+                .filter(({ visible }) => visible) // Only show visible questions
+                .map(({ index, question, state, visible }) => {
                 const isCurrent = index === currentIndex
                 const hasBookmark = bookmarkedMap && questions[index]?.question_id
                   ? !!bookmarkedMap[String(questions[index].question_id)]
@@ -181,12 +406,12 @@ export default function ReviewPremiumStatusPanel({
                   <motion.button
                     key={index}
                     onClick={() => onQuestionSelect(index)}
-                    className={`
-                      relative w-14 h-14 rounded-xl border-2 transition-all duration-300 font-bold text-sm
-                      ${getQuestionColor(index)}
-                      ${isCurrent ? 'ring-3 ring-blue-500/50 dark:ring-blue-400/50 shadow-2xl scale-110' : 'hover:shadow-xl hover:scale-105'}
-                      active:scale-95 backdrop-blur-sm
-                    `}
+                  className={`
+                    relative w-14 h-14 rounded-xl border-2 transition-all duration-300 font-bold text-sm
+                    ${getQuestionColor(index)}
+                    ${isCurrent ? 'ring-3 ring-blue-500/50 dark:ring-blue-400/50 shadow-2xl scale-110' : 'hover:shadow-xl hover:scale-105'}
+                    active:scale-95 backdrop-blur-sm
+                  `}
                     whileHover={{ 
                       scale: isCurrent ? 1.15 : 1.08,
                       y: isCurrent ? -4 : -2,
