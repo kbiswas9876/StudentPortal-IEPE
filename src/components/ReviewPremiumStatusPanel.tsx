@@ -17,6 +17,7 @@ interface ReviewPremiumStatusPanelProps {
   onQuestionSelect: (index: number) => void
   onViewAllQuestions?: () => void
   bookmarkedMap?: Record<string, boolean>
+  hideInternalToggle?: boolean
 }
 
 export default function ReviewPremiumStatusPanel({
@@ -25,10 +26,13 @@ export default function ReviewPremiumStatusPanel({
   currentIndex,
   onQuestionSelect,
   onViewAllQuestions,
-  bookmarkedMap
+  bookmarkedMap,
+  hideInternalToggle = false,
 }: ReviewPremiumStatusPanelProps) {
   // State for panel collapse/expand
   const [isCollapsed, setIsCollapsed] = useState(false)
+  // When external page controls collapse, hide internal toggle UI and keep panel visible
+  const showCollapsed = !hideInternalToggle && isCollapsed
 
   // Color logic for review mode
   const getQuestionColor = (index: number) => {
@@ -53,7 +57,7 @@ export default function ReviewPremiumStatusPanel({
 
   return (
     <AnimatePresence>
-      {!isCollapsed ? (
+      {!showCollapsed ? (
         // --- Panel Visible State ---
         <motion.div
           key="panel-visible"
@@ -72,58 +76,60 @@ export default function ReviewPremiumStatusPanel({
           }}
         >
           {/* Premium Card Toggle Button - Always Visible (When Panel is Expanded) */}
-          <motion.button
-            onClick={() => setIsCollapsed(true)}
-            className="absolute -left-12 top-1/2 -translate-y-1/2 w-10 h-20 bg-gradient-to-br from-white to-slate-50 dark:from-slate-50 dark:to-slate-100 border border-slate-200/60 dark:border-slate-300/60 rounded-l-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 z-30 group backdrop-blur-md"
-            style={{
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-            }}
-            whileHover={{ 
-              scale: 1.05,
-              y: -2
-            }}
-            whileTap={{ scale: 0.95 }}
-            initial={{ x: 0, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.3 }}
-          >
-            <div className="w-full h-full flex items-center justify-center">
-              <motion.svg 
-                className="w-5 h-5 text-slate-600 dark:text-slate-700 group-hover:text-slate-900 dark:group-hover:text-slate-900 transition-all duration-300" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-                style={{ transform: 'rotate(180deg)' }}
-                whileHover={{ scale: 1.2, rotate: 185 }}
-                transition={{ duration: 0.2 }}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              </motion.svg>
-            </div>
-            {/* Premium card glow effect */}
-            <motion.div 
-              className="absolute inset-0 rounded-r-2xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-all duration-500"
-              whileHover={{ opacity: 1 }}
-            />
-            {/* Subtle inner highlight */}
-            <motion.div 
-              className="absolute top-0 left-0 right-0 h-1/2 rounded-r-2xl bg-gradient-to-b from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              whileHover={{ opacity: 1 }}
-            />
-            {/* Premium shimmer effect */}
-            <motion.div
-              className="absolute inset-0 rounded-r-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent"
-              animate={{
-                x: ['-100%', '100%'],
+          {!hideInternalToggle && (
+            <motion.button
+              onClick={() => setIsCollapsed(true)}
+              className="absolute -left-12 top-1/2 -translate-y-1/2 w-10 h-20 bg-gradient-to-br from-white to-slate-50 dark:from-slate-50 dark:to-slate-100 border border-slate-200/60 dark:border-slate-300/60 rounded-l-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 z-30 group backdrop-blur-md"
+              style={{
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
               }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatDelay: 3,
-                ease: "easeInOut"
+              whileHover={{
+                scale: 1.05,
+                y: -2
               }}
-            />
-          </motion.button>
+              whileTap={{ scale: 0.95 }}
+              initial={{ x: 0, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+            >
+              <div className="w-full h-full flex items-center justify-center">
+                <motion.svg
+                  className="w-5 h-5 text-slate-600 dark:text-slate-700 group-hover:text-slate-900 dark:group-hover:text-slate-900 transition-all duration-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  style={{ transform: 'rotate(180deg)' }}
+                  whileHover={{ scale: 1.2, rotate: 185 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                </motion.svg>
+              </div>
+              {/* Premium card glow effect */}
+              <motion.div
+                className="absolute inset-0 rounded-r-2xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-all duration-500"
+                whileHover={{ opacity: 1 }}
+              />
+              {/* Subtle inner highlight */}
+              <motion.div
+                className="absolute top-0 left-0 right-0 h-1/2 rounded-r-2xl bg-gradient-to-b from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                whileHover={{ opacity: 1 }}
+              />
+              {/* Premium shimmer effect */}
+              <motion.div
+                className="absolute inset-0 rounded-r-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                animate={{
+                  x: ['-100%', '100%'],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: 3,
+                  ease: "easeInOut"
+                }}
+              />
+            </motion.button>
+          )}
 
           {/* Section 1: Premium Header */}
           <motion.div 

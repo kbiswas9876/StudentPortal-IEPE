@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
 import { Database } from '@/types/database'
  // AnalysisSkeletonLoader dynamically imported below to avoid server bundling framer-motion
@@ -71,6 +72,9 @@ export default function DetailedSolutionReviewPage() {
   
   // Prevent concurrent bookmark requests (race condition fix)
   const bookmarkInProgressRef = useRef(false)
+
+  // Right panel collapsed state (controls visibility and left column width)
+  const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false)
 
   useEffect(() => {
     if (authLoading) return
@@ -341,20 +345,13 @@ const handleNext = () => {
 
   return (
     <div className="min-h-screen flex gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      {/* Fixed Back to Analysis button */}
+      <Link href="../" className="fixed left-6 top-6 z-40 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-colors">
+        <span>⬅️</span>
+        <span>Back to Analysis</span>
+      </Link>
       {/* Left column: main content */}
-      <div className="flex-1 min-w-0 pt-28 lg:pt-12 transition-all duration-300 lg:w-3/4">
-        <div className="px-4 py-6">
-          <DynamicZenModeBackButton
-            onClick={() => router.push(`/analysis/${encodeURIComponent(String(resultId))}`)}
-            className="md:left-8 md:top-6"
-          />
-          <header className="mb-4">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Detailed Solution Review</h1>
-            <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Session ID: {String(resultId)} • Questions: {totalQuestions} • Answers: {sessionData?.answerLog.length ?? 0}
-            </div>
-          </header>
-        </div>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4'} pt-6 lg:pt-6`}>
 
         {/* Main question view */}
         <div className="px-4">
@@ -396,24 +393,56 @@ const handleNext = () => {
       </div>
 
       {/* Right column: Premium Status Panel */}
-      <div className="hidden lg:block w-1/4 h-screen p-6">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl h-full flex flex-col relative backdrop-blur-sm">
-          {sessionData && (
-            <DynamicReviewPremiumStatusPanel
-              questions={sessionData.questions}
-              reviewStates={reviewStates}
-              currentIndex={currentQuestionIndex}
-              onQuestionSelect={(index: number) => {
-                console.debug('[Solutions] Palette select', { index })
-                setCurrentQuestionIndex(index)
-              }}
-              onViewAllQuestions={handleViewAllQuestions}
-              bookmarkedMap={bookmarkedMap}
-            />
-          )}
+      {!isRightPanelCollapsed && (
+        <div className="hidden lg:block w-1/4 h-screen p-6">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl h-full flex flex-col relative backdrop-blur-sm">
+            {/* Collapse control (external) */}
+            <button
+              onClick={() => setIsRightPanelCollapsed(true)}
+              className="hidden lg:flex absolute -left-12 top-1/2 -translate-y-1/2 z-40 w-10 h-20 bg-gradient-to-br from-white to-slate-50 dark:from-slate-50 dark:to-slate-100 border border-slate-200/60 dark:border-slate-300/60 rounded-l-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 group backdrop-blur-md"
+            >
+              <svg
+                className="w-5 h-5 text-slate-600 dark:text-slate-700 group-hover:text-slate-900 dark:group-hover:text-slate-900"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            {sessionData && (
+              <DynamicReviewPremiumStatusPanel
+                questions={sessionData.questions}
+                reviewStates={reviewStates}
+                currentIndex={currentQuestionIndex}
+                onQuestionSelect={(index: number) => {
+                  console.debug('[Solutions] Palette select', { index })
+                  setCurrentQuestionIndex(index)
+                }}
+                onViewAllQuestions={handleViewAllQuestions}
+                bookmarkedMap={bookmarkedMap}
+                hideInternalToggle={true}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
+      {isRightPanelCollapsed && (
+        <button
+          onClick={() => setIsRightPanelCollapsed(false)}
+          className="hidden lg:flex fixed right-6 top-1/2 -translate-y-1/2 z-40 w-10 h-20 bg-gradient-to-br from-white to-slate-50 dark:from-slate-50 dark:to-slate-100 border border-slate-200/60 dark:border-slate-300/60 rounded-l-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 group backdrop-blur-md"
+        >
+          <svg
+            className="w-5 h-5 text-slate-600 dark:text-slate-700 group-hover:text-slate-900 dark:group-hover:text-slate-900"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
       {/* Report Error Modal */}
       {showReportModal && currentQuestion && (
         <DynamicReportErrorModal
