@@ -8,6 +8,7 @@ import { QuestionStatus } from './PracticeInterface'
 import StatusLegend from './StatusLegend'
 import ReviewStatusLegend from './ReviewStatusLegend'
 import { getAdvancedSpeedCategory, type AdvancedDifficulty, type SpeedCategory } from '@/lib/speed-calculator'
+import { Bookmark } from 'lucide-react'
 
 type Question = Database['public']['Tables']['questions']['Row']
 
@@ -471,7 +472,12 @@ export default function PremiumStatusPanel({
                 {state?.status === 'marked_for_review' && state?.user_answer && (
                   <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full shadow-sm"></div>
                 )}
-                {/* Bookmark indication removed - now handled by main bookmark icon in question header */}
+                {/* Small bookmark overview indicator - top-left corner */}
+                {hasBookmark && (
+                  <div className="absolute -top-1 -left-1">
+                    <Bookmark className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="currentColor" />
+                  </div>
+                )}
               </motion.button>
             )
           })}

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
 import ReviewStatusLegend from './ReviewStatusLegend'
 import { getAdvancedSpeedCategory, type AdvancedDifficulty, type SpeedCategory } from '@/lib/speed-calculator'
+import { Bookmark } from 'lucide-react'
 
 type Question = Database['public']['Tables']['questions']['Row']
 type ReviewStatus = 'correct' | 'incorrect' | 'skipped'
@@ -450,7 +451,12 @@ export default function ReviewPremiumStatusPanel({
                     }}
                   >
                     {index + 1}
-                    {/* Bookmark indication removed - now handled by main bookmark icon in question header */}
+                    {/* Small bookmark overview indicator - top-left corner */}
+                    {hasBookmark && (
+                      <div className="absolute -top-1 -left-1">
+                        <Bookmark className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="currentColor" />
+                      </div>
+                    )}
                   </motion.button>
                 )
               })}

@@ -6,6 +6,7 @@ import { Database } from '@/types/database'
 import { QuestionStatus } from './PracticeInterface'
 import StatusLegend from './StatusLegend'
 import type { MatrixCounts, QuadrantKey } from './StrategicPerformanceMatrix'
+import { Bookmark } from 'lucide-react'
 
 type Question = Database['public']['Tables']['questions']['Row']
 
@@ -325,7 +326,12 @@ export default function QuestionPalette({
                   <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full shadow-sm"></div>
                 )}
 
-                {/* Bookmark indication removed - now handled by main bookmark icon in question header */}
+                {/* Small bookmark overview indicator - top-left corner */}
+                {showBookmarkBadge && (
+                  <div className="absolute -top-1 -left-1">
+                    <Bookmark className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="currentColor" />
+                  </div>
+                )}
               </motion.button>
             )
           })}
