@@ -21,6 +21,7 @@ import type { QuestionStatus } from '@/components/PracticeInterface'
  // ZenModeBackButton dynamically imported above
  // ReportErrorModal dynamically imported above
 
+ import { ChevronLeft, ChevronRight } from 'lucide-react'
 type TestResult = Database['public']['Tables']['test_results']['Row']
 type AnswerLog = Database['public']['Tables']['answer_log']['Row']
 type Question = Database['public']['Tables']['questions']['Row']
@@ -399,16 +400,11 @@ const handleNext = () => {
             {/* Collapse control (external) */}
             <button
               onClick={() => setIsRightPanelCollapsed(true)}
-              className="hidden lg:flex absolute -left-12 top-1/2 -translate-y-1/2 z-40 w-10 h-20 bg-gradient-to-br from-white to-slate-50 dark:from-slate-50 dark:to-slate-100 border border-slate-200/60 dark:border-slate-300/60 rounded-l-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 group backdrop-blur-md"
+              aria-label="Collapse status panel"
+              title="Collapse status panel"
+              className="hidden lg:flex absolute -left-12 top-1/2 -translate-y-1/2 z-40 inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-100/90 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60 shadow-md transition-colors hover:scale-[1.03]"
             >
-              <svg
-                className="w-5 h-5 text-slate-600 dark:text-slate-700 group-hover:text-slate-900 dark:group-hover:text-slate-900"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              </svg>
+              <ChevronLeft className="w-5 h-5 text-slate-700 dark:text-slate-200" />
             </button>
             {sessionData && (
               <DynamicReviewPremiumStatusPanel
@@ -431,16 +427,11 @@ const handleNext = () => {
       {isRightPanelCollapsed && (
         <button
           onClick={() => setIsRightPanelCollapsed(false)}
-          className="hidden lg:flex fixed right-6 top-1/2 -translate-y-1/2 z-40 w-10 h-20 bg-gradient-to-br from-white to-slate-50 dark:from-slate-50 dark:to-slate-100 border border-slate-200/60 dark:border-slate-300/60 rounded-l-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 group backdrop-blur-md"
+          aria-label="Expand status panel"
+          title="Expand status panel"
+          className="hidden lg:flex fixed right-6 top-1/2 -translate-y-1/2 z-40 inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-100/90 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60 shadow-md transition-colors hover:scale-[1.03]"
         >
-          <svg
-            className="w-5 h-5 text-slate-600 dark:text-slate-700 group-hover:text-slate-900 dark:group-hover:text-slate-900"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-          </svg>
+          <ChevronRight className="w-5 h-5 text-slate-700 dark:text-slate-200" />
         </button>
       )}
       {/* Report Error Modal */}
