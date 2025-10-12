@@ -153,7 +153,7 @@ export default function MainQuestionView({
               
               <motion.svg
                 className="w-6 h-6 relative z-10"
-                fill="none"
+                fill={isBookmarked ? "currentColor" : "none"}
                 stroke="currentColor"
                 viewBox="0 0 24 24"
                 whileHover={{ scale: 1.1 }}
@@ -162,7 +162,7 @@ export default function MainQuestionView({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
+                  strokeWidth={isBookmarked ? 0 : 2}
                   d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
                 />
               </motion.svg>
