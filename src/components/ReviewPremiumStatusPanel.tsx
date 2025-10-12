@@ -236,7 +236,6 @@ export default function ReviewPremiumStatusPanel({
               correctCount={correctCount}
               incorrectCount={incorrectCount}
               skippedCount={skippedCount}
-              className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-xl border border-slate-200/60 dark:border-slate-700/60"
             />
           </motion.div>
 

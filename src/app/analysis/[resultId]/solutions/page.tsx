@@ -7,7 +7,7 @@ import { Database } from '@/types/database'
  // AnalysisSkeletonLoader dynamically imported below to avoid server bundling framer-motion
 import nextDynamic from 'next/dynamic'
 // Dynamically import client-only components to avoid server bundling framer-motion
-const DynamicPremiumStatusPanel = nextDynamic(() => import('@/components/PremiumStatusPanel'), { ssr: false })
+const DynamicReviewPremiumStatusPanel = nextDynamic(() => import('@/components/ReviewPremiumStatusPanel'), { ssr: false })
 const DynamicMainQuestionView = nextDynamic(() => import('@/components/MainQuestionView'), { ssr: false })
 const DynamicAnalysisSkeletonLoader = nextDynamic(() => import('@/components/AnalysisSkeletonLoader'), { ssr: false })
 const DynamicZenModeBackButton = nextDynamic(() => import('@/components/ZenModeBackButton'), { ssr: false })
@@ -340,88 +340,89 @@ const handleNext = () => {
   const currentQuestion = sessionData?.questions[currentQuestionIndex]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <DynamicZenModeBackButton
-          onClick={() => router.push(`/analysis/${encodeURIComponent(String(resultId))}`)}
-          className="md:left-8 md:top-6"
-        />
-        <header className="mb-4">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Detailed Solution Review</h1>
-          <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Session ID: {String(resultId)} • Questions: {totalQuestions} • Answers: {sessionData?.answerLog.length ?? 0}
-          </div>
-        </header>
-
-        {/* Unified two-column layout: main left, palette right */}
-        <div className="flex">
-          {/* Left column */}
-          <div className="flex-1 lg:w-3/4 pt-28 lg:pt-12">
-            {sessionData && (
-              filteredIndices.length === 0 ? (
-                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">No matching questions</h3>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                        Adjust the filters or clear them to view questions.
-                      </p>
-                    </div>
-                    <button
-                      onClick={clearAllFilters}
-                      className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <DynamicMainQuestionView
-                  session={sessionData}
-                  currentIndex={currentQuestionIndex}
-                  onPrev={handlePrev}
-                  onNext={handleNext}
-                  isBookmarked={currentQuestion ? !!bookmarkedMap[String(currentQuestion.question_id)] : false}
-                  onToggleBookmark={handleToggleBookmark}
-                  onReportError={handleReportError}
-                  canPrev={(filteredIndices.findIndex(i => i === currentQuestionIndex)) > 0}
-                  canNext={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos >= 0 && pos < filteredIndices.length - 1; })()}
-                  filteredPosition={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos >= 0 ? pos + 1 : 1; })()}
-                  filteredTotal={filteredIndices.length}
-                />
-              )
-            )}
-          </div>
-
-          {/* Right sidebar (desktop only) */}
-          <div className="hidden lg:block fixed right-0 top-0 h-screen w-1/4 p-0">
-            {sessionData && (
-              <DynamicPremiumStatusPanel
-                questions={sessionData.questions}
-                sessionStates={premiumSessionStates}
-                currentIndex={currentQuestionIndex}
-                onQuestionSelect={(index: number) => {
-                  console.debug('[Solutions] Palette select', { index })
-                  setCurrentQuestionIndex(index)
-                }}
-                onSubmitTest={handleViewAllQuestions}
-                isSubmitting={false}
-                submitLabel="View All Questions"
-              />
-            )}
-          </div>
+    <div className="min-h-screen flex gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      {/* Left column: main content */}
+      <div className="flex-1 min-w-0 pt-28 lg:pt-12 transition-all duration-300 lg:w-3/4">
+        <div className="px-4 py-6">
+          <DynamicZenModeBackButton
+            onClick={() => router.push(`/analysis/${encodeURIComponent(String(resultId))}`)}
+            className="md:left-8 md:top-6"
+          />
+          <header className="mb-4">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Detailed Solution Review</h1>
+            <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Session ID: {String(resultId)} • Questions: {totalQuestions} • Answers: {sessionData?.answerLog.length ?? 0}
+            </div>
+          </header>
         </div>
 
-        {/* Report Error Modal */}
-        {showReportModal && currentQuestion && (
-          <DynamicReportErrorModal
-            isOpen={showReportModal}
-            onClose={() => setShowReportModal(false)}
-            questionId={currentQuestion.id}
-            questionText={currentQuestion.question_text}
-          />
-        )}
+        {/* Main question view */}
+        <div className="px-4">
+          {sessionData && (
+            filteredIndices.length === 0 ? (
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">No matching questions</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      Adjust the filters or clear them to view questions.
+                    </p>
+                  </div>
+                  <button
+                    onClick={clearAllFilters}
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <DynamicMainQuestionView
+                session={sessionData}
+                currentIndex={currentQuestionIndex}
+                onPrev={handlePrev}
+                onNext={handleNext}
+                isBookmarked={currentQuestion ? !!bookmarkedMap[String(currentQuestion.question_id)] : false}
+                onToggleBookmark={handleToggleBookmark}
+                onReportError={handleReportError}
+                canPrev={(filteredIndices.findIndex(i => i === currentQuestionIndex)) > 0}
+                canNext={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos >= 0 && pos < filteredIndices.length - 1; })()}
+                filteredPosition={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos >= 0 ? pos + 1 : 1; })()}
+                filteredTotal={filteredIndices.length}
+              />
+            )
+          )}
+        </div>
       </div>
+
+      {/* Right column: Premium Status Panel */}
+      <div className="hidden lg:block w-1/4 h-screen p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl h-full flex flex-col relative backdrop-blur-sm">
+          {sessionData && (
+            <DynamicReviewPremiumStatusPanel
+              questions={sessionData.questions}
+              reviewStates={reviewStates}
+              currentIndex={currentQuestionIndex}
+              onQuestionSelect={(index: number) => {
+                console.debug('[Solutions] Palette select', { index })
+                setCurrentQuestionIndex(index)
+              }}
+              onViewAllQuestions={handleViewAllQuestions}
+              bookmarkedMap={bookmarkedMap}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Report Error Modal */}
+      {showReportModal && currentQuestion && (
+        <DynamicReportErrorModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          questionId={currentQuestion.id}
+          questionText={currentQuestion.question_text}
+        />
+      )}
     </div>
   )
 }

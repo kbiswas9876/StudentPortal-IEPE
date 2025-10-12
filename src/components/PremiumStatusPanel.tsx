@@ -277,7 +277,7 @@ export default function PremiumStatusPanel({
           <motion.button
             onClick={onSubmitTest}
             disabled={isSubmitting}
-            className="w-full px-6 py-4 bg-gradient-to-r from-red-500 via-red-600 to-red-700 hover:from-red-600 hover:via-red-700 hover:to-red-800 disabled:from-red-400 disabled:via-red-500 disabled:to-red-600 text-white rounded-xl font-bold text-base transition-all duration-300 flex items-center justify-center space-x-3 shadow-2xl hover:shadow-red-500/25 disabled:shadow-none whitespace-nowrap"
+            className="w-full px-6 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-bold text-base transition-colors duration-300 flex items-center justify-center space-x-3 shadow-2xl hover:shadow-blue-500/25 disabled:shadow-none whitespace-nowrap"
             whileHover={{
               scale: isSubmitting ? 1 : 1.02,
               y: -2
@@ -285,8 +285,8 @@ export default function PremiumStatusPanel({
             whileTap={{ scale: 0.98 }}
             style={{
               boxShadow: isSubmitting
-                ? '0 8px 25px -8px rgba(239, 68, 68, 0.3)'
-                : '0 20px 40px -12px rgba(239, 68, 68, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+                ? '0 8px 25px -8px rgba(59, 130, 246, 0.3)'
+                : '0 20px 40px -12px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)'
             }}
           >
             {isSubmitting ? (
