@@ -356,12 +356,7 @@ const handleNext = () => {
   const currentQuestion = sessionData?.questions[currentQuestionIndex]
 
   return (
-    <div className="min-h-screen flex gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Fixed Back to Analysis button */}
-      <Link href="../" className="fixed left-6 top-6 z-40 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-colors">
-        <span>⬅️</span>
-        <span>Back to Analysis</span>
-      </Link>
+    <div className="h-screen flex gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 overflow-hidden">
 
       {/* Mobile Floating Action Button for Status Panel */}
       <button
@@ -375,7 +370,20 @@ const handleNext = () => {
         </svg>
       </button>
       {/* Left column: main content */}
-      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} pt-6 lg:pt-6 pb-20`}>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} pt-6 lg:pt-6 pb-20 overflow-y-auto`}>
+
+        {/* Back to Analysis button */}
+        <div className="px-4 pt-4">
+          <Link 
+            href={`/analysis/${resultId}`} 
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-colors border border-slate-200 dark:border-slate-600"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="font-medium">Back to Analysis</span>
+          </Link>
+        </div>
 
         {/* Main question view */}
         <div className="px-4">
@@ -418,7 +426,7 @@ const handleNext = () => {
 
       {/* Right column: Premium Status Panel */}
       {!isRightPanelCollapsed && (
-        <div className="lg:block w-full lg:w-1/4 xl:w-1/4 2xl:w-1/4 h-screen p-4 lg:p-6 pb-20 fixed lg:relative top-0 right-0 z-40 lg:z-auto bg-white dark:bg-slate-800 lg:bg-transparent">
+        <div className="lg:block w-full lg:w-1/4 xl:w-1/4 2xl:w-1/4 h-screen p-4 lg:p-6 pb-20 fixed lg:relative top-0 right-0 z-40 lg:z-auto bg-white dark:bg-slate-800 lg:bg-transparent overflow-hidden">
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl h-full flex flex-col relative backdrop-blur-sm">
             {/* Mobile close button */}
             <button
