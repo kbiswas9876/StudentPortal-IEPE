@@ -210,34 +210,34 @@ export interface Database {
       }
       error_reports: {
         Row: {
-          id: number
+          id: string // UUID
           question_id: number
-          reported_by_user_id: string
+          reported_by_user_id: string // UUID string
           report_description: string
           status: 'new' | 'reviewed' | 'resolved' | 'dismissed'
           admin_notes: string | null
           created_at: string
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
-          id?: number
+          id?: string
           question_id: number
           reported_by_user_id: string
           report_description: string
           status?: 'new' | 'reviewed' | 'resolved' | 'dismissed'
           admin_notes?: string | null
           created_at?: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
-          id?: number
+          id?: string
           question_id?: number
           reported_by_user_id?: string
           report_description?: string
           status?: 'new' | 'reviewed' | 'resolved' | 'dismissed'
           admin_notes?: string | null
           created_at?: string
-          updated_at?: string | null
+          updated_at?: string
         }
       }
     }

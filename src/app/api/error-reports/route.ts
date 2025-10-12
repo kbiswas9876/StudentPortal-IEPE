@@ -1,22 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-import { env } from '@/lib/env'
-import { cookies } from 'next/headers'
+import { createServerClient, createAdminClient } from '@/lib/supabase-server'
+import { Database } from '@/types/database'
 
-if (!env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
-}
-
-const supabaseAdmin = createClient(
-  env.SUPABASE_URL,
-  env.SUPABASE_SERVICE_ROLE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+// Use admin client for inserts (bypasses RLS safely on server)
+const supabaseAdmin = createAdminClient()
 
 // POST - Create a new error report
 export async function POST(request: Request) {
@@ -25,34 +12,28 @@ export async function POST(request: Request) {
     const { questionId, description } = body
 
     if (!questionId || !description) {
-      return NextResponse.json({ 
-        error: 'Question ID and description are required' 
+      return NextResponse.json({
+        error: 'Question ID and description are required'
       }, { status: 400 })
     }
 
-    // Get the current user
-    const cookieStore = await cookies()
-    const supabase = createClient(
-      env.SUPABASE_URL,
-      env.SUPABASE_ANON_KEY,
-      {
-        auth: {
-          storage: {
-            getItem: (name: string) => {
-              return cookieStore.get(name)?.value || null
-            },
-            setItem: (name: string, value: string) => {
-              // No-op for server-side
-            },
-            removeItem: (name: string) => {
-              // No-op for server-side
-            }
-          }
-        }
-      }
-    )
+    // Authenticate user using server client (supports Authorization Bearer token)
+    const authHeader = request.headers.get('authorization') ?? request.headers.get('Authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const supabase = await createServerClient(token)
+    const { data: { user }, error: getUserError } = token
+      ? await supabase.auth.getUser(token)
+      : await supabase.auth.getUser()
+
+    if (getUserError) {
+      console.error('Error-reports getUser error:', {
+        message: getUserError.message,
+        code: (getUserError as any)?.code,
+        details: (getUserError as any)?.details,
+        hint: (getUserError as any)?.hint,
+      })
+    }
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -60,29 +41,48 @@ export async function POST(request: Request) {
 
     console.log('Creating error report:', { questionId, userId: user.id, description })
 
+    const insertData = {
+      question_id: questionId,
+      reported_by_user_id: user.id,
+      report_description: description,
+      status: 'new' as const
+    }
+
     const { data, error } = await supabaseAdmin
       .from('error_reports')
-      .insert({
-        question_id: questionId,
-        reported_by_user_id: user.id,
-        report_description: description,
-        status: 'new'
-      })
+      .insert(insertData as any) // Type assertion needed due to Supabase client type inference issue
       .select()
+      .single()
 
     if (error) {
-      console.error('Error creating error report:', error)
+      console.error('Error creating error report:', {
+        error,
+        message: error.message,
+        code: (error as any)?.code,
+        details: (error as any)?.details,
+        hint: (error as any)?.hint,
+      })
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    console.log('Successfully created error report:', data[0])
+    console.log('Successfully created error report:', data)
 
-    return NextResponse.json({ 
-      data: data[0],
-      message: 'Error report submitted successfully' 
+    return NextResponse.json({
+      data,
+      message: 'Error report submitted successfully'
     })
   } catch (error) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // Enhanced error logging with full details
+    console.error('[ERROR-REPORTS] Unexpected error in POST handler:', {
+      error: error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
+    })
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }

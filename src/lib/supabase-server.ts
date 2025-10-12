@@ -9,7 +9,7 @@ import { Database } from '@/types/database'
  * 
  * @returns Supabase client configured for server-side usage
  */
-export async function createServerClient(authToken?: string) {
+export async function createServerClient(authToken?: string): Promise<import('@supabase/supabase-js').SupabaseClient<Database>> {
   const cookieStore = await cookies()
   
   return createClient<Database>(
@@ -48,7 +48,7 @@ export async function createServerClient(authToken?: string) {
  * 
  * @returns Supabase admin client with service role privileges
  */
-export function createAdminClient() {
+export function createAdminClient(): import('@supabase/supabase-js').SupabaseClient<Database> {
   if (!env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
   }

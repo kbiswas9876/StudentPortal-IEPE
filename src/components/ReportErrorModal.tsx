@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/lib/toast-context'
+import { useAuth } from '@/lib/auth-context'
 import KatexRenderer from './ui/KatexRenderer'
 
 interface ReportErrorModalProps {
@@ -22,6 +23,7 @@ export default function ReportErrorModal({
   const [description, setDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { showToast } = useToast()
+  const { session } = useAuth()
 
   const handleSubmit = async () => {
     if (!description.trim()) {
@@ -38,8 +40,10 @@ export default function ReportErrorModal({
 
       const response = await fetch('/api/error-reports', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
         },
         body: JSON.stringify({
           questionId,

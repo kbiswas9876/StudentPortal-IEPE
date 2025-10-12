@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
@@ -54,6 +54,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const { showToast } = useToast()
   const router = useRouter()
   
+  // Extract stable primitive values from auth context to prevent unnecessary effect re-runs
+  const userId = user?.id
+  const sessionToken = session?.access_token
+  
   // Generate unique session key based on question set for sessionStorage
   const sessionKey = useRef(`practice_session_${questions.map(q => q.id).join('_')}`).current
   
@@ -74,6 +78,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   
   // Centralized Timer Architecture - Your Method Implementation
   const [displayTime, setDisplayTime] = useState(0); // State for triggering re-renders of timer display
+  // Memoize questionIds for stable dependency in bookmark checks
+  const questionIds = useMemo(() => questions.map(q => q.question_id), [questions]);
   
   // Timer pause state management
   const [isPaused, setIsPaused] = useState(false);
@@ -351,39 +357,63 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           setDisplayTime(0) // Start from 0 for new session
         }
         
-         // Then, fetch actual bookmark status for these questions if user is logged in
-         if (user) {
-           const questionIds = questions.map(q => q.question_id)
-           fetch('/api/practice/check-bookmarks', {
-             method: 'POST',
-             headers: {
-               'Content-Type': 'application/json',
-               ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-             },
-             body: JSON.stringify({ questionIds })
-           })
-             .then(response => response.json())
-             .then(data => {
-               if (data.bookmarks) {
-                 // Update session states with actual bookmark status (keyed by question_id)
-                 setSessionStates(prevStates =>
-                   prevStates.map((state, index) => ({
-                     ...state,
-                     is_bookmarked: data.bookmarks[questions[index].question_id] || false
-                   }))
-                 )
-               }
-             })
-             .catch(error => {
-               console.error('Error checking bookmarks:', error)
-               // Continue with default bookmark state (false) if API fails
-             })
-         }
-        
-        setIsInitialized(true)
+         setIsInitialized(true)
       }
     }
-  }, [questions, savedSessionState, user, restoreStateFromSessionStorage])
+  }, [questions, savedSessionState, restoreStateFromSessionStorage])
+
+// Effect: Fetch bookmark statuses ONCE on initialization
+// FIX: This should only run once when initialized, not on every session change
+// Using a ref to track if we've already fetched bookmarks for this session
+const bookmarksFetchedRef = useRef(false);
+ 
+useEffect(() => {
+  // Only run once when initialized and user is available
+  if (!isInitialized || !userId || bookmarksFetchedRef.current) return;
+
+  const controller = new AbortController();
+
+  const run = async () => {
+    try {
+      const response = await fetch('/api/practice/check-bookmarks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+        },
+        body: JSON.stringify({ questionIds }),
+        signal: controller.signal,
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        console.error('Bookmark check failed:', data);
+        return;
+      }
+
+      if (controller.signal.aborted) return;
+
+      if (data.bookmarks) {
+        setSessionStates(prevStates =>
+          prevStates.map((state, index) => ({
+            ...state,
+            is_bookmarked: !!data.bookmarks[String(questions[index].question_id)],
+          }))
+        );
+        // Mark as fetched to prevent re-running
+        bookmarksFetchedRef.current = true;
+      }
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
+      console.error('Error checking bookmarks:', err);
+    }
+  };
+
+  run();
+
+  return () => controller.abort();
+}, [isInitialized, userId, sessionToken, questionIds, questions])
 
 
   // ===== AUTO-SAVE EFFECT: Persist state on every change =====
@@ -474,14 +504,16 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     is_bookmarked: false
   }
 
-  // Debug logging
-  console.log('PracticeInterface render:', {
-    questionsLength: questions.length,
-    sessionStatesLength: sessionStates.length,
-    currentIndex,
-    isInitialized,
-    currentState
-  })
+  // Debug logging (development only)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('PracticeInterface render:', {
+      questionsLength: questions.length,
+      sessionStatesLength: sessionStates.length,
+      currentIndex,
+      isInitialized,
+      currentState
+    })
+  }
 
   const updateSessionState = useCallback((index: number, updates: Partial<SessionState>) => {
     setSessionStates(prev => {
@@ -571,7 +603,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
 
   const handleSaveAndExit = async (sessionName: string) => {
     try {
-      if (!user) return
+      if (!userId) return
 
       // Create comprehensive session state object with complete state serialization
       const sessionState = {
@@ -646,7 +678,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.id,
+          userId,
           sessionName,
           sessionState
         })
@@ -697,7 +729,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   }
 
   const handleBookmark = async () => {
-    if (!user || !currentQuestion) return;
+    if (!userId || !currentQuestion) return;
 
     // Prevent concurrent requests (race condition fix)
     if (bookmarkInProgressRef.current) {
@@ -716,7 +748,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
       },
       body: JSON.stringify({
         questionId: currentQuestion.question_id,
@@ -808,7 +840,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       const totalTime = Math.round((Date.now() - effectiveSessionStartTime) / 1000) // Convert to seconds
 
       console.log('Submitting practice session:', {
-        user_id: user?.id,
+        user_id: userId,
         total_questions: totalQuestions,
         correct_answers: correctAnswers,
         incorrect_answers: incorrectAnswers,
@@ -823,7 +855,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: user?.id,
+          user_id: userId,
           questions: questions.map((question, index) => ({
             question_id: question.id, // Use numeric ID from questions table
             user_answer: sessionStates[index].user_answer,
@@ -904,7 +936,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
       const totalTime = Math.round((Date.now() - effectiveSessionStartTime) / 1000) // Convert to seconds
 
       console.log('Submitting practice session:', {
-        user_id: user?.id,
+        user_id: userId,
         total_questions: totalQuestions,
         correct_answers: correctAnswers,
         incorrect_answers: incorrectAnswers,
@@ -919,7 +951,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: user?.id,
+          user_id: userId,
           questions: questions.map((question, index) => ({
             question_id: question.id, // Use numeric ID from questions table
             user_answer: sessionStates[index].user_answer,
