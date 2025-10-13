@@ -8,13 +8,20 @@ import CustomCheckbox from './CustomCheckbox'
 import InlineChapterConfig from './InlineChapterConfig'
 
 type BookSource = Database['public']['Tables']['book_sources']['Row']
+
+// Extended type for books with statistics
+type BookSourceWithStats = BookSource & {
+  totalChapters?: number
+  totalQuestions?: number
+}
+
 type ChapterData = {
   chapter_name: string
   count: number
 }
 
 interface PremiumBookCardProps {
-  book: BookSource
+  book: BookSourceWithStats
   isSelected: boolean
   chapters: ChapterData[]
   loadingChapters: boolean
@@ -50,8 +57,9 @@ export default function PremiumBookCard({
   }
 
   // Calculate total chapters and questions
-  const totalChapters = chapters.length
-  const totalQuestions = chapters.reduce((sum, chapter) => sum + chapter.count, 0)
+  // Use pre-loaded statistics if available, otherwise calculate from chapters
+  const totalChapters = book.totalChapters ?? chapters.length
+  const totalQuestions = book.totalQuestions ?? chapters.reduce((sum, chapter) => sum + chapter.count, 0)
 
   return (
     <motion.div

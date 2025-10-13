@@ -11,13 +11,20 @@ import StickyActionFooter from './StickyActionFooter'
 import { PremiumTimeInput } from './PremiumTimeInput'
 
 type BookSource = Database['public']['Tables']['book_sources']['Row']
+
+// Extended type for books with statistics
+type BookSourceWithStats = BookSource & {
+  totalChapters?: number
+  totalQuestions?: number
+}
+
 type ChapterData = {
   chapter_name: string
   count: number
 }
 
 interface PremiumPracticeSetupProps {
-  books: BookSource[]
+  books: BookSourceWithStats[]
   onSessionStart: (config: PracticeSessionConfig) => void
   onTotalQuestionsChange: (total: number) => void
   onSessionConfigChange: (config: PracticeSessionConfig | null) => void

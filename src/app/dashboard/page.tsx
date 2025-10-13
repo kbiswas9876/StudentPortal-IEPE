@@ -16,12 +16,18 @@ import DashboardSkeletonLoader from '@/components/DashboardSkeletonLoader'
 import { BookAccordionSkeleton, RecentReportsSkeleton } from '@/components/SkeletonLoader'
 
 type BookSource = Database['public']['Tables']['book_sources']['Row']
+
+// Extended type for books with statistics
+type BookSourceWithStats = BookSource & {
+  totalChapters?: number
+  totalQuestions?: number
+}
 type TestResult = Database['public']['Tables']['test_results']['Row']
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const [books, setBooks] = useState<BookSource[]>([])
+  const [books, setBooks] = useState<BookSourceWithStats[]>([])
   const [recentReports, setRecentReports] = useState<TestResult[]>([])
   const [loading, setLoading] = useState(true)
   const [booksLoading, setBooksLoading] = useState(true)
@@ -84,12 +90,13 @@ export default function DashboardPage() {
     }
   }
 
-  const fetchBooks = async (): Promise<BookSource[]> => {
+  const fetchBooks = async (): Promise<BookSourceWithStats[]> => {
     try {
       setBooksLoading(true)
-      console.log('Fetching books...')
+      console.log('Fetching books with statistics...')
       
-      const response = await fetch('/api/books')
+      // Request books with statistics included
+      const response = await fetch('/api/books?includeStats=true')
       const result = await response.json()
 
       console.log('Books API result:', result)
@@ -99,7 +106,7 @@ export default function DashboardPage() {
         return []
       }
       
-      console.log('Books fetched successfully:', result.data)
+      console.log('Books with statistics fetched successfully:', result.data)
       return result.data || []
     } catch (error) {
       console.error('Error fetching books:', error)

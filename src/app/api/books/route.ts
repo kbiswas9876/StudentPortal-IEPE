@@ -22,6 +22,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
     const includeCustom = searchParams.get('includeCustom') === 'true'
+    const includeStats = searchParams.get('includeStats') === 'true'
 
     // Fetch official books
     const { data: officialBooks, error: officialError } = await supabaseAdmin
@@ -67,7 +68,7 @@ export async function GET(request: Request) {
     }
 
     // Combine and format the results
-    const allBooks = [
+    let allBooks = [
       ...(officialBooks || []).map(book => ({
         ...book,
         type: 'official',
@@ -83,6 +84,88 @@ export async function GET(request: Request) {
         question_count: book.question_count
       }))
     ]
+
+    // If statistics are requested, fetch them for all official books
+    if (includeStats && officialBooks && officialBooks.length > 0) {
+      console.log('Fetching statistics for all books...')
+      
+      // Fetch statistics for all official books in parallel
+      const statsPromises = officialBooks.map(async (book) => {
+        try {
+          // Get chapter and question counts for this book
+          const { data: questionsData, error: questionsError } = await supabaseAdmin
+            .from('questions')
+            .select('chapter_name')
+            .eq('book_source', book.name)
+
+          if (questionsError) {
+            console.error(`Error fetching questions for book ${book.name}:`, questionsError)
+            return {
+              bookCode: book.code,
+              totalChapters: 0,
+              totalQuestions: 0
+            }
+          }
+
+          if (!questionsData || questionsData.length === 0) {
+            return {
+              bookCode: book.code,
+              totalChapters: 0,
+              totalQuestions: 0
+            }
+          }
+
+          // Group by chapter_name and count
+          const chapterCounts = questionsData.reduce((acc, question) => {
+            const chapterName = question.chapter_name
+            if (chapterName) {
+              acc[chapterName] = (acc[chapterName] || 0) + 1
+            }
+            return acc
+          }, {} as Record<string, number>)
+
+          const totalChapters = Object.keys(chapterCounts).length
+          const totalQuestions = questionsData.length
+
+          return {
+            bookCode: book.code,
+            totalChapters,
+            totalQuestions
+          }
+        } catch (error) {
+          console.error(`Error processing statistics for book ${book.name}:`, error)
+          return {
+            bookCode: book.code,
+            totalChapters: 0,
+            totalQuestions: 0
+          }
+        }
+      })
+
+      // Wait for all statistics to be fetched
+      const statsResults = await Promise.all(statsPromises)
+      
+      // Create a map for quick lookup
+      const statsMap = new Map()
+      statsResults.forEach(stat => {
+        statsMap.set(stat.bookCode, stat)
+      })
+
+      // Add statistics to official books
+      allBooks = allBooks.map(book => {
+        if (book.type === 'official') {
+          const stats = statsMap.get(book.code)
+          return {
+            ...book,
+            totalChapters: stats?.totalChapters || 0,
+            totalQuestions: stats?.totalQuestions || 0
+          }
+        }
+        return book
+      })
+
+      console.log('Statistics fetched for all books:', statsResults)
+    }
 
     console.log(`Fetched ${allBooks.length} books (${officialBooks?.length || 0} official, ${customBooks.length} custom)`)
 
