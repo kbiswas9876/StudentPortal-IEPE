@@ -356,7 +356,7 @@ const handleNext = () => {
   const currentQuestion = sessionData?.questions[currentQuestionIndex]
 
   return (
-    <div className="h-screen flex gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 overflow-hidden">
+    <div className="h-screen flex gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 overflow-visible">
 
       {/* Mobile Floating Action Button for Status Panel */}
       <button
@@ -370,7 +370,7 @@ const handleNext = () => {
         </svg>
       </button>
       {/* Left column: main content */}
-      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} pt-6 lg:pt-6 pb-20 overflow-y-auto`}>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full lg:pr-20' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} pt-6 lg:pt-6 pb-20 overflow-y-auto`}>
 
         {/* Back to Analysis button */}
         <div className="px-4 pt-4">
@@ -426,7 +426,7 @@ const handleNext = () => {
 
       {/* Right column: Premium Status Panel */}
       {!isRightPanelCollapsed && (
-        <div className="lg:block w-full lg:w-1/4 xl:w-1/4 2xl:w-1/4 h-screen p-4 lg:p-6 pb-20 fixed lg:relative top-0 right-0 z-40 lg:z-auto bg-white dark:bg-slate-800 lg:bg-transparent overflow-hidden">
+        <div className="lg:block w-full lg:w-1/4 xl:w-1/4 2xl:w-1/4 h-screen p-4 lg:p-6 pb-20 fixed lg:relative top-0 right-0 z-40 lg:z-auto bg-white dark:bg-slate-800 lg:bg-transparent overflow-visible">
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl h-full flex flex-col relative backdrop-blur-sm">
             {/* Mobile close button */}
             <button
