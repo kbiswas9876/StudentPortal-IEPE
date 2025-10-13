@@ -63,6 +63,9 @@ function calculateKPIMetrics(session: SessionResult): KPIMetrics {
   const correctFinal = (testResult.total_correct ?? 0) ||
     (answerLog?.filter(a => a.status === 'correct').length ?? 0)
 
+  const incorrectFinal = (testResult.total_incorrect ?? 0) ||
+    (answerLog?.filter(a => a.status === 'incorrect').length ?? 0)
+
   const totalQuestionsFinal = (testResult.total_questions ?? 0) || (answerLog?.length ?? 0)
 
   const accuracy =
@@ -84,7 +87,10 @@ function calculateKPIMetrics(session: SessionResult): KPIMetrics {
 
   return {
     score,
+    totalQuestions: totalQuestionsFinal,
     attempted: attemptedFinal,
+    correct: correctFinal,
+    incorrect: incorrectFinal,
     accuracy,
     percentage,
     timeTaken: formatTimeMMSS(totalTime)
@@ -110,8 +116,30 @@ function calculateChapterPerformance(session: SessionResult): ChapterPerformance
   }
 
   // Accumulate per-chapter stats
-  const chapterMap = new Map<string, { attempted: number; correct: number; timeSum: number }>()
+  const chapterMap = new Map<string, { 
+    totalQuestions: number; 
+    attempted: number; 
+    correct: number; 
+    incorrect: number; 
+    timeSum: number 
+  }>()
 
+  // First pass: count total questions per chapter
+  for (const q of questions) {
+    const chapterName = q.chapter_name || 'Unknown'
+    if (!chapterMap.has(chapterName)) {
+      chapterMap.set(chapterName, { 
+        totalQuestions: 0, 
+        attempted: 0, 
+        correct: 0, 
+        incorrect: 0, 
+        timeSum: 0 
+      })
+    }
+    chapterMap.get(chapterName)!.totalQuestions += 1
+  }
+
+  // Second pass: process answer log
   for (const a of answerLog) {
     const q = questionById.get(a.question_id)
     if (!q) continue
@@ -119,11 +147,9 @@ function calculateChapterPerformance(session: SessionResult): ChapterPerformance
 
     const wasAttempted = a.status !== 'skipped'
     const wasCorrect = a.status === 'correct'
+    const wasIncorrect = a.status === 'incorrect'
     const time = a.time_taken || 0
 
-    if (!chapterMap.has(chapterName)) {
-      chapterMap.set(chapterName, { attempted: 0, correct: 0, timeSum: 0 })
-    }
     const agg = chapterMap.get(chapterName)!
     if (wasAttempted) {
       agg.attempted += 1
@@ -131,6 +157,9 @@ function calculateChapterPerformance(session: SessionResult): ChapterPerformance
     }
     if (wasCorrect) {
       agg.correct += 1
+    }
+    if (wasIncorrect) {
+      agg.incorrect += 1
     }
   }
 
@@ -140,10 +169,12 @@ function calculateChapterPerformance(session: SessionResult): ChapterPerformance
     const timePerQuestion = agg.attempted > 0 ? agg.timeSum / agg.attempted : 0
     result.push({
       chapterName,
-      accuracy,
-      timePerQuestion,
+      totalQuestions: agg.totalQuestions,
       attempted: agg.attempted,
-      correct: agg.correct
+      correct: agg.correct,
+      incorrect: agg.incorrect,
+      accuracy,
+      timePerQuestion
     })
   }
 
