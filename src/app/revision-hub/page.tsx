@@ -1,12 +1,14 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { Database } from '@/types/database'
 import RevisionChapterNav from '@/components/RevisionChapterNav'
 import BookmarkedQuestionCard from '@/components/BookmarkedQuestionCard'
+import { FunnelIcon } from '@heroicons/react/24/outline'
+import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 
 interface ChapterData {
   name: string
@@ -46,8 +48,28 @@ export default function RevisionHubPage() {
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Filter and Sort states
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
+  const [selectedRatingFilter, setSelectedRatingFilter] = useState<number | null>(null)
+  const [sortOrder, setSortOrder] = useState<'none' | 'high-to-low' | 'low-to-high'>('none')
+
   // State persistence - prevent unnecessary reloads
   const dataFetchedRef = React.useRef(false)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (isFilterDropdownOpen && !target.closest('.filter-dropdown-container')) {
+        setIsFilterDropdownOpen(false)
+      }
+    }
+
+    if (isFilterDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isFilterDropdownOpen])
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -125,6 +147,45 @@ export default function RevisionHubPage() {
   const handleSelectChapter = (chapter: string) => {
     setSelectedChapter(chapter)
     fetchQuestionsForChapter(chapter)
+    // Reset filters when changing chapters
+    setSelectedRatingFilter(null)
+    setSortOrder('none')
+  }
+
+  // Filter and sort questions
+  const filteredAndSortedQuestions = useMemo(() => {
+    let result = [...bookmarkedQuestions]
+
+    // Apply rating filter
+    if (selectedRatingFilter !== null) {
+      result = result.filter(q => q.user_difficulty_rating === selectedRatingFilter)
+    }
+
+    // Apply sorting
+    if (sortOrder === 'high-to-low') {
+      result.sort((a, b) => {
+        const ratingA = a.user_difficulty_rating || 0
+        const ratingB = b.user_difficulty_rating || 0
+        return ratingB - ratingA
+      })
+    } else if (sortOrder === 'low-to-high') {
+      result.sort((a, b) => {
+        const ratingA = a.user_difficulty_rating || 0
+        const ratingB = b.user_difficulty_rating || 0
+        return ratingA - ratingB
+      })
+    }
+
+    return result
+  }, [bookmarkedQuestions, selectedRatingFilter, sortOrder])
+
+  // Toggle rating filter
+  const handleRatingFilterClick = (rating: number) => {
+    if (selectedRatingFilter === rating) {
+      setSelectedRatingFilter(null) // Clear filter if clicking the same rating
+    } else {
+      setSelectedRatingFilter(rating)
+    }
   }
 
   // Loading state
@@ -269,8 +330,13 @@ export default function RevisionHubPage() {
                           {selectedChapter}
                         </h2>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {bookmarkedQuestions.length} bookmarked question{bookmarkedQuestions.length !== 1 ? 's' : ''}
-                          {bookmarkedQuestions.length > 0 && (
+                          {filteredAndSortedQuestions.length} 
+                          {selectedRatingFilter || sortOrder !== 'none' ? ' filtered' : ''} 
+                          {' '}question{filteredAndSortedQuestions.length !== 1 ? 's' : ''}
+                          {bookmarkedQuestions.length !== filteredAndSortedQuestions.length && (
+                            <span className="text-xs text-slate-500"> (of {bookmarkedQuestions.length} total)</span>
+                          )}
+                          {filteredAndSortedQuestions.length > 0 && (
                             <span className="ml-2 text-xs text-slate-500 dark:text-slate-500">
                               • Click any card to expand
                             </span>
@@ -283,6 +349,119 @@ export default function RevisionHubPage() {
                       </h2>
                     )}
                   </div>
+
+                  {/* Filter/Sort Button */}
+                  {selectedChapter && bookmarkedQuestions.length > 0 && (
+                    <div className="relative filter-dropdown-container">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          selectedRatingFilter || sortOrder !== 'none'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600'
+                        } hover:shadow-md`}
+                        title="Filter and Sort"
+                      >
+                        <FunnelIcon className="h-5 w-5" />
+                      </motion.button>
+
+                      {/* Filter Dropdown */}
+                      <AnimatePresence>
+                        {isFilterDropdownOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden"
+                          >
+                            <div className="p-4 space-y-4">
+                              {/* Filter by Rating */}
+                              <div>
+                                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                                  Filter by Rating
+                                </h3>
+                                <div className="flex gap-2 justify-between">
+                                  {[1, 2, 3, 4, 5].map((rating) => (
+                                    <motion.button
+                                      key={rating}
+                                      whileHover={{ scale: 1.1 }}
+                                      whileTap={{ scale: 0.9 }}
+                                      onClick={() => handleRatingFilterClick(rating)}
+                                      className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
+                                        selectedRatingFilter === rating
+                                          ? 'bg-yellow-100 dark:bg-yellow-900 border-2 border-yellow-500'
+                                          : 'bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600'
+                                      }`}
+                                    >
+                                      <StarSolidIcon className={`h-5 w-5 ${
+                                        selectedRatingFilter === rating
+                                          ? 'text-yellow-500'
+                                          : 'text-slate-400 dark:text-slate-500'
+                                      }`} />
+                                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                                        {rating}
+                                      </span>
+                                    </motion.button>
+                                  ))}
+                                </div>
+                                {selectedRatingFilter && (
+                                  <button
+                                    onClick={() => setSelectedRatingFilter(null)}
+                                    className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                  >
+                                    Clear filter
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Divider */}
+                              <div className="border-t border-slate-200 dark:border-slate-700"></div>
+
+                              {/* Sort by Rating */}
+                              <div>
+                                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                                  Sort by Rating
+                                </h3>
+                                <div className="space-y-2">
+                                  <button
+                                    onClick={() => setSortOrder('high-to-low')}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                                      sortOrder === 'high-to-low'
+                                        ? 'bg-blue-600 text-white font-medium'
+                                        : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'
+                                    }`}
+                                  >
+                                    High to Low (5 → 1)
+                                  </button>
+                                  <button
+                                    onClick={() => setSortOrder('low-to-high')}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                                      sortOrder === 'low-to-high'
+                                        ? 'bg-blue-600 text-white font-medium'
+                                        : 'bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600'
+                                    }`}
+                                  >
+                                    Low to High (1 → 5)
+                                  </button>
+                                  {sortOrder !== 'none' && (
+                                    <button
+                                      onClick={() => setSortOrder('none')}
+                                      className="mt-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                    >
+                                      Clear sorting
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -301,9 +480,24 @@ export default function RevisionHubPage() {
                       <p className="text-lg">No questions found for this chapter</p>
                     </div>
                   </div>
+                ) : filteredAndSortedQuestions.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center text-slate-500 dark:text-slate-400">
+                      <p className="text-lg mb-2">No questions match your filters</p>
+                      <button
+                        onClick={() => {
+                          setSelectedRatingFilter(null)
+                          setSortOrder('none')
+                        }}
+                        className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
+                      >
+                        Clear all filters
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-4">
-                    {bookmarkedQuestions.map((question, index) => (
+                    {filteredAndSortedQuestions.map((question, index) => (
                       <BookmarkedQuestionCard
                         key={question.id}
                         question={question}

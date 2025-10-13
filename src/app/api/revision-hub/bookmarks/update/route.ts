@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
-import { cookies } from 'next/headers'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -18,73 +17,75 @@ const supabaseAdmin = createClient(
   }
 )
 
-// POST - Update bookmark with personal note and custom tags
+// POST - Update bookmark with rating, personal note, and custom tags
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { bookmarkId, personalNote, customTags } = body
+    const { bookmarkId, rating, personalNote, customTags } = body
+
+    console.log('📝 Update request received:', { bookmarkId, rating, personalNote, customTags })
 
     if (!bookmarkId) {
+      console.error('❌ No bookmark ID provided')
       return NextResponse.json({ error: 'Bookmark ID is required' }, { status: 400 })
     }
 
-    // Get the current user
-    const cookieStore = await cookies()
-    const supabase = createClient(
-      env.SUPABASE_URL,
-      env.SUPABASE_ANON_KEY,
-      {
-        auth: {
-          storage: {
-            getItem: (name: string) => {
-              return cookieStore.get(name)?.value || null
-            },
-            setItem: (name: string, value: string) => {
-              // No-op for server-side
-            },
-            removeItem: (name: string) => {
-              // No-op for server-side
-            }
-          }
-        }
-      }
-    )
-
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Validate rating if provided
+    if (rating !== undefined && rating !== null && (rating < 1 || rating > 5)) {
+      console.error('❌ Invalid rating value:', rating)
+      return NextResponse.json({ error: 'Rating must be between 1 and 5, or null' }, { status: 400 })
     }
 
-    console.log('Updating bookmark:', { bookmarkId, personalNote, customTags })
+    // Build update object dynamically based on what's provided
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    }
+
+    if (rating !== undefined) {
+      updateData.user_difficulty_rating = rating
+    }
+    if (personalNote !== undefined) {
+      updateData.personal_note = personalNote || null
+    }
+    if (customTags !== undefined) {
+      updateData.custom_tags = customTags || null
+    }
+
+    console.log('📦 Update data:', updateData)
 
     const { data, error } = await supabaseAdmin
       .from('bookmarked_questions')
-      .update({
-        personal_note: personalNote || null,
-        custom_tags: customTags || null
-      })
+      .update(updateData)
       .eq('id', bookmarkId)
-      .eq('user_id', user.id) // Ensure user can only update their own bookmarks
       .select()
 
     if (error) {
-      console.error('Error updating bookmark:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('❌ Database error:', error)
+      return NextResponse.json({ 
+        error: 'Database error: ' + error.message,
+        details: error 
+      }, { status: 500 })
     }
 
     if (!data || data.length === 0) {
-      return NextResponse.json({ error: 'Bookmark not found or access denied' }, { status: 404 })
+      console.error('❌ Bookmark not found. BookmarkId:', bookmarkId)
+      return NextResponse.json({ 
+        error: 'Bookmark not found',
+        bookmarkId
+      }, { status: 404 })
     }
 
-    console.log('Successfully updated bookmark:', data[0])
+    console.log('✅ Successfully updated bookmark:', data[0])
 
     return NextResponse.json({ 
       data: data[0],
       message: 'Bookmark updated successfully' 
     })
   } catch (error) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('❌ Unexpected error:', error)
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
