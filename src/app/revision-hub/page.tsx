@@ -13,17 +13,13 @@ interface ChapterData {
   count: number
 }
 
-interface BookChapters {
-  chapters: ChapterData[]
-  totalBookmarks: number
-}
-
 interface BookmarkedQuestion {
   id: string
   user_id: string
   question_id: string
   personal_note: string | null
   custom_tags: string[] | null
+  user_difficulty_rating: number | null
   created_at: string
   updated_at: string
   questions: Database['public']['Tables']['questions']['Row']
@@ -42,14 +38,16 @@ export default function RevisionHubPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   
-  const [chaptersData, setChaptersData] = useState<Record<string, BookChapters>>({})
-  const [selectedBook, setSelectedBook] = useState<string | null>(null)
+  const [chapters, setChapters] = useState<ChapterData[]>([])
   const [selectedChapter, setSelectedChapter] = useState<string | null>(null)
   const [bookmarkedQuestions, setBookmarkedQuestions] = useState<BookmarkedQuestion[]>([])
   
   const [loadingChapters, setLoadingChapters] = useState(true)
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // State persistence - prevent unnecessary reloads
+  const dataFetchedRef = React.useRef(false)
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -60,7 +58,11 @@ export default function RevisionHubPage() {
       return
     }
 
-    fetchChapters()
+    // Only fetch if we haven't already
+    if (!dataFetchedRef.current) {
+      fetchChapters()
+      dataFetchedRef.current = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, router])
 
@@ -78,18 +80,13 @@ export default function RevisionHubPage() {
       }
 
       console.log('Chapters fetched successfully:', result.data)
-      setChaptersData(result.data || {})
+      setChapters(result.data || [])
 
       // Auto-select first chapter
-      const books = Object.keys(result.data || {})
-      if (books.length > 0) {
-        const firstBook = books[0]
-        const firstChapter = result.data[firstBook].chapters[0]?.name
-        if (firstChapter) {
-          setSelectedBook(firstBook)
-          setSelectedChapter(firstChapter)
-          fetchQuestionsForChapter(firstBook, firstChapter)
-        }
+      if (result.data && result.data.length > 0) {
+        const firstChapter = result.data[0].name
+        setSelectedChapter(firstChapter)
+        fetchQuestionsForChapter(firstChapter)
       }
     } catch (error) {
       console.error('Error fetching chapters:', error)
@@ -100,13 +97,13 @@ export default function RevisionHubPage() {
   }
 
   // Fetch bookmarked questions for a specific chapter
-  const fetchQuestionsForChapter = async (book: string, chapter: string) => {
+  const fetchQuestionsForChapter = async (chapter: string) => {
     try {
       setLoadingQuestions(true)
-      console.log('Fetching questions for:', { book, chapter })
+      console.log('Fetching questions for chapter:', chapter)
 
       const response = await fetch(
-        `/api/revision-hub/by-chapter?userId=${user?.id}&bookSource=${encodeURIComponent(book)}&chapterName=${encodeURIComponent(chapter)}`
+        `/api/revision-hub/by-chapter?userId=${user?.id}&chapterName=${encodeURIComponent(chapter)}`
       )
       const result = await response.json()
 
@@ -125,10 +122,9 @@ export default function RevisionHubPage() {
   }
 
   // Handle chapter selection
-  const handleSelectChapter = (book: string, chapter: string) => {
-    setSelectedBook(book)
+  const handleSelectChapter = (chapter: string) => {
     setSelectedChapter(chapter)
-    fetchQuestionsForChapter(book, chapter)
+    fetchQuestionsForChapter(chapter)
   }
 
   // Loading state
@@ -169,7 +165,7 @@ export default function RevisionHubPage() {
   }
 
   // Empty state
-  if (Object.keys(chaptersData).length === 0) {
+  if (chapters.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -232,7 +228,7 @@ export default function RevisionHubPage() {
             My Revision Hub
           </h1>
           <p className="text-slate-600 dark:text-slate-400">
-            Your personal collection of questions for focused revision
+            Review and master your bookmarked questions, organized by chapter
           </p>
         </motion.div>
 
@@ -247,8 +243,7 @@ export default function RevisionHubPage() {
           >
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 h-full overflow-hidden">
               <RevisionChapterNav
-                chaptersData={chaptersData}
-                selectedBook={selectedBook}
+                chapters={chapters}
                 selectedChapter={selectedChapter}
                 onSelectChapter={handleSelectChapter}
                 isLoading={loadingChapters}
@@ -265,7 +260,7 @@ export default function RevisionHubPage() {
           >
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 h-full overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700">
+              <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div>
                     {selectedChapter ? (
@@ -274,7 +269,12 @@ export default function RevisionHubPage() {
                           {selectedChapter}
                         </h2>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {selectedBook} • {bookmarkedQuestions.length} question{bookmarkedQuestions.length !== 1 ? 's' : ''}
+                          {bookmarkedQuestions.length} bookmarked question{bookmarkedQuestions.length !== 1 ? 's' : ''}
+                          {bookmarkedQuestions.length > 0 && (
+                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-500">
+                              • Click any card to expand
+                            </span>
+                          )}
                         </p>
                       </>
                     ) : (
@@ -283,8 +283,6 @@ export default function RevisionHubPage() {
                       </h2>
                     )}
                   </div>
-                  
-                  {/* Future: Start Revision Session button will go here in Part 2 */}
                 </div>
               </div>
 
@@ -304,7 +302,7 @@ export default function RevisionHubPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {bookmarkedQuestions.map((question, index) => (
                       <BookmarkedQuestionCard
                         key={question.id}

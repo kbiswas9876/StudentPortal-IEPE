@@ -157,6 +157,7 @@ export interface Database {
           question_id: string
           personal_note: string | null
           custom_tags: string[] | null
+          user_difficulty_rating: number | null
           created_at: string
           updated_at: string
         }
@@ -166,6 +167,7 @@ export interface Database {
           question_id: string
           personal_note?: string | null
           custom_tags?: string[] | null
+          user_difficulty_rating?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -175,6 +177,7 @@ export interface Database {
           question_id?: string
           personal_note?: string | null
           custom_tags?: string[] | null
+          user_difficulty_rating?: number | null
           created_at?: string
           updated_at?: string
         }

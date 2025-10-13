@@ -22,18 +22,17 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
-    const bookSource = searchParams.get('bookSource')
     const chapterName = searchParams.get('chapterName')
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
-    if (!bookSource || !chapterName) {
-      return NextResponse.json({ error: 'Book source and chapter name are required' }, { status: 400 })
+    if (!chapterName) {
+      return NextResponse.json({ error: 'Chapter name is required' }, { status: 400 })
     }
 
-    console.log('Fetching bookmarked questions for:', { userId, bookSource, chapterName })
+    console.log('Fetching bookmarked questions for:', { userId, chapterName })
 
     // Fetch bookmarks for the user
     const { data: bookmarks, error: bookmarkError } = await supabaseAdmin
@@ -55,12 +54,11 @@ export async function GET(request: Request) {
     // Get question IDs from bookmarks
     const questionIds = bookmarks.map(b => b.question_id)
 
-    // Fetch questions filtered by book source and chapter
+    // Fetch questions filtered by chapter only (chapter-first approach)
     const { data: questions, error: questionError } = await supabaseAdmin
       .from('questions')
       .select('*')
       .in('question_id', questionIds)
-      .eq('book_source', bookSource)
       .eq('chapter_name', chapterName)
 
     if (questionError) {
@@ -146,6 +144,7 @@ export async function GET(request: Request) {
         question_id: item.question_id,
         personal_note: item.personal_note,
         custom_tags: item.custom_tags,
+        user_difficulty_rating: item.user_difficulty_rating || null,
         created_at: item.created_at,
         updated_at: item.updated_at,
         questions: item.questions,

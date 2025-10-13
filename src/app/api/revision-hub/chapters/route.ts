@@ -59,52 +59,27 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: questionError.message }, { status: 500 })
     }
 
-    // Group chapters by book source
-    const groupedChapters: Record<string, { chapters: string[], count: number }> = {}
-    const chapterCounts: Record<string, Record<string, number>> = {}
+    // Group bookmarks by chapter (chapter-first approach, regardless of book)
+    const chapterCounts: Record<string, number> = {}
 
     questions?.forEach(question => {
-      const { book_source, chapter_name } = question
+      const { chapter_name } = question
 
-      if (!groupedChapters[book_source]) {
-        groupedChapters[book_source] = {
-          chapters: [],
-          count: 0
-        }
-        chapterCounts[book_source] = {}
+      if (!chapterCounts[chapter_name]) {
+        chapterCounts[chapter_name] = 0
       }
-
-      // Count bookmarks per chapter
-      if (!chapterCounts[book_source][chapter_name]) {
-        chapterCounts[book_source][chapter_name] = 0
-        groupedChapters[book_source].chapters.push(chapter_name)
-      }
-      chapterCounts[book_source][chapter_name]++
-      groupedChapters[book_source].count++
+      chapterCounts[chapter_name]++
     })
 
-    // Sort chapters within each book alphabetically
-    Object.keys(groupedChapters).forEach(book => {
-      groupedChapters[book].chapters.sort()
-    })
+    // Format response as array of chapters with counts
+    const formattedResponse = Object.keys(chapterCounts)
+      .sort() // Sort alphabetically
+      .map(chapterName => ({
+        name: chapterName,
+        count: chapterCounts[chapterName]
+      }))
 
-    // Format response with chapter counts
-    const formattedResponse: Record<string, { 
-      chapters: { name: string, count: number }[], 
-      totalBookmarks: number 
-    }> = {}
-
-    Object.keys(groupedChapters).forEach(book => {
-      formattedResponse[book] = {
-        chapters: groupedChapters[book].chapters.map(chapter => ({
-          name: chapter,
-          count: chapterCounts[book][chapter] || 0
-        })),
-        totalBookmarks: groupedChapters[book].count
-      }
-    })
-
-    console.log(`Found ${Object.keys(formattedResponse).length} books with bookmarks`)
+    console.log(`Found ${formattedResponse.length} unique chapters with bookmarks`)
     return NextResponse.json({ data: formattedResponse })
   } catch (error) {
     console.error('Unexpected error:', error)
