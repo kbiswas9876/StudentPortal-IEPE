@@ -117,7 +117,7 @@ export default function ViewAllQuestionsModal({
             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               <div className="space-y-4">
                 {questions.map((question, index) => {
-                  const status = reviewStates[index]?.status || 'skipped'
+                  const status = reviewStates[index] || 'skipped'
                   const timeTaken = timePerQuestion[question.id.toString()] || 0
                   
                   return (
@@ -176,15 +176,15 @@ export default function ViewAllQuestionsModal({
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span>Correct: {reviewStates.filter(s => s?.status === 'correct').length}</span>
+                    <span>Correct: {reviewStates.filter(s => s === 'correct').length}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <XCircle className="w-4 h-4 text-red-600" />
-                    <span>Incorrect: {reviewStates.filter(s => s?.status === 'incorrect').length}</span>
+                    <span>Incorrect: {reviewStates.filter(s => s === 'incorrect').length}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-500" />
-                    <span>Skipped: {reviewStates.filter(s => s?.status === 'skipped').length}</span>
+                    <span>Skipped: {reviewStates.filter(s => s === 'skipped').length}</span>
                   </div>
                 </div>
               </div>

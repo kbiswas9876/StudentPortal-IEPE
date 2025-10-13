@@ -506,7 +506,7 @@ const handleNext = () => {
           isOpen={showViewAllModal}
           onClose={() => setShowViewAllModal(false)}
           questions={sessionData.questions}
-          reviewStates={reviewStates}
+          reviewStates={reviewStates.map(r => r.status)}
           timePerQuestion={timePerQuestion}
           onQuestionSelect={(index: number) => {
             setCurrentQuestionIndex(index)
