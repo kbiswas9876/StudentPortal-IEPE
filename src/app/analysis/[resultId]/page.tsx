@@ -265,7 +265,7 @@ export default function AnalysisReportPage() {
   }
 
   if (authLoading || loading) {
-    return <AnalysisSkeletonLoader retryCount={retryCount} showRetryMessage={retryCount > 0} />
+    return <AnalysisSkeletonLoader retryCount={retryCount} showRetryMessage={retryCount > 0} isMockTest={analysisData?.isMockTest} />
   }
 
   if (error) {
@@ -296,7 +296,7 @@ export default function AnalysisReportPage() {
   }
 
   if (!analysisData && !loading) {
-    return <AnalysisSkeletonLoader retryCount={retryCount} showRetryMessage={true} />
+    return <AnalysisSkeletonLoader retryCount={retryCount} showRetryMessage={true} isMockTest={false} />
   }
 
   const filteredQuestions = getFilteredQuestions()
