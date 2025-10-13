@@ -5,6 +5,16 @@
 /* Import KaTeX styles for mathematical typesetting */
 @import '../styles/katex.css';
 
+/* Premium shimmer animation for buttons */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
