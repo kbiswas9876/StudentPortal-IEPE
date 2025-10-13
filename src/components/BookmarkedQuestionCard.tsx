@@ -350,10 +350,10 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                           setIsEditingRating(true)
                           setTempRating(question.user_difficulty_rating || 0)
                         }}
-                        className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                        className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
                         title="Edit rating"
                       >
-                        <PencilIcon className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                        <PencilIcon className="h-3.5 w-3.5 text-blue-700 dark:text-blue-400" />
                       </motion.button>
                     ) : (
                       <div className="flex items-center gap-1">
@@ -365,7 +365,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                           className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50"
                           title="Save rating"
                         >
-                          <CheckIcon className="h-3.5 w-3.5 text-green-700 dark:text-green-400" />
+                          <CheckCircleIcon className="h-3.5 w-3.5 text-green-700 dark:text-green-400" />
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.1 }}
@@ -375,7 +375,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                           className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors disabled:opacity-50"
                           title="Cancel"
                         >
-                          <XMarkIcon className="h-3.5 w-3.5 text-red-700 dark:text-red-400" />
+                          <XCircleIcon className="h-3.5 w-3.5 text-red-700 dark:text-red-400" />
                         </motion.button>
                       </div>
                     )}
@@ -502,173 +502,175 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                 </div>
 
                 {/* Personal Note and Custom Tags Section - Always show when expanded */}
-                <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    {/* Custom Tags */}
-                    <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          My Tags
-                        </h4>
-                        {!isEditingTags ? (
+                <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  {/* Custom Tags */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                        My Tags
+                      </h4>
+                      {!isEditingTags ? (
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setIsEditingTags(true)
+                            setTempTags(question.custom_tags || [])
+                          }}
+                          className="p-1 rounded-lg bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                          title="Edit tags"
+                        >
+                          <PencilIcon className="h-3 w-3 text-blue-700 dark:text-blue-400" />
+                        </motion.button>
+                      ) : (
+                        <div className="flex items-center gap-1">
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setIsEditingTags(true)
-                              setTempTags(question.custom_tags || [])
-                            }}
-                            className="p-1.5 rounded-lg bg-white dark:bg-slate-600 hover:bg-slate-100 dark:hover:bg-slate-500 transition-colors border border-slate-300 dark:border-slate-600"
-                            title="Edit tags"
+                            onClick={handleSaveTags}
+                            disabled={isSaving}
+                            className="p-1 rounded-lg bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50"
+                            title="Save tags"
                           >
-                            <PencilIcon className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                            <CheckCircleIcon className="h-3 w-3 text-green-700 dark:text-green-400" />
                           </motion.button>
-                        ) : null}
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={handleCancelTags}
+                            disabled={isSaving}
+                            className="p-1 rounded-lg bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors disabled:opacity-50"
+                            title="Cancel"
+                          >
+                            <XCircleIcon className="h-3 w-3 text-red-700 dark:text-red-400" />
+                          </motion.button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {isEditingTags ? (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          {tempTags.map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-700"
+                            >
+                              {tag}
+                              <button
+                                onClick={() => handleRemoveTag(tag)}
+                                className="ml-1.5 hover:text-purple-900 dark:hover:text-purple-100 transition-colors"
+                              >
+                                <XMarkIcon className="h-3 w-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyDown={handleTagInputKeyDown}
+                            placeholder="Add a tag (press Enter)"
+                            className="flex-1 px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-slate-400"
+                          />
+                          <button
+                            onClick={handleAddTag}
+                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-xs font-medium"
+                          >
+                            Add
+                          </button>
+                        </div>
                       </div>
-                      
-                      {isEditingTags ? (
-                        <div className="space-y-3">
+                    ) : (
+                      <div>
+                        {question.custom_tags && question.custom_tags.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
-                            {tempTags.map((tag, idx) => (
+                            {question.custom_tags.map((tag, idx) => (
                               <span
                                 key={idx}
-                                className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-700"
+                                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-700"
                               >
                                 {tag}
-                                <button
-                                  onClick={() => handleRemoveTag(tag)}
-                                  className="ml-1.5 hover:text-purple-900 dark:hover:text-purple-100 transition-colors"
-                                >
-                                  <XMarkIcon className="h-3 w-3" />
-                                </button>
                               </span>
                             ))}
                           </div>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={tagInput}
-                              onChange={(e) => setTagInput(e.target.value)}
-                              onKeyDown={handleTagInputKeyDown}
-                              placeholder="Add a tag (press Enter)"
-                              className="flex-1 px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                            <button
-                              onClick={handleAddTag}
-                              className="px-3 py-2 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors text-xs font-medium"
-                            >
-                              Add
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={handleSaveTags}
-                              disabled={isSaving}
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {isSaving ? 'Saving...' : 'Save Tags'}
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={handleCancelTags}
-                              disabled={isSaving}
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-300 font-medium text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              Cancel
-                            </motion.button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div>
-                          {question.custom_tags && question.custom_tags.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {question.custom_tags.map((tag, idx) => (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-700"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-slate-400 dark:text-slate-500 italic">No tags added yet. Click the edit icon to add tags.</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                        ) : (
+                          <p className="text-xs text-slate-400 dark:text-slate-500 italic">No tags yet</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
-                    {/* Personal Note */}
-                    <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          My Note
-                        </h4>
-                        {!isEditingNote ? (
+                  {/* Personal Note */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                        My Note
+                      </h4>
+                      {!isEditingNote ? (
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setIsEditingNote(true)
+                            setTempNote(question.personal_note || '')
+                          }}
+                          className="p-1 rounded-lg bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                          title="Edit note"
+                        >
+                          <PencilIcon className="h-3 w-3 text-blue-700 dark:text-blue-400" />
+                        </motion.button>
+                      ) : (
+                        <div className="flex items-center gap-1">
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setIsEditingNote(true)
-                              setTempNote(question.personal_note || '')
-                            }}
-                            className="p-1.5 rounded-lg bg-white dark:bg-slate-600 hover:bg-slate-100 dark:hover:bg-slate-500 transition-colors border border-slate-300 dark:border-slate-600"
-                            title="Edit note"
+                            onClick={handleSaveNote}
+                            disabled={isSaving}
+                            className="p-1 rounded-lg bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50"
+                            title="Save note"
                           >
-                            <PencilIcon className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                            <CheckCircleIcon className="h-3 w-3 text-green-700 dark:text-green-400" />
                           </motion.button>
-                        ) : null}
-                      </div>
-                      
-                      {isEditingNote ? (
-                        <div className="space-y-3">
-                          <textarea
-                            value={tempNote}
-                            onChange={(e) => setTempNote(e.target.value)}
-                            placeholder="Add a personal note about this question..."
-                            rows={4}
-                            className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                          />
-                          <div className="flex items-center gap-2">
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={handleSaveNote}
-                              disabled={isSaving}
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {isSaving ? 'Saving...' : 'Save Note'}
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={handleCancelNote}
-                              disabled={isSaving}
-                              className="flex-1 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 text-slate-700 dark:text-slate-300 font-medium text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              Cancel
-                            </motion.button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div>
-                          {question.personal_note ? (
-                            <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-3 rounded">
-                              <p className="text-sm text-slate-700 dark:text-slate-300 italic">
-                                &ldquo;{question.personal_note}&rdquo;
-                              </p>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-slate-400 dark:text-slate-500 italic">No note added yet. Click the edit icon to add a note.</p>
-                          )}
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={handleCancelNote}
+                            disabled={isSaving}
+                            className="p-1 rounded-lg bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors disabled:opacity-50"
+                            title="Cancel"
+                          >
+                            <XCircleIcon className="h-3 w-3 text-red-700 dark:text-red-400" />
+                          </motion.button>
                         </div>
                       )}
                     </div>
+                    
+                    {isEditingNote ? (
+                      <textarea
+                        value={tempNote}
+                        onChange={(e) => setTempNote(e.target.value)}
+                        placeholder="Add a personal note about this question..."
+                        rows={3}
+                        className="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y placeholder:text-slate-400"
+                      />
+                    ) : (
+                      <div>
+                        {question.personal_note ? (
+                          <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-2.5 rounded text-xs text-slate-700 dark:text-slate-300 italic">
+                            &ldquo;{question.personal_note}&rdquo;
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-400 dark:text-slate-500 italic">No note yet</p>
+                        )}
+                      </div>
+                    )}
                   </div>
+                </div>
               </div>
             </div>
           </motion.div>
