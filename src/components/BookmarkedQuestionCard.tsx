@@ -343,39 +343,39 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                   <>
                     {!isEditingRating ? (
                       <motion.button
-                        whileHover={{ scale: 1.1 }}
+                        whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)" }}
                         whileTap={{ scale: 0.9 }}
                         onClick={(e) => {
                           e.stopPropagation()
                           setIsEditingRating(true)
                           setTempRating(question.user_difficulty_rating || 0)
                         }}
-                        className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                        className="p-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
                         title="Edit rating"
                       >
-                        <PencilIcon className="h-3.5 w-3.5 text-blue-700 dark:text-blue-400" />
+                        <PencilIcon className="h-3.5 w-3.5 text-white drop-shadow-sm" />
                       </motion.button>
                     ) : (
                       <div className="flex items-center gap-1">
                         <motion.button
-                          whileHover={{ scale: 1.1 }}
+                          whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)" }}
                           whileTap={{ scale: 0.9 }}
                           onClick={handleSaveRating}
                           disabled={isSaving}
-                          className="p-1.5 rounded-lg bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50"
+                          className="p-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Save rating"
                         >
-                          <CheckCircleIcon className="h-3.5 w-3.5 text-green-700 dark:text-green-400" />
+                          <CheckIcon className="h-3.5 w-3.5 text-white drop-shadow-sm" />
                         </motion.button>
                         <motion.button
-                          whileHover={{ scale: 1.1 }}
+                          whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)" }}
                           whileTap={{ scale: 0.9 }}
                           onClick={handleCancelRating}
                           disabled={isSaving}
-                          className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors disabled:opacity-50"
+                          className="p-1.5 rounded-full bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Cancel"
                         >
-                          <XCircleIcon className="h-3.5 w-3.5 text-red-700 dark:text-red-400" />
+                          <XMarkIcon className="h-3.5 w-3.5 text-white drop-shadow-sm" />
                         </motion.button>
                       </div>
                     )}
@@ -511,39 +511,39 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                       </h4>
                       {!isEditingTags ? (
                         <motion.button
-                          whileHover={{ scale: 1.1 }}
+                          whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)" }}
                           whileTap={{ scale: 0.9 }}
                           onClick={(e) => {
                             e.stopPropagation()
                             setIsEditingTags(true)
                             setTempTags(question.custom_tags || [])
                           }}
-                          className="p-1 rounded-lg bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                          className="p-1 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
                           title="Edit tags"
                         >
-                          <PencilIcon className="h-3 w-3 text-blue-700 dark:text-blue-400" />
+                          <PencilIcon className="h-3 w-3 text-white drop-shadow-sm" />
                         </motion.button>
                       ) : (
                         <div className="flex items-center gap-1">
                           <motion.button
-                            whileHover={{ scale: 1.1 }}
+                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)" }}
                             whileTap={{ scale: 0.9 }}
                             onClick={handleSaveTags}
                             disabled={isSaving}
-                            className="p-1 rounded-lg bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50"
+                            className="p-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Save tags"
                           >
-                            <CheckCircleIcon className="h-3 w-3 text-green-700 dark:text-green-400" />
+                            <CheckIcon className="h-3 w-3 text-white drop-shadow-sm" />
                           </motion.button>
                           <motion.button
-                            whileHover={{ scale: 1.1 }}
+                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)" }}
                             whileTap={{ scale: 0.9 }}
                             onClick={handleCancelTags}
                             disabled={isSaving}
-                            className="p-1 rounded-lg bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors disabled:opacity-50"
+                            className="p-1 rounded-full bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Cancel"
                           >
-                            <XCircleIcon className="h-3 w-3 text-red-700 dark:text-red-400" />
+                            <XMarkIcon className="h-3 w-3 text-white drop-shadow-sm" />
                           </motion.button>
                         </div>
                       )}
@@ -612,39 +612,39 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                       </h4>
                       {!isEditingNote ? (
                         <motion.button
-                          whileHover={{ scale: 1.1 }}
+                          whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(59, 130, 246, 0.3)" }}
                           whileTap={{ scale: 0.9 }}
                           onClick={(e) => {
                             e.stopPropagation()
                             setIsEditingNote(true)
                             setTempNote(question.personal_note || '')
                           }}
-                          className="p-1 rounded-lg bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                          className="p-1 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
                           title="Edit note"
                         >
-                          <PencilIcon className="h-3 w-3 text-blue-700 dark:text-blue-400" />
+                          <PencilIcon className="h-3 w-3 text-white drop-shadow-sm" />
                         </motion.button>
                       ) : (
                         <div className="flex items-center gap-1">
                           <motion.button
-                            whileHover={{ scale: 1.1 }}
+                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)" }}
                             whileTap={{ scale: 0.9 }}
                             onClick={handleSaveNote}
                             disabled={isSaving}
-                            className="p-1 rounded-lg bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50"
+                            className="p-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Save note"
                           >
-                            <CheckCircleIcon className="h-3 w-3 text-green-700 dark:text-green-400" />
+                            <CheckIcon className="h-3 w-3 text-white drop-shadow-sm" />
                           </motion.button>
                           <motion.button
-                            whileHover={{ scale: 1.1 }}
+                            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)" }}
                             whileTap={{ scale: 0.9 }}
                             onClick={handleCancelNote}
                             disabled={isSaving}
-                            className="p-1 rounded-lg bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 transition-colors disabled:opacity-50"
+                            className="p-1 rounded-full bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Cancel"
                           >
-                            <XCircleIcon className="h-3 w-3 text-red-700 dark:text-red-400" />
+                            <XMarkIcon className="h-3 w-3 text-white drop-shadow-sm" />
                           </motion.button>
                         </div>
                       )}
