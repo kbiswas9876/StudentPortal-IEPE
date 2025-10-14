@@ -265,27 +265,41 @@ export default function RevisionHubPage() {
     // Handle advanced session configuration
     const fetchAdvancedQuestionsForSession = async () => {
       try {
+        console.log('🚀 Starting Advanced Session with config:', config)
         const allQuestionIds: string[] = []
         
         // Process each chapter configuration
         for (const chapterConfig of config.chapterConfigs) {
+          console.log(`📚 Processing chapter: ${chapterConfig.chapterName}`)
+          console.log(`📋 Chapter config:`, chapterConfig)
+          
           const response = await fetch(`/api/revision-hub/by-chapter?userId=${user?.id}&chapterName=${encodeURIComponent(chapterConfig.chapterName)}`)
           const result = await response.json()
           const chapterQuestions = result.data || []
           
+          console.log(`📊 Found ${chapterQuestions.length} questions for ${chapterConfig.chapterName}`)
+          console.log('📋 Chapter questions:', chapterQuestions)
+          
           let chapterQuestionIds: string[] = []
           
           if (chapterConfig.questionScope === 'all') {
-            chapterQuestionIds = chapterQuestions.map((q: any) => q.questions.id)
+            chapterQuestionIds = chapterQuestions.map((q: any) => q.questions.question_id)
+            console.log(`✅ All questions selected: ${chapterQuestionIds.length} questions`)
           } else if (chapterConfig.questionScope === 'random') {
             const shuffled = [...chapterQuestions].sort(() => Math.random() - 0.5)
-            chapterQuestionIds = shuffled.slice(0, chapterConfig.questionCount || 0).map((q: any) => q.questions.id)
+            chapterQuestionIds = shuffled.slice(0, chapterConfig.questionCount || 0).map((q: any) => q.questions.question_id)
+            console.log(`🎲 Random selection: ${chapterQuestionIds.length} questions (requested: ${chapterConfig.questionCount})`)
           } else if (chapterConfig.questionScope === 'difficulty') {
+            console.log(`⭐ Difficulty-based selection for ${chapterConfig.chapterName}`)
+            console.log('📊 Difficulty breakdown:', chapterConfig.difficultyBreakdown)
+            
             // Filter by difficulty ratings
             const difficultyFiltered = chapterQuestions.filter((q: any) => {
               const rating = q.user_difficulty_rating
               return rating && chapterConfig.difficultyBreakdown?.[rating] > 0
             })
+            
+            console.log(`🔍 Difficulty filtered questions: ${difficultyFiltered.length}`)
             
             // Apply difficulty-based selection
             const selectedByDifficulty: string[] = []
@@ -294,12 +308,36 @@ export default function RevisionHubPage() {
               const countNum = typeof count === 'number' ? count : 0
               const questionsOfRating = difficultyFiltered.filter((q: any) => q.user_difficulty_rating === ratingNum)
               const shuffled = [...questionsOfRating].sort(() => Math.random() - 0.5)
-              selectedByDifficulty.push(...shuffled.slice(0, countNum).map((q: any) => q.questions.id))
+              const selected = shuffled.slice(0, countNum).map((q: any) => q.questions.question_id)
+              selectedByDifficulty.push(...selected)
+              
+              console.log(`⭐ Rating ${rating}: ${questionsOfRating.length} available, ${countNum} requested, ${selected.length} selected`)
             }
             chapterQuestionIds = selectedByDifficulty
+            console.log(`✅ Difficulty selection result: ${chapterQuestionIds.length} questions`)
           }
           
+          console.log(`📝 Final chapter question IDs:`, chapterQuestionIds)
           allQuestionIds.push(...chapterQuestionIds)
+        }
+        
+        console.log(`🎯 Total question IDs collected: ${allQuestionIds.length}`)
+        console.log('📋 All question IDs:', allQuestionIds)
+        
+        // Validate that we have questions
+        if (allQuestionIds.length === 0) {
+          console.error('❌ No questions found for the selected configuration!')
+          console.error('📋 Config that failed:', config)
+          alert('No questions found for the selected configuration. Please check your selections and try again.')
+          return
+        }
+        
+        // Validate that all question IDs are strings (not numbers)
+        const invalidIds = allQuestionIds.filter(id => typeof id !== 'string' || id === '')
+        if (invalidIds.length > 0) {
+          console.error('❌ Invalid question IDs found:', invalidIds)
+          alert('Invalid question data detected. Please try again.')
+          return
         }
         
         // Navigate to practice with the questions
@@ -309,9 +347,10 @@ export default function RevisionHubPage() {
           ...(config.timeLimit && { timeLimit: config.timeLimit.toString() })
         })
         
+        console.log(`🔗 Navigating to practice with params:`, params.toString())
         router.push(`/practice?${params.toString()}`)
       } catch (error) {
-        console.error('Error starting advanced revision session:', error)
+        console.error('❌ Error starting advanced revision session:', error)
         alert('Failed to start revision session. Please try again.')
       }
     }

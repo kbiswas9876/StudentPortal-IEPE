@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     }
 
     console.log('Fetching questions for practice session:', questionIds)
+    console.log('Question IDs type check:', questionIds.map(id => ({ id, type: typeof id })))
 
     const { data, error } = await supabaseAdmin
       .from('questions')
