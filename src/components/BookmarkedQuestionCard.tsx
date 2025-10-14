@@ -5,11 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   StarIcon, 
   ChevronDownIcon,
-  BookOpenIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon
+  BookOpenIcon
 } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import { 
@@ -17,7 +13,11 @@ import {
   Check, 
   X, 
   Plus,
-  Trash2
+  Trash2,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Clock
 } from 'lucide-react'
 import KatexRenderer from './ui/KatexRenderer'
 import { Database } from '@/types/database'
@@ -228,13 +228,13 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'correct':
-        return <CheckCircleIcon className="h-4 w-4 text-green-500" />
+        return <CheckCircle className="h-4 w-4 text-green-500" strokeWidth={2.5} />
       case 'incorrect':
-        return <XCircleIcon className="h-4 w-4 text-red-500" />
+        return <XCircle className="h-4 w-4 text-red-500" strokeWidth={2.5} />
       case 'skipped':
-        return <ExclamationTriangleIcon className="h-4 w-4 text-yellow-500" />
+        return <AlertTriangle className="h-4 w-4 text-yellow-500" strokeWidth={2.5} />
       default:
-        return <ClockIcon className="h-4 w-4 text-slate-400" />
+        return <Clock className="h-4 w-4 text-slate-400" strokeWidth={2.5} />
     }
   }
 
@@ -458,9 +458,9 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                               className="text-sm"
                             />
                           </div>
-                          {key === question.questions.correct_option && (
-                            <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400 ml-2 flex-shrink-0" />
-                          )}
+                              {key === question.questions.correct_option && (
+                                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 ml-2 flex-shrink-0" strokeWidth={2.5} />
+                              )}
                         </div>
                       </div>
                     ))}
