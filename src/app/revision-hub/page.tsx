@@ -670,7 +670,7 @@ export default function RevisionHubPage() {
           onClose={() => setIsSessionModalOpen(false)}
           selectedChapters={selectedChapters}
           chapters={chapters}
-          bookmarkedQuestions={bookmarkedQuestions}
+          userId={user?.id || ''}
           onStartSession={handleAdvancedStartSession}
         />
       ) : (

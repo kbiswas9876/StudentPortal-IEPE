@@ -45,7 +45,7 @@ interface AdvancedRevisionSessionModalProps {
   onClose: () => void
   selectedChapters: string[]
   chapters: ChapterData[]
-  bookmarkedQuestions: BookmarkedQuestion[]
+  userId: string
   onStartSession: (config: AdvancedSessionConfig) => void
 }
 
@@ -60,14 +60,16 @@ export default function AdvancedRevisionSessionModal({
   onClose,
   selectedChapters,
   chapters,
-  bookmarkedQuestions,
+  userId,
   onStartSession
 }: AdvancedRevisionSessionModalProps) {
   const [chapterConfigs, setChapterConfigs] = useState<ChapterConfig[]>([])
   const [testMode, setTestMode] = useState<'practice' | 'timed'>('practice')
   const [timeLimit, setTimeLimit] = useState<number>(60)
+  const [allBookmarkedQuestions, setAllBookmarkedQuestions] = useState<BookmarkedQuestion[]>([])
+  const [loadingQuestions, setLoadingQuestions] = useState(false)
 
-  // Initialize chapter configurations
+  // Initialize chapter configurations and fetch questions for all selected chapters
   useEffect(() => {
     if (isOpen && selectedChapters.length > 0) {
       const initialConfigs: ChapterConfig[] = selectedChapters.map(chapterName => ({
@@ -77,12 +79,50 @@ export default function AdvancedRevisionSessionModal({
         difficultyBreakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
       }))
       setChapterConfigs(initialConfigs)
+      
+      // Fetch questions for ALL selected chapters independently
+      fetchQuestionsForAllChapters()
     }
-  }, [isOpen, selectedChapters])
+  }, [isOpen, selectedChapters, userId])
+
+  // Fetch questions for all selected chapters
+  const fetchQuestionsForAllChapters = async () => {
+    if (!userId || selectedChapters.length === 0) return
+    
+    try {
+      setLoadingQuestions(true)
+      console.log('Fetching questions for all selected chapters:', selectedChapters)
+      
+      // Fetch questions for each selected chapter
+      const questionPromises = selectedChapters.map(async (chapterName) => {
+        const response = await fetch(
+          `/api/revision-hub/by-chapter?userId=${userId}&chapterName=${encodeURIComponent(chapterName)}`
+        )
+        const result = await response.json()
+        
+        if (!response.ok) {
+          console.error(`Failed to fetch questions for ${chapterName}:`, result.error)
+          return []
+        }
+        
+        return result.data || []
+      })
+      
+      const allQuestionsArrays = await Promise.all(questionPromises)
+      const allQuestions = allQuestionsArrays.flat()
+      
+      console.log('Successfully fetched questions for all chapters:', allQuestions.length)
+      setAllBookmarkedQuestions(allQuestions)
+    } catch (error) {
+      console.error('Error fetching questions for all chapters:', error)
+    } finally {
+      setLoadingQuestions(false)
+    }
+  }
 
   // Get questions for a specific chapter
   const getQuestionsForChapter = (chapterName: string) => {
-    return bookmarkedQuestions.filter(q => q.questions.chapter_name === chapterName)
+    return allBookmarkedQuestions.filter(q => q.questions.chapter_name === chapterName)
   }
 
   // Get difficulty breakdown for a chapter
@@ -127,7 +167,7 @@ export default function AdvancedRevisionSessionModal({
       }
       return total
     }, 0)
-  }, [chapterConfigs, bookmarkedQuestions])
+  }, [chapterConfigs, allBookmarkedQuestions])
 
   const handleStartSession = () => {
     const config: AdvancedSessionConfig = {
@@ -190,21 +230,30 @@ export default function AdvancedRevisionSessionModal({
             {/* Main Content - Scrollable */}
             <div className="flex-1 overflow-y-auto max-h-[60vh]">
               <div className="p-6 space-y-6">
-                {/* Chapter Configuration Cards */}
-                {chapterConfigs.map((config, index) => {
-                  const chapterQuestions = getQuestionsForChapter(config.chapterName)
-                  const difficultyBreakdown = getDifficultyBreakdown(config.chapterName)
-                  
-                  return (
-                    <ChapterConfigurationCard
-                      key={config.chapterName}
-                      config={config}
-                      chapterQuestions={chapterQuestions}
-                      difficultyBreakdown={difficultyBreakdown}
-                      onUpdate={(updates) => updateChapterConfig(config.chapterName, updates)}
-                    />
-                  )
-                })}
+                {loadingQuestions ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-4 border-slate-200 dark:border-slate-700 border-t-blue-600 mx-auto mb-3"></div>
+                      <p className="text-slate-500 dark:text-slate-400">Loading questions for all chapters...</p>
+                    </div>
+                  </div>
+                ) : (
+                  /* Chapter Configuration Cards */
+                  chapterConfigs.map((config, index) => {
+                    const chapterQuestions = getQuestionsForChapter(config.chapterName)
+                    const difficultyBreakdown = getDifficultyBreakdown(config.chapterName)
+                    
+                    return (
+                      <ChapterConfigurationCard
+                        key={config.chapterName}
+                        config={config}
+                        chapterQuestions={chapterQuestions}
+                        difficultyBreakdown={difficultyBreakdown}
+                        onUpdate={(updates) => updateChapterConfig(config.chapterName, updates)}
+                      />
+                    )
+                  })
+                )}
               </div>
             </div>
 
