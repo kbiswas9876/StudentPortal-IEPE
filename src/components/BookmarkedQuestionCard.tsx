@@ -8,16 +8,17 @@ import {
   BookOpenIcon
 } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
-import { 
-  Edit3, 
-  Check, 
-  X, 
+import {
+  Edit3,
+  Check,
+  X,
   Plus,
   Trash2,
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Clock
+  Clock,
+  Eye
 } from 'lucide-react'
 import KatexRenderer from './ui/KatexRenderer'
 import { Database } from '@/types/database'
@@ -60,6 +61,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
   const [tagInput, setTagInput] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [hoveredRating, setHoveredRating] = useState(0)
+  const [showAnswer, setShowAnswer] = useState(false) // New state for answer visibility
 
   const formatTime = (seconds: number | null) => {
     if (!seconds) return 'N/A'
@@ -313,21 +315,27 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
           </motion.button>
         ))}
         
-        {/* Descriptive Tooltip */}
-        <AnimatePresence>
-          {showTooltip && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.9 }}
-              transition={{ duration: 0.15 }}
-              className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-slate-900 dark:bg-slate-700 text-white text-xs font-medium px-2 py-1 rounded-lg shadow-lg whitespace-nowrap z-10"
-            >
-              {getRatingLabel(hoveredRating)}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900 dark:border-t-slate-700"></div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            {/* Descriptive Tooltip */}
+            <AnimatePresence>
+              {showTooltip && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-slate-900 dark:bg-slate-700 text-white text-xs font-medium px-2 py-1 rounded-lg shadow-lg whitespace-nowrap z-10"
+                >
+                  {getRatingLabel(hoveredRating)}
+                  <div 
+                    className="absolute top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900 dark:border-t-slate-700 transition-transform duration-150 ease-out"
+                    style={{
+                      left: `${((hoveredRating - 1) * 20) + 8}px`, // Dynamic positioning: 20px per star + 8px offset
+                      transform: 'translateX(-50%)'
+                    }}
+                  ></div>
+                </motion.div>
+              )}
+            </AnimatePresence>
       </div>
     )
   }
@@ -340,10 +348,13 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
       className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
     >
       {/* Collapsed/Compact View - Always Visible */}
-      <div 
-        className="p-5 cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
+          <div
+            className="p-5 cursor-pointer"
+            onClick={() => {
+              setIsExpanded(!isExpanded)
+              setShowAnswer(false) // Reset answer visibility when collapsing/expanding
+            }}
+          >
         <div className="flex items-start justify-between gap-4">
           {/* Left Side - Main Content */}
           <div className="flex-1 min-w-0">
@@ -472,43 +483,76 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
           >
             <div className="px-5 pb-5 pt-0 border-t border-slate-200 dark:border-slate-700">
               <div className="pt-4 space-y-4">
-                {/* Options */}
-                {question.questions.options && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Options:
-                    </h4>
-                    {Object.entries(question.questions.options).map(([key, value]) => (
-                      <div
-                        key={key}
-                        className={`p-3 rounded-lg border ${
-                          key === question.questions.correct_option
-                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30'
-                        }`}
-                      >
-                        <div className="flex items-start">
-                          <span className={`font-semibold mr-3 ${
-                            key === question.questions.correct_option
-                              ? 'text-green-700 dark:text-green-400'
-                              : 'text-slate-600 dark:text-slate-400'
-                          }`}>
-                            {key}.
-                          </span>
-                          <div className="flex-1">
-                            <KatexRenderer 
-                              content={value as string}
-                              className="text-sm"
-                            />
-                          </div>
-                              {key === question.questions.correct_option && (
-                                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 ml-2 flex-shrink-0" strokeWidth={2.5} />
-                              )}
+                    {/* Options */}
+                    {question.questions.options && (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                          Options:
+                        </h4>
+                        {/* Two-column grid layout */}
+                        <div className="grid grid-cols-2 gap-3">
+                          {Object.entries(question.questions.options).map(([key, value]) => (
+                            <div
+                              key={key}
+                              className={`p-3 rounded-lg border transition-all ${
+                                showAnswer && key === question.questions.correct_option
+                                  ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                  : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30'
+                              }`}
+                            >
+                              <div className="flex items-start">
+                                <span className={`font-semibold mr-3 ${
+                                  showAnswer && key === question.questions.correct_option
+                                    ? 'text-green-700 dark:text-green-400'
+                                    : 'text-slate-600 dark:text-slate-400'
+                                }`}>
+                                  {key}.
+                                </span>
+                                <div className="flex-1">
+                                  <KatexRenderer
+                                    content={value as string}
+                                    className="text-sm"
+                                  />
+                                </div>
+                                {showAnswer && key === question.questions.correct_option && (
+                                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 ml-2 flex-shrink-0" strokeWidth={2.5} />
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
+                        
+                        {/* Show Answer Button */}
+                        {!showAnswer && (
+                          <motion.button
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setShowAnswer(true)}
+                            className="w-full mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium shadow-md hover:shadow-lg"
+                          >
+                            <Eye className="h-4 w-4" strokeWidth={2.5} />
+                            Show Answer
+                          </motion.button>
+                        )}
+                        
+                        {/* Hide Answer Button */}
+                        {showAnswer && (
+                          <motion.button
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setShowAnswer(false)}
+                            className="w-full mt-3 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium shadow-md hover:shadow-lg"
+                          >
+                            <Eye className="h-4 w-4" strokeWidth={2.5} />
+                            Hide Answer
+                          </motion.button>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    )}
 
                 {/* Performance Metrics */}
                 <div className="grid grid-cols-2 gap-3">
