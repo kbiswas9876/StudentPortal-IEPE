@@ -389,7 +389,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
         <div className="flex items-start justify-between gap-4">
           {/* Left Side - Main Content */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 pl-8">
             {/* Book & Question ID + Metadata Header */}
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               <span className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm inline-flex items-center gap-1.5">
@@ -408,6 +408,22 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                 <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                   • {question.questions.exam_metadata}
                 </span>
+              )}
+              
+              {/* Remove Button - Safely positioned in header */}
+              {onRemove && (
+                <motion.button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onRemove(question.question_id)
+                  }}
+                  className="p-1.5 rounded-lg bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 hover:from-red-100 hover:to-orange-100 dark:hover:from-red-900/30 dark:hover:to-orange-900/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-200 shadow-sm hover:shadow-md ml-auto"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Remove from Revision Hub"
+                >
+                  <BookmarkX className="h-3.5 w-3.5" strokeWidth={2.5} />
+                </motion.button>
               )}
             </div>
 
@@ -491,21 +507,6 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
           {/* Right Side - Actions */}
           <div className="flex-shrink-0 flex items-center gap-2">
-            {/* Remove Button */}
-            {onRemove && (
-              <motion.button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onRemove(question.question_id)
-                }}
-                className="p-2 rounded-lg bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 hover:from-red-100 hover:to-orange-100 dark:hover:from-red-900/30 dark:hover:to-orange-900/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-200 shadow-sm hover:shadow-md"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                title="Remove from Revision Hub"
-              >
-                <BookmarkX className="h-4 w-4" strokeWidth={2.5} />
-              </motion.button>
-            )}
             
             {/* Expand/Collapse Icon */}
             <motion.div
