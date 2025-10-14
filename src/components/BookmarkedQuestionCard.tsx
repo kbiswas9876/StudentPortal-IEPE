@@ -9,12 +9,16 @@ import {
   ClockIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ExclamationTriangleIcon,
-  PencilIcon,
-  CheckIcon,
-  XMarkIcon
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
+import { 
+  Edit3, 
+  Check, 
+  X, 
+  Plus,
+  Trash2
+} from 'lucide-react'
 import KatexRenderer from './ui/KatexRenderer'
 import { Database } from '@/types/database'
 
@@ -353,7 +357,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                         className="p-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
                         title="Edit rating"
                       >
-                        <PencilIcon className="h-3.5 w-3.5 text-white drop-shadow-sm" />
+                        <Edit3 className="h-3.5 w-3.5 text-white drop-shadow-sm" strokeWidth={2.5} />
                       </motion.button>
                     ) : (
                       <div className="flex items-center gap-1">
@@ -365,7 +369,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                           className="p-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Save rating"
                         >
-                          <CheckIcon className="h-3.5 w-3.5 text-white drop-shadow-sm" />
+                          <Check className="h-3.5 w-3.5 text-white drop-shadow-sm" strokeWidth={3} />
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)" }}
@@ -375,7 +379,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                           className="p-1.5 rounded-full bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Cancel"
                         >
-                          <XMarkIcon className="h-3.5 w-3.5 text-white drop-shadow-sm" />
+                          <X className="h-3.5 w-3.5 text-white drop-shadow-sm" strokeWidth={3} />
                         </motion.button>
                       </div>
                     )}
@@ -521,7 +525,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                           className="p-1 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
                           title="Edit tags"
                         >
-                          <PencilIcon className="h-3 w-3 text-white drop-shadow-sm" />
+                          <Edit3 className="h-3 w-3 text-white drop-shadow-sm" strokeWidth={2.5} />
                         </motion.button>
                       ) : (
                         <div className="flex items-center gap-1">
@@ -533,7 +537,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                             className="p-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Save tags"
                           >
-                            <CheckIcon className="h-3 w-3 text-white drop-shadow-sm" />
+                            <Check className="h-3 w-3 text-white drop-shadow-sm" strokeWidth={3} />
                           </motion.button>
                           <motion.button
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)" }}
@@ -543,7 +547,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                             className="p-1 rounded-full bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Cancel"
                           >
-                            <XMarkIcon className="h-3 w-3 text-white drop-shadow-sm" />
+                            <X className="h-3 w-3 text-white drop-shadow-sm" strokeWidth={3} />
                           </motion.button>
                         </div>
                       )}
@@ -562,7 +566,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                                 onClick={() => handleRemoveTag(tag)}
                                 className="ml-1.5 hover:text-purple-900 dark:hover:text-purple-100 transition-colors"
                               >
-                                <XMarkIcon className="h-3 w-3" />
+                                <X className="h-3 w-3" strokeWidth={2.5} />
                               </button>
                             </span>
                           ))}
@@ -578,8 +582,9 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                           />
                           <button
                             onClick={handleAddTag}
-                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-xs font-medium"
+                            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-xs font-medium flex items-center gap-1"
                           >
+                            <Plus className="h-3 w-3" strokeWidth={2.5} />
                             Add
                           </button>
                         </div>
@@ -622,7 +627,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                           className="p-1 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
                           title="Edit note"
                         >
-                          <PencilIcon className="h-3 w-3 text-white drop-shadow-sm" />
+                          <Edit3 className="h-3 w-3 text-white drop-shadow-sm" strokeWidth={2.5} />
                         </motion.button>
                       ) : (
                         <div className="flex items-center gap-1">
@@ -634,7 +639,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                             className="p-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Save note"
                           >
-                            <CheckIcon className="h-3 w-3 text-white drop-shadow-sm" />
+                            <Check className="h-3 w-3 text-white drop-shadow-sm" strokeWidth={3} />
                           </motion.button>
                           <motion.button
                             whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)" }}
@@ -644,7 +649,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                             className="p-1 rounded-full bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Cancel"
                           >
-                            <XMarkIcon className="h-3 w-3 text-white drop-shadow-sm" />
+                            <X className="h-3 w-3 text-white drop-shadow-sm" strokeWidth={3} />
                           </motion.button>
                         </div>
                       )}
