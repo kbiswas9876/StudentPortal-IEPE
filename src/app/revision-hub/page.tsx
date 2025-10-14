@@ -8,6 +8,7 @@ import { Database } from '@/types/database'
 import RevisionChapterNav from '@/components/RevisionChapterNav'
 import BookmarkedQuestionCard from '@/components/BookmarkedQuestionCard'
 import RevisionSessionModal from '@/components/RevisionSessionModal'
+import DifficultyBreakdown from '@/components/DifficultyBreakdown'
 import { FunnelIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 
@@ -398,25 +399,39 @@ export default function RevisionHubPage() {
               {/* Header */}
               <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     {selectedChapter ? (
                       <>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">
                           {selectedChapter}
                         </h2>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {filteredAndSortedQuestions.length} 
-                          {selectedRatingFilter || sortOrder !== 'none' ? ' filtered' : ''} 
-                          {' '}question{filteredAndSortedQuestions.length !== 1 ? 's' : ''}
-                          {bookmarkedQuestions.length !== filteredAndSortedQuestions.length && (
-                            <span className="text-xs text-slate-500"> (of {bookmarkedQuestions.length} total)</span>
-                          )}
+                        
+                        {/* Difficulty Breakdown */}
+                        {bookmarkedQuestions.length > 0 && (
+                          <DifficultyBreakdown 
+                            questions={bookmarkedQuestions}
+                            className="mb-2"
+                            onRatingClick={handleRatingFilterClick}
+                            selectedRating={selectedRatingFilter}
+                          />
+                        )}
+                        
+                        {/* Question Count Summary */}
+                        <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
+                          <span>
+                            {filteredAndSortedQuestions.length} 
+                            {selectedRatingFilter || sortOrder !== 'none' ? ' filtered' : ''} 
+                            {' '}question{filteredAndSortedQuestions.length !== 1 ? 's' : ''}
+                            {bookmarkedQuestions.length !== filteredAndSortedQuestions.length && (
+                              <span className="text-xs text-slate-500"> (of {bookmarkedQuestions.length} total)</span>
+                            )}
+                          </span>
                           {filteredAndSortedQuestions.length > 0 && (
-                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-500">
+                            <span className="text-xs text-slate-500 dark:text-slate-500">
                               • Click any card to expand
                             </span>
                           )}
-                        </p>
+                        </div>
                       </>
                     ) : (
                       <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
