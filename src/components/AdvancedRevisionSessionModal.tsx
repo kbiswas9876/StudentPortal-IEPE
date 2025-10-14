@@ -500,43 +500,145 @@ function ChapterConfigurationCard({
               <h5 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4">
                 Difficulty-Based Selection
               </h5>
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((rating) => {
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((rating) => {
                   const available = difficultyBreakdown[rating] || 0
                   const selected = config.difficultyBreakdown?.[rating] || 0
                   
                   return (
-                    <div key={rating} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-0.5">
+                    <div 
+                      key={rating} 
+                      className={`p-4 rounded-xl border transition-all duration-200 ${
+                        available > 0 
+                          ? 'bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-700 border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md' 
+                          : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-60'
+                      }`}
+                    >
+                      {/* Star Rating Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-1">
                           {Array.from({ length: rating }, (_, i) => (
-                            <StarSolidIcon key={i} className="h-4 w-4 text-yellow-500" />
+                            <StarSolidIcon 
+                              key={i} 
+                              className={`h-4 w-4 ${
+                                available > 0 
+                                  ? 'text-yellow-500 drop-shadow-sm' 
+                                  : 'text-slate-300 dark:text-slate-600'
+                              }`} 
+                            />
                           ))}
                         </div>
-                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                        <span className={`text-xs font-medium ${
+                          available > 0 
+                            ? 'text-slate-600 dark:text-slate-400' 
+                            : 'text-slate-400 dark:text-slate-500'
+                        }`}>
                           {available} available
                         </span>
                       </div>
+                      
+                      {/* Input Control */}
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
-                          value={selected}
-                          onChange={(e) => handleDifficultyCountChange(rating, parseInt(e.target.value) || 0)}
                           min="0"
                           max={available}
-                          className="w-16 px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                          value={selected}
+                          onChange={(e) => handleDifficultyCountChange(rating, parseInt(e.target.value) || 0)}
+                          disabled={available === 0}
+                          className={`w-full px-3 py-2 text-sm font-semibold text-center border rounded-lg transition-all ${
+                            available > 0
+                              ? 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800'
+                              : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                          }`}
+                          placeholder="0"
                         />
                         <button
                           onClick={() => handleSelectAllDifficulty(rating)}
                           disabled={available === 0}
-                          className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
+                            available > 0
+                              ? 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-sm hover:shadow-md'
+                              : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                          }`}
                         >
-                          All
+                          Max
                         </button>
                       </div>
                     </div>
                   )
                 })}
+                
+                {/* 5-Star Rating - Full Width Special Card */}
+                <div className="col-span-2">
+                  {(() => {
+                    const rating = 5
+                    const available = difficultyBreakdown[rating] || 0
+                    const selected = config.difficultyBreakdown?.[rating] || 0
+                    
+                    return (
+                      <div 
+                        className={`p-4 rounded-xl border transition-all duration-200 ${
+                          available > 0 
+                            ? 'bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-700 border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md' 
+                            : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-60'
+                        }`}
+                      >
+                        {/* Star Rating Header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: rating }, (_, i) => (
+                              <StarSolidIcon 
+                                key={i} 
+                                className={`h-4 w-4 ${
+                                  available > 0 
+                                    ? 'text-yellow-500 drop-shadow-sm' 
+                                    : 'text-slate-300 dark:text-slate-600'
+                                }`} 
+                              />
+                            ))}
+                          </div>
+                          <span className={`text-xs font-medium ${
+                            available > 0 
+                              ? 'text-slate-600 dark:text-slate-400' 
+                              : 'text-slate-400 dark:text-slate-500'
+                          }`}>
+                            {available} available
+                          </span>
+                        </div>
+                        
+                        {/* Input Control */}
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            max={available}
+                            value={selected}
+                            onChange={(e) => handleDifficultyCountChange(rating, parseInt(e.target.value) || 0)}
+                            disabled={available === 0}
+                            className={`w-full px-3 py-2 text-sm font-semibold text-center border rounded-lg transition-all ${
+                              available > 0
+                                ? 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800'
+                                : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                            }`}
+                            placeholder="0"
+                          />
+                          <button
+                            onClick={() => handleSelectAllDifficulty(rating)}
+                            disabled={available === 0}
+                            className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
+                              available > 0
+                                ? 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-sm hover:shadow-md'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                            }`}
+                          >
+                            Max
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
               </div>
             </motion.div>
           )}
