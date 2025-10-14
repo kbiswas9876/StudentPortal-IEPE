@@ -265,10 +265,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
     }
   }
 
-  const truncateText = (text: string, maxLength: number = 120) => {
-    if (text.length <= maxLength) return text
-    return text.substring(0, maxLength) + '...'
-  }
+  // Removed truncateText function - now showing full question text for better scannability
 
   const getRatingLabel = (rating: number) => {
     const labels = {
@@ -394,10 +391,10 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
               )}
             </div>
 
-            {/* Truncated Question Text */}
+            {/* Full Question Text - Always Show Complete Text for Better Scannability */}
             <div className="text-slate-900 dark:text-slate-100 mb-3">
               <KatexRenderer 
-                content={isExpanded ? question.questions.question_text : truncateText(question.questions.question_text)}
+                content={question.questions.question_text}
                 className="text-sm leading-relaxed"
               />
             </div>
