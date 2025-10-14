@@ -8,6 +8,7 @@ import { Database } from '@/types/database'
 import RevisionChapterNav from '@/components/RevisionChapterNav'
 import BookmarkedQuestionCard from '@/components/BookmarkedQuestionCard'
 import RevisionSessionModal from '@/components/RevisionSessionModal'
+import AdvancedRevisionSessionModal from '@/components/AdvancedRevisionSessionModal'
 import DifficultyBreakdown from '@/components/DifficultyBreakdown'
 import { FunnelIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
@@ -58,6 +59,7 @@ export default function RevisionHubPage() {
   // Revision Session states
   const [selectedChapters, setSelectedChapters] = useState<string[]>([])
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false)
+  const [useAdvancedModal, setUseAdvancedModal] = useState(true) // Toggle between simple and advanced modal
 
   // State persistence - prevent unnecessary reloads
   const dataFetchedRef = React.useRef(false)
@@ -256,6 +258,65 @@ export default function RevisionHubPage() {
     }
     
     fetchQuestionsForSession()
+    setIsSessionModalOpen(false)
+  }
+
+  const handleAdvancedStartSession = (config: any) => {
+    // Handle advanced session configuration
+    const fetchAdvancedQuestionsForSession = async () => {
+      try {
+        const allQuestionIds: string[] = []
+        
+        // Process each chapter configuration
+        for (const chapterConfig of config.chapterConfigs) {
+          const response = await fetch(`/api/revision-hub/by-chapter?userId=${user?.id}&chapterName=${encodeURIComponent(chapterConfig.chapterName)}`)
+          const result = await response.json()
+          const chapterQuestions = result.data || []
+          
+          let chapterQuestionIds: string[] = []
+          
+          if (chapterConfig.questionScope === 'all') {
+            chapterQuestionIds = chapterQuestions.map((q: any) => q.questions.id)
+          } else if (chapterConfig.questionScope === 'random') {
+            const shuffled = [...chapterQuestions].sort(() => Math.random() - 0.5)
+            chapterQuestionIds = shuffled.slice(0, chapterConfig.questionCount || 0).map((q: any) => q.questions.id)
+          } else if (chapterConfig.questionScope === 'difficulty') {
+            // Filter by difficulty ratings
+            const difficultyFiltered = chapterQuestions.filter((q: any) => {
+              const rating = q.user_difficulty_rating
+              return rating && chapterConfig.difficultyBreakdown?.[rating] > 0
+            })
+            
+            // Apply difficulty-based selection
+            const selectedByDifficulty: string[] = []
+            for (const [rating, count] of Object.entries(chapterConfig.difficultyBreakdown || {})) {
+              const ratingNum = parseInt(rating)
+              const countNum = typeof count === 'number' ? count : 0
+              const questionsOfRating = difficultyFiltered.filter((q: any) => q.user_difficulty_rating === ratingNum)
+              const shuffled = [...questionsOfRating].sort(() => Math.random() - 0.5)
+              selectedByDifficulty.push(...shuffled.slice(0, countNum).map((q: any) => q.questions.id))
+            }
+            chapterQuestionIds = selectedByDifficulty
+          }
+          
+          allQuestionIds.push(...chapterQuestionIds)
+        }
+        
+        // Navigate to practice with the questions
+        const params = new URLSearchParams({
+          questions: allQuestionIds.join(','),
+          mode: config.testMode,
+          ...(config.timeLimit && { timeLimit: config.timeLimit.toString() })
+        })
+        
+        router.push(`/practice?${params.toString()}`)
+      } catch (error) {
+        console.error('Error starting advanced revision session:', error)
+        alert('Failed to start revision session. Please try again.')
+      }
+    }
+    
+    fetchAdvancedQuestionsForSession()
     setIsSessionModalOpen(false)
   }
 
@@ -603,13 +664,24 @@ export default function RevisionHubPage() {
       </div>
 
       {/* Revision Session Modal */}
-      <RevisionSessionModal
-        isOpen={isSessionModalOpen}
-        onClose={() => setIsSessionModalOpen(false)}
-        selectedChapters={selectedChapters}
-        chapters={chapters}
-        onStartSession={handleStartSession}
-      />
+      {useAdvancedModal ? (
+        <AdvancedRevisionSessionModal
+          isOpen={isSessionModalOpen}
+          onClose={() => setIsSessionModalOpen(false)}
+          selectedChapters={selectedChapters}
+          chapters={chapters}
+          bookmarkedQuestions={bookmarkedQuestions}
+          onStartSession={handleAdvancedStartSession}
+        />
+      ) : (
+        <RevisionSessionModal
+          isOpen={isSessionModalOpen}
+          onClose={() => setIsSessionModalOpen(false)}
+          selectedChapters={selectedChapters}
+          chapters={chapters}
+          onStartSession={handleStartSession}
+        />
+      )}
     </div>
   )
 }
