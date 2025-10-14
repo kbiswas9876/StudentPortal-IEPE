@@ -496,9 +496,36 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                     {/* Options */}
                     {question.questions.options && (
                       <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                          Options:
-                        </h4>
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            Options:
+                          </h4>
+                          {!showAnswer ? (
+                            <motion.button
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setShowAnswer(true)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                            >
+                              <Eye className="h-3.5 w-3.5" strokeWidth={2.5} />
+                              Show Answer
+                            </motion.button>
+                          ) : (
+                            <motion.button
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setShowAnswer(false)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200"
+                            >
+                              <Eye className="h-3.5 w-3.5" strokeWidth={2.5} />
+                              Hide Answer
+                            </motion.button>
+                          )}
+                        </div>
                         {/* Two-column grid layout */}
                         <div className="grid grid-cols-2 gap-3">
                           {Object.entries(question.questions.options).map(([key, value]) => (
@@ -531,36 +558,6 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                             </div>
                           ))}
                         </div>
-                        
-                        {/* Show Answer Button */}
-                        {!showAnswer && (
-                          <motion.button
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setShowAnswer(true)}
-                            className="w-full mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium shadow-md hover:shadow-lg"
-                          >
-                            <Eye className="h-4 w-4" strokeWidth={2.5} />
-                            Show Answer
-                          </motion.button>
-                        )}
-                        
-                        {/* Hide Answer Button */}
-                        {showAnswer && (
-                          <motion.button
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setShowAnswer(false)}
-                            className="w-full mt-3 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium shadow-md hover:shadow-lg"
-                          >
-                            <Eye className="h-4 w-4" strokeWidth={2.5} />
-                            Hide Answer
-                          </motion.button>
-                        )}
                       </div>
                     )}
 
