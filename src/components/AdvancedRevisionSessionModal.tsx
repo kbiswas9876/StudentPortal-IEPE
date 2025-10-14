@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Play, Clock, Shuffle, BookOpen, Star, Target, CheckCircle } from 'lucide-react'
+import { X, Play, Clock, Shuffle, BookOpen, Star, Target, CheckCircle, Rocket, SlidersHorizontal, Settings2 } from 'lucide-react'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
+import { PremiumTimeInput } from './PremiumTimeInput'
 
 interface ChapterData {
   name: string
@@ -65,7 +66,7 @@ export default function AdvancedRevisionSessionModal({
 }: AdvancedRevisionSessionModalProps) {
   const [chapterConfigs, setChapterConfigs] = useState<ChapterConfig[]>([])
   const [testMode, setTestMode] = useState<'practice' | 'timed'>('practice')
-  const [timeLimit, setTimeLimit] = useState<number>(60)
+  const [timeLimitInSeconds, setTimeLimitInSeconds] = useState<number>(3600) // 1 hour default
   const [allBookmarkedQuestions, setAllBookmarkedQuestions] = useState<BookmarkedQuestion[]>([])
   const [loadingQuestions, setLoadingQuestions] = useState(false)
 
@@ -173,7 +174,7 @@ export default function AdvancedRevisionSessionModal({
     const config: AdvancedSessionConfig = {
       chapterConfigs,
       testMode,
-      ...(testMode === 'timed' && { timeLimit })
+      ...(testMode === 'timed' && { timeLimit: Math.ceil(timeLimitInSeconds / 60) })
     }
     onStartSession(config)
   }
@@ -197,21 +198,21 @@ export default function AdvancedRevisionSessionModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-4xl max-h-[90vh] overflow-hidden"
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-4xl max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900">
-                    <Play className="h-5 w-5 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 shadow-sm">
+                    <Rocket className="h-5 w-5 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                      🚀 Start Revision Session
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                      Start Revision Session
                     </h2>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                       Advanced configuration for targeted practice
                     </p>
                   </div>
@@ -258,14 +259,14 @@ export default function AdvancedRevisionSessionModal({
             </div>
 
             {/* Sticky Footer */}
-            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50">
-              <div className="flex items-center justify-between">
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-700">
+              <div className="flex items-center justify-between gap-4">
                 {/* Left Side - Summary */}
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
                     <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
                     <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Total Questions Selected:
+                      Total:
                     </span>
                     <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
                       {totalQuestionsSelected}
@@ -273,55 +274,62 @@ export default function AdvancedRevisionSessionModal({
                   </div>
                 </div>
 
-                {/* Middle - Test Mode */}
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Test Mode:</span>
-                  <div className="flex bg-slate-200 dark:bg-slate-600 rounded-lg p-1">
-                    <button
-                      onClick={() => setTestMode('practice')}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                        testMode === 'practice'
-                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-                      }`}
-                    >
-                      Practice Mode
-                    </button>
-                    <button
-                      onClick={() => setTestMode('timed')}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                        testMode === 'timed'
-                          ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-                      }`}
-                    >
-                      Timed Mode
-                    </button>
+                {/* Middle - Test Mode & Time Input */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Mode:</span>
+                    <div className="flex bg-slate-200 dark:bg-slate-600 rounded-lg p-1">
+                      <button
+                        onClick={() => setTestMode('practice')}
+                        className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                          testMode === 'practice'
+                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                        }`}
+                      >
+                        Practice
+                      </button>
+                      <button
+                        onClick={() => setTestMode('timed')}
+                        className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                          testMode === 'timed'
+                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                        }`}
+                      >
+                        Timed
+                      </button>
+                    </div>
                   </div>
                   
-                  {/* Time Input for Timed Mode */}
-                  {testMode === 'timed' && (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={timeLimit}
-                        onChange={(e) => setTimeLimit(parseInt(e.target.value) || 60)}
-                        min="1"
-                        max="300"
-                        className="w-16 px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                      />
-                      <span className="text-sm text-slate-500 dark:text-slate-400">minutes</span>
-                    </div>
-                  )}
+                  {/* Premium Time Input for Timed Mode */}
+                  <AnimatePresence>
+                    {testMode === 'timed' && (
+                      <motion.div
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: 'auto' }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="text-xs text-slate-500 dark:text-slate-400">Time:</span>
+                        <PremiumTimeInput
+                          defaultValue={timeLimitInSeconds}
+                          onChange={setTimeLimitInSeconds}
+                          className="scale-75"
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Right Side - Action Buttons */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={onClose}
-                    className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                    className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                   >
                     Cancel
                   </motion.button>
@@ -329,10 +337,10 @@ export default function AdvancedRevisionSessionModal({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleStartSession}
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-sm rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-sm rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
                   >
-                    <Play className="h-4 w-4" strokeWidth={2.5} />
-                    Begin Session
+                    <Rocket className="h-4 w-4" strokeWidth={2.5} />
+                    Begin
                   </motion.button>
                 </div>
               </div>
@@ -391,26 +399,28 @@ function ChapterConfigurationCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600 p-6"
+      className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-700/50 dark:to-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-600 p-6 shadow-sm hover:shadow-md transition-shadow duration-200"
     >
       {/* Card Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
             {config.chapterName}
           </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
             {chapterQuestions.length} questions available
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-slate-500" strokeWidth={2.5} />
+          <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+            <SlidersHorizontal className="h-4 w-4 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
+          </div>
         </div>
       </div>
 
       {/* Question Scope Selection */}
       <div className="space-y-4">
-        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+        <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
           Question Scope Rule
         </h4>
         
@@ -485,9 +495,9 @@ function ChapterConfigurationCard({
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="mt-4 p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600"
+              className="mt-4 p-5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm"
             >
-              <h5 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+              <h5 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4">
                 Difficulty-Based Selection
               </h5>
               <div className="space-y-3">
