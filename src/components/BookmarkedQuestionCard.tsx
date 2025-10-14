@@ -323,15 +323,25 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.9 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-slate-900 dark:bg-slate-700 text-white text-xs font-medium px-2 py-1 rounded-lg shadow-lg whitespace-nowrap z-10"
+                  className="absolute -top-12 bg-slate-900 dark:bg-slate-700 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap z-10"
+                  style={{
+                    left: `${(hoveredRating - 1) * 20 - (() => {
+                      // Precise positioning based on star position
+                      switch(hoveredRating) {
+                        case 1: return 10; // Easy: shift left by half distance (10px)
+                        case 2: return 40; // Easy-to-Moderate: shift left by 2x distance (40px)
+                        case 3: return 20; // Moderate: shift left by 1x distance (20px)
+                        case 4: return 40; // Moderate-to-Hard: shift left by 2x distance (40px)
+                        case 5: return 10; // Hard: shift left by half distance (10px)
+                        default: return 0;
+                      }
+                    })()}px`,
+                    transform: 'translateX(-50%)'
+                  }}
                 >
                   {getRatingLabel(hoveredRating)}
                   <div 
-                    className="absolute top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900 dark:border-t-slate-700 transition-transform duration-150 ease-out"
-                    style={{
-                      left: `${((hoveredRating - 1) * 20) + 8}px`, // Dynamic positioning: 20px per star + 8px offset
-                      transform: 'translateX(-50%)'
-                    }}
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900 dark:border-t-slate-700"
                   ></div>
                 </motion.div>
               )}
