@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context'
 import { Database } from '@/types/database'
 import RevisionChapterNav from '@/components/RevisionChapterNav'
 import BookmarkedQuestionCard from '@/components/BookmarkedQuestionCard'
+import RevisionSessionModal from '@/components/RevisionSessionModal'
 import { FunnelIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 
@@ -52,6 +53,10 @@ export default function RevisionHubPage() {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
   const [selectedRatingFilter, setSelectedRatingFilter] = useState<number | null>(null)
   const [sortOrder, setSortOrder] = useState<'none' | 'high-to-low' | 'low-to-high'>('none')
+
+  // Revision Session states
+  const [selectedChapters, setSelectedChapters] = useState<string[]>([])
+  const [isSessionModalOpen, setIsSessionModalOpen] = useState(false)
 
   // State persistence - prevent unnecessary reloads
   const dataFetchedRef = React.useRef(false)
@@ -188,6 +193,71 @@ export default function RevisionHubPage() {
     }
   }
 
+  // Revision Session handlers
+  const handleChapterSelectionChange = (chapter: string, selected: boolean) => {
+    if (selected) {
+      setSelectedChapters(prev => [...prev, chapter])
+    } else {
+      setSelectedChapters(prev => prev.filter(c => c !== chapter))
+    }
+  }
+
+  const handleSelectAllChapters = () => {
+    setSelectedChapters(chapters.map(c => c.name))
+  }
+
+  const handleDeselectAllChapters = () => {
+    setSelectedChapters([])
+  }
+
+  const handleStartRevisionSession = () => {
+    setIsSessionModalOpen(true)
+  }
+
+  const handleStartSession = (config: any) => {
+    // Get all question IDs from selected chapters
+    const selectedChapterNames = selectedChapters
+    const allQuestionIds: string[] = []
+    
+    // For now, we'll need to fetch questions from each selected chapter
+    // This is a simplified approach - in a real implementation, you'd want to optimize this
+    const fetchQuestionsForSession = async () => {
+      try {
+        const questionPromises = selectedChapterNames.map(async (chapterName) => {
+          const response = await fetch(`/api/revision-hub/by-chapter?userId=${user?.id}&chapterName=${encodeURIComponent(chapterName)}`)
+          const result = await response.json()
+          return result.data || []
+        })
+        
+        const allQuestions = await Promise.all(questionPromises)
+        const questionIds = allQuestions.flat().map((q: any) => q.questions.id)
+        
+        // Apply question scope
+        let finalQuestionIds = questionIds
+        if (config.questionScope === 'random' && config.questionCount) {
+          // Shuffle and take the specified number
+          const shuffled = [...questionIds].sort(() => Math.random() - 0.5)
+          finalQuestionIds = shuffled.slice(0, config.questionCount)
+        }
+        
+        // Navigate to practice with the questions
+        const params = new URLSearchParams({
+          questions: finalQuestionIds.join(','),
+          mode: config.testMode,
+          ...(config.timeLimit && { timeLimit: config.timeLimit.toString() })
+        })
+        
+        router.push(`/practice?${params.toString()}`)
+      } catch (error) {
+        console.error('Error starting revision session:', error)
+        alert('Failed to start revision session. Please try again.')
+      }
+    }
+    
+    fetchQuestionsForSession()
+    setIsSessionModalOpen(false)
+  }
+
   // Loading state
   if (authLoading || loadingChapters) {
     return (
@@ -308,6 +378,11 @@ export default function RevisionHubPage() {
                 selectedChapter={selectedChapter}
                 onSelectChapter={handleSelectChapter}
                 isLoading={loadingChapters}
+                selectedChapters={selectedChapters}
+                onChapterSelectionChange={handleChapterSelectionChange}
+                onSelectAllChapters={handleSelectAllChapters}
+                onDeselectAllChapters={handleDeselectAllChapters}
+                onStartRevisionSession={handleStartRevisionSession}
               />
             </div>
           </motion.div>
@@ -511,6 +586,15 @@ export default function RevisionHubPage() {
           </motion.div>
         </div>
       </div>
+
+      {/* Revision Session Modal */}
+      <RevisionSessionModal
+        isOpen={isSessionModalOpen}
+        onClose={() => setIsSessionModalOpen(false)}
+        selectedChapters={selectedChapters}
+        chapters={chapters}
+        onStartSession={handleStartSession}
+      />
     </div>
   )
 }
