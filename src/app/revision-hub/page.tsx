@@ -10,8 +10,10 @@ import BookmarkedQuestionCard from '@/components/BookmarkedQuestionCard'
 import RevisionSessionModal from '@/components/RevisionSessionModal'
 import AdvancedRevisionSessionModal from '@/components/AdvancedRevisionSessionModal'
 import DifficultyBreakdown from '@/components/DifficultyBreakdown'
+import BookmarkRemovalModal from '@/components/BookmarkRemovalModal'
 import { FunnelIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
+import { Archive } from 'lucide-react'
 
 interface ChapterData {
   name: string
@@ -40,7 +42,7 @@ interface BookmarkedQuestion {
 }
 
 export default function RevisionHubPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, session, loading: authLoading } = useAuth()
   const router = useRouter()
   
   const [chapters, setChapters] = useState<ChapterData[]>([])
@@ -60,6 +62,16 @@ export default function RevisionHubPage() {
   const [selectedChapters, setSelectedChapters] = useState<string[]>([])
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false)
   const [useAdvancedModal, setUseAdvancedModal] = useState(true) // Toggle between simple and advanced modal
+  
+  // Bookmark removal states
+  const [showRemovalModal, setShowRemovalModal] = useState(false)
+  const [removalQuestionId, setRemovalQuestionId] = useState<string | null>(null)
+  const [removalQuestionText, setRemovalQuestionText] = useState('')
+  const [isBulkRemoval, setIsBulkRemoval] = useState(false)
+  
+  // Bulk selection states
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set())
+  const [showBulkActions, setShowBulkActions] = useState(false)
 
   // State persistence - prevent unnecessary reloads
   const dataFetchedRef = React.useRef(false)
@@ -194,6 +206,97 @@ export default function RevisionHubPage() {
     } else {
       setSelectedRatingFilter(rating)
     }
+  }
+
+  // Handle bookmark removal - show confirmation modal
+  const handleRemoveBookmark = (questionId: string) => {
+    const question = bookmarkedQuestions.find(q => q.question_id === questionId)
+    if (!question) return
+
+    setRemovalQuestionId(questionId)
+    setRemovalQuestionText(question.questions.question_text)
+    setIsBulkRemoval(false)
+    setShowRemovalModal(true)
+  }
+
+  // Handle bulk bookmark removal
+  const handleBulkRemoveBookmarks = () => {
+    if (selectedQuestions.size === 0) return
+
+    setIsBulkRemoval(true)
+    setRemovalQuestionId(null)
+    setRemovalQuestionText('')
+    setShowRemovalModal(true)
+  }
+
+  // Confirm bookmark removal
+  const handleConfirmRemoval = async () => {
+    if (!user || !session) return
+
+    try {
+      if (isBulkRemoval) {
+        // Remove multiple bookmarks
+        const questionIds = Array.from(selectedQuestions)
+        for (const questionId of questionIds) {
+          const response = await fetch('/api/practice/bookmark', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+            },
+            body: JSON.stringify({ questionId }),
+          })
+
+          if (!response.ok) {
+            const result = await response.json()
+            throw new Error(result.error || 'Failed to remove bookmark')
+          }
+        }
+        
+        // Clear selection
+        setSelectedQuestions(new Set())
+        setShowBulkActions(false)
+      } else {
+        // Remove single bookmark
+        if (!removalQuestionId) return
+
+        const response = await fetch('/api/practice/bookmark', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({ questionId: removalQuestionId }),
+        })
+
+        const result = await response.json()
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to remove bookmark')
+        }
+      }
+
+      // Refresh the questions to update the UI
+      if (selectedChapter) {
+        await fetchQuestionsForChapter(selectedChapter)
+      }
+
+      setShowRemovalModal(false)
+    } catch (error) {
+      console.error('Error removing bookmark:', error)
+      alert('Failed to remove bookmark. Please try again.')
+    }
+  }
+
+  // Handle question selection for bulk actions
+  const handleQuestionSelect = (questionId: string, selected: boolean) => {
+    const newSelected = new Set(selectedQuestions)
+    if (selected) {
+      newSelected.add(questionId)
+    } else {
+      newSelected.delete(questionId)
+    }
+    setSelectedQuestions(newSelected)
+    setShowBulkActions(newSelected.size > 0)
   }
 
   // Revision Session handlers
@@ -687,11 +790,62 @@ export default function RevisionHubPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {/* Bulk Actions Bar */}
+                    {showBulkActions && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                              <Archive className="h-5 w-5 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                                {selectedQuestions.size} Question{selectedQuestions.size !== 1 ? 's' : ''} Selected
+                              </h3>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">
+                                Choose an action for the selected questions
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => {
+                                setSelectedQuestions(new Set())
+                                setShowBulkActions(false)
+                              }}
+                              className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                            >
+                              Cancel
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={handleBulkRemoveBookmarks}
+                              className="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold text-sm rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                            >
+                              <Archive className="h-4 w-4" strokeWidth={2.5} />
+                              Remove Selected
+                            </motion.button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
                     {filteredAndSortedQuestions.map((question, index) => (
                       <BookmarkedQuestionCard
                         key={question.id}
                         question={question}
                         index={index}
+                        onRemove={handleRemoveBookmark}
+                        isSelected={selectedQuestions.has(question.question_id)}
+                        onSelect={handleQuestionSelect}
                       />
                     ))}
                   </div>
@@ -721,6 +875,18 @@ export default function RevisionHubPage() {
           onStartSession={handleStartSession}
         />
       )}
+
+      {/* Bookmark Removal Confirmation Modal */}
+      <BookmarkRemovalModal
+        isOpen={showRemovalModal}
+        onClose={() => setShowRemovalModal(false)}
+        onConfirm={handleConfirmRemoval}
+        questionText={removalQuestionText}
+        questionId={removalQuestionId || ''}
+        isBulk={isBulkRemoval}
+        bulkCount={selectedQuestions.size}
+        chapterNames={isBulkRemoval ? [selectedChapter || ''] : []}
+      />
     </div>
   )
 }

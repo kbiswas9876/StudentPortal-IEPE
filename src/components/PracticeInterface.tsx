@@ -728,68 +728,15 @@ useEffect(() => {
     }
   }
 
+  // Bookmarking removed from practice interface - now only available in solution review
+  // This enforces deliberate bookmarking after reviewing solutions
   const handleBookmark = async () => {
-    if (!userId || !currentQuestion) return;
-
-    // Prevent concurrent requests (race condition fix)
-    if (bookmarkInProgressRef.current) {
-      console.debug('Bookmark request already in progress, ignoring duplicate click');
-      return;
-    }
-
-    // Optimistic UI: toggle immediately
-    const prev = currentState.is_bookmarked;
-    const optimistic = !prev;
-    updateSessionState(currentIndex, { is_bookmarked: optimistic });
-
-    // Background operation: sync with server (return promise so callers can await)
-    bookmarkInProgressRef.current = true;
-    return fetch('/api/practice/bookmark', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
-      },
-      body: JSON.stringify({
-        questionId: currentQuestion.question_id,
-      }),
-    })
-      .then(async (response) => {
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to update bookmark');
-        }
-
-        // Server truth: if mismatch, align UI
-        if (typeof result.bookmarked === 'boolean' && result.bookmarked !== optimistic) {
-          updateSessionState(currentIndex, { is_bookmarked: result.bookmarked });
-        }
-
-        // Subtle success toast
-        showToast({
-          type: 'success',
-          title: (typeof result.bookmarked === 'boolean' ? result.bookmarked : optimistic)
-            ? 'Saved to Revision Hub'
-            : 'Removed from Revision Hub',
-          message: (typeof result.bookmarked === 'boolean' ? result.bookmarked : optimistic)
-            ? 'Question added to your revision hub for later review'
-            : 'Question removed from your revision hub',
-          duration: 2500,
-        });
-      })
-      .catch((error) => {
-        console.error('Error bookmarking question:', error);
-        // Revert on failure
-        updateSessionState(currentIndex, { is_bookmarked: prev });
-        showToast({
-          type: 'error',
-          title: 'Bookmark Failed',
-          message: 'Unable to update bookmark status. Please try again.',
-        });
-      })
-      .finally(() => {
-        bookmarkInProgressRef.current = false;
-      });
+    showToast({
+      type: 'info',
+      title: 'Bookmark in Solution Review',
+      message: 'You can bookmark questions after reviewing solutions. Complete this session to access the solution review.',
+      duration: 4000,
+    });
   }
 
   const handleSubmitTest = async () => {

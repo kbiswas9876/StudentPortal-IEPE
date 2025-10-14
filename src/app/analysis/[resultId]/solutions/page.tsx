@@ -15,6 +15,7 @@ const DynamicZenModeBackButton = nextDynamic(() => import('@/components/ZenModeB
 const DynamicReportErrorModal = nextDynamic(() => import('@/components/ReportErrorModal'), { ssr: false })
 const DynamicViewAllQuestionsModal = nextDynamic(() => import('@/components/ViewAllQuestionsModal'), { ssr: false })
 const DynamicQuestionNavigationFooter = nextDynamic(() => import('@/components/QuestionNavigationFooter'), { ssr: false })
+const DynamicBookmarkCreationModal = nextDynamic(() => import('@/components/BookmarkCreationModal'), { ssr: false })
 
 // Local type alias to avoid importing from StrategicPerformanceMatrix which uses framer-motion
 type QuadrantKey = 'strengths' | 'needsSpeed' | 'carelessErrors' | 'weaknesses'
@@ -69,6 +70,9 @@ export default function DetailedSolutionReviewPage() {
   
   // View All Questions modal
   const [showViewAllModal, setShowViewAllModal] = useState(false)
+  
+  // Bookmark creation modal
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false)
 
   // Bookmark map keyed by questions.question_id (string)
   const [bookmarkedMap, setBookmarkedMap] = useState<Record<string, boolean>>({})
@@ -292,44 +296,79 @@ const handleNext = () => {
 }
 
 
-  // Inline bookmark toggle (optimistic) with race condition protection
+  // Bookmark toggle - now opens creation modal for new bookmarks
   const handleToggleBookmark = async () => {
     if (!sessionData || !user) return
     const q = sessionData.questions[currentQuestionIndex]
     if (!q) return
 
-    // Prevent concurrent requests (race condition fix)
-    if (bookmarkInProgressRef.current) {
-      console.debug('Bookmark request already in progress, ignoring duplicate click')
-      return
-    }
-
     const key = String(q.question_id)
-    const prev = !!bookmarkedMap[key]
-    const optimistic = !prev
-    setBookmarkedMap((m) => ({ ...m, [key]: optimistic }))
+    const isCurrentlyBookmarked = !!bookmarkedMap[key]
+
+    if (isCurrentlyBookmarked) {
+      // Remove existing bookmark
+      try {
+        bookmarkInProgressRef.current = true
+        const response = await fetch('/api/practice/bookmark', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({ questionId: q.question_id }),
+        })
+        const result = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to remove bookmark')
+        }
+        setBookmarkedMap((m) => ({ ...m, [key]: false }))
+      } catch (e) {
+        console.error('Error removing bookmark:', e)
+      } finally {
+        bookmarkInProgressRef.current = false
+      }
+    } else {
+      // Open bookmark creation modal for new bookmark
+      setShowBookmarkModal(true)
+    }
+  }
+
+  // Handle bookmark creation from modal
+  const handleBookmarkSave = async (bookmarkData: {
+    difficultyRating: number
+    customTags: string[]
+    personalNote: string
+  }) => {
+    if (!sessionData || !user) return
+    const q = sessionData.questions[currentQuestionIndex]
+    if (!q) return
 
     try {
       bookmarkInProgressRef.current = true
-      const response = await fetch('/api/practice/bookmark', {
+      const response = await fetch('/api/revision-hub/bookmarks/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
         },
-        body: JSON.stringify({ questionId: q.question_id }),
+        body: JSON.stringify({
+          questionId: q.question_id,
+          difficultyRating: bookmarkData.difficultyRating,
+          customTags: bookmarkData.customTags,
+          personalNote: bookmarkData.personalNote
+        }),
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to update bookmark')
+        throw new Error(result.error || 'Failed to create bookmark')
       }
-      if (typeof result.bookmarked === 'boolean' && result.bookmarked !== optimistic) {
-        setBookmarkedMap((m) => ({ ...m, [key]: result.bookmarked }))
-      }
+      
+      // Update local state
+      const key = String(q.question_id)
+      setBookmarkedMap((m) => ({ ...m, [key]: true }))
     } catch (e) {
-      console.error('Error bookmarking:', e)
-      // revert
-      setBookmarkedMap((m) => ({ ...m, [key]: prev }))
+      console.error('Error creating bookmark:', e)
+      throw e // Re-throw to let modal handle the error
     } finally {
       bookmarkInProgressRef.current = false
     }
@@ -512,6 +551,17 @@ const handleNext = () => {
             setCurrentQuestionIndex(index)
             setShowViewAllModal(false)
           }}
+        />
+      )}
+
+      {/* Bookmark Creation Modal */}
+      {sessionData && (
+        <DynamicBookmarkCreationModal
+          isOpen={showBookmarkModal}
+          onClose={() => setShowBookmarkModal(false)}
+          onSave={handleBookmarkSave}
+          questionText={sessionData.questions[currentQuestionIndex]?.question_text || ''}
+          questionId={sessionData.questions[currentQuestionIndex]?.question_id || ''}
         />
       )}
 

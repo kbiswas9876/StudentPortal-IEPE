@@ -18,7 +18,9 @@ import {
   XCircle,
   AlertTriangle,
   Clock,
-  Eye
+  Eye,
+  BookmarkX,
+  Archive
 } from 'lucide-react'
 import KatexRenderer from './ui/KatexRenderer'
 import { Database } from '@/types/database'
@@ -48,9 +50,12 @@ interface BookmarkedQuestionCardProps {
   question: BookmarkedQuestion
   index: number
   onRatingUpdate?: () => void
+  onRemove?: (questionId: string) => void
+  isSelected?: boolean
+  onSelect?: (questionId: string, selected: boolean) => void
 }
 
-export default function BookmarkedQuestionCard({ question, index, onRatingUpdate }: BookmarkedQuestionCardProps) {
+export default function BookmarkedQuestionCard({ question, index, onRatingUpdate, onRemove, isSelected = false, onSelect }: BookmarkedQuestionCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isEditingRating, setIsEditingRating] = useState(false)
   const [isEditingTags, setIsEditingTags] = useState(false)
@@ -467,8 +472,44 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
             </div>
           </div>
 
-          {/* Right Side - Expand/Collapse Icon */}
-          <div className="flex-shrink-0">
+          {/* Right Side - Actions */}
+          <div className="flex-shrink-0 flex items-center gap-2">
+            {/* Selection Checkbox */}
+            {onSelect && (
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center"
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={(e) => {
+                    e.stopPropagation()
+                    onSelect(question.question_id, e.target.checked)
+                  }}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                />
+              </motion.div>
+            )}
+
+            {/* Remove Button */}
+            {onRemove && (
+              <motion.button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRemove(question.question_id)
+                }}
+                className="p-2 rounded-lg bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 hover:from-red-100 hover:to-orange-100 dark:hover:from-red-900/30 dark:hover:to-orange-900/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-200 shadow-sm hover:shadow-md"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                title="Remove from Revision Hub"
+              >
+                <BookmarkX className="h-4 w-4" strokeWidth={2.5} />
+              </motion.button>
+            )}
+            
+            {/* Expand/Collapse Icon */}
             <motion.div
               animate={{ rotate: isExpanded ? 180 : 0 }}
               transition={{ duration: 0.2 }}
