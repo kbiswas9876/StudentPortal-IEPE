@@ -8,6 +8,8 @@ import { Database } from '@/types/database'
 import RevisionChapterNav from '@/components/RevisionChapterNav'
 import BookmarkedQuestionCard from '@/components/BookmarkedQuestionCard'
 import RevisionSessionModal from '@/components/RevisionSessionModal'
+import AdvancedRevisionSessionModal from '@/components/AdvancedRevisionSessionModal'
+import DifficultyBreakdown from '@/components/DifficultyBreakdown'
 import { FunnelIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 
@@ -57,6 +59,7 @@ export default function RevisionHubPage() {
   // Revision Session states
   const [selectedChapters, setSelectedChapters] = useState<string[]>([])
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false)
+  const [useAdvancedModal, setUseAdvancedModal] = useState(true) // Toggle between simple and advanced modal
 
   // State persistence - prevent unnecessary reloads
   const dataFetchedRef = React.useRef(false)
@@ -258,6 +261,104 @@ export default function RevisionHubPage() {
     setIsSessionModalOpen(false)
   }
 
+  const handleAdvancedStartSession = (config: any) => {
+    // Handle advanced session configuration
+    const fetchAdvancedQuestionsForSession = async () => {
+      try {
+        console.log('🚀 Starting Advanced Session with config:', config)
+        const allQuestionIds: string[] = []
+        
+        // Process each chapter configuration
+        for (const chapterConfig of config.chapterConfigs) {
+          console.log(`📚 Processing chapter: ${chapterConfig.chapterName}`)
+          console.log(`📋 Chapter config:`, chapterConfig)
+          
+          const response = await fetch(`/api/revision-hub/by-chapter?userId=${user?.id}&chapterName=${encodeURIComponent(chapterConfig.chapterName)}`)
+          const result = await response.json()
+          const chapterQuestions = result.data || []
+          
+          console.log(`📊 Found ${chapterQuestions.length} questions for ${chapterConfig.chapterName}`)
+          console.log('📋 Chapter questions:', chapterQuestions)
+          
+          let chapterQuestionIds: string[] = []
+          
+          if (chapterConfig.questionScope === 'all') {
+            chapterQuestionIds = chapterQuestions.map((q: any) => q.questions.question_id)
+            console.log(`✅ All questions selected: ${chapterQuestionIds.length} questions`)
+          } else if (chapterConfig.questionScope === 'random') {
+            const shuffled = [...chapterQuestions].sort(() => Math.random() - 0.5)
+            chapterQuestionIds = shuffled.slice(0, chapterConfig.questionCount || 0).map((q: any) => q.questions.question_id)
+            console.log(`🎲 Random selection: ${chapterQuestionIds.length} questions (requested: ${chapterConfig.questionCount})`)
+          } else if (chapterConfig.questionScope === 'difficulty') {
+            console.log(`⭐ Difficulty-based selection for ${chapterConfig.chapterName}`)
+            console.log('📊 Difficulty breakdown:', chapterConfig.difficultyBreakdown)
+            
+            // Filter by difficulty ratings
+            const difficultyFiltered = chapterQuestions.filter((q: any) => {
+              const rating = q.user_difficulty_rating
+              return rating && chapterConfig.difficultyBreakdown?.[rating] > 0
+            })
+            
+            console.log(`🔍 Difficulty filtered questions: ${difficultyFiltered.length}`)
+            
+            // Apply difficulty-based selection
+            const selectedByDifficulty: string[] = []
+            for (const [rating, count] of Object.entries(chapterConfig.difficultyBreakdown || {})) {
+              const ratingNum = parseInt(rating)
+              const countNum = typeof count === 'number' ? count : 0
+              const questionsOfRating = difficultyFiltered.filter((q: any) => q.user_difficulty_rating === ratingNum)
+              const shuffled = [...questionsOfRating].sort(() => Math.random() - 0.5)
+              const selected = shuffled.slice(0, countNum).map((q: any) => q.questions.question_id)
+              selectedByDifficulty.push(...selected)
+              
+              console.log(`⭐ Rating ${rating}: ${questionsOfRating.length} available, ${countNum} requested, ${selected.length} selected`)
+            }
+            chapterQuestionIds = selectedByDifficulty
+            console.log(`✅ Difficulty selection result: ${chapterQuestionIds.length} questions`)
+          }
+          
+          console.log(`📝 Final chapter question IDs:`, chapterQuestionIds)
+          allQuestionIds.push(...chapterQuestionIds)
+        }
+        
+        console.log(`🎯 Total question IDs collected: ${allQuestionIds.length}`)
+        console.log('📋 All question IDs:', allQuestionIds)
+        
+        // Validate that we have questions
+        if (allQuestionIds.length === 0) {
+          console.error('❌ No questions found for the selected configuration!')
+          console.error('📋 Config that failed:', config)
+          alert('No questions found for the selected configuration. Please check your selections and try again.')
+          return
+        }
+        
+        // Validate that all question IDs are strings (not numbers)
+        const invalidIds = allQuestionIds.filter(id => typeof id !== 'string' || id === '')
+        if (invalidIds.length > 0) {
+          console.error('❌ Invalid question IDs found:', invalidIds)
+          alert('Invalid question data detected. Please try again.')
+          return
+        }
+        
+        // Navigate to practice with the questions
+        const params = new URLSearchParams({
+          questions: allQuestionIds.join(','),
+          mode: config.testMode,
+          ...(config.timeLimit && { timeLimit: config.timeLimit.toString() })
+        })
+        
+        console.log(`🔗 Navigating to practice with params:`, params.toString())
+        router.push(`/practice?${params.toString()}`)
+      } catch (error) {
+        console.error('❌ Error starting advanced revision session:', error)
+        alert('Failed to start revision session. Please try again.')
+      }
+    }
+    
+    fetchAdvancedQuestionsForSession()
+    setIsSessionModalOpen(false)
+  }
+
   // Loading state
   if (authLoading || loadingChapters) {
     return (
@@ -398,25 +499,39 @@ export default function RevisionHubPage() {
               {/* Header */}
               <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     {selectedChapter ? (
                       <>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">
                           {selectedChapter}
                         </h2>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {filteredAndSortedQuestions.length} 
-                          {selectedRatingFilter || sortOrder !== 'none' ? ' filtered' : ''} 
-                          {' '}question{filteredAndSortedQuestions.length !== 1 ? 's' : ''}
-                          {bookmarkedQuestions.length !== filteredAndSortedQuestions.length && (
-                            <span className="text-xs text-slate-500"> (of {bookmarkedQuestions.length} total)</span>
-                          )}
+                        
+                        {/* Difficulty Breakdown */}
+                        {bookmarkedQuestions.length > 0 && (
+                          <DifficultyBreakdown 
+                            questions={bookmarkedQuestions}
+                            className="mb-2"
+                            onRatingClick={handleRatingFilterClick}
+                            selectedRating={selectedRatingFilter}
+                          />
+                        )}
+                        
+                        {/* Question Count Summary */}
+                        <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
+                          <span>
+                            {filteredAndSortedQuestions.length} 
+                            {selectedRatingFilter || sortOrder !== 'none' ? ' filtered' : ''} 
+                            {' '}question{filteredAndSortedQuestions.length !== 1 ? 's' : ''}
+                            {bookmarkedQuestions.length !== filteredAndSortedQuestions.length && (
+                              <span className="text-xs text-slate-500"> (of {bookmarkedQuestions.length} total)</span>
+                            )}
+                          </span>
                           {filteredAndSortedQuestions.length > 0 && (
-                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-500">
+                            <span className="text-xs text-slate-500 dark:text-slate-500">
                               • Click any card to expand
                             </span>
                           )}
-                        </p>
+                        </div>
                       </>
                     ) : (
                       <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -588,13 +703,24 @@ export default function RevisionHubPage() {
       </div>
 
       {/* Revision Session Modal */}
-      <RevisionSessionModal
-        isOpen={isSessionModalOpen}
-        onClose={() => setIsSessionModalOpen(false)}
-        selectedChapters={selectedChapters}
-        chapters={chapters}
-        onStartSession={handleStartSession}
-      />
+      {useAdvancedModal ? (
+        <AdvancedRevisionSessionModal
+          isOpen={isSessionModalOpen}
+          onClose={() => setIsSessionModalOpen(false)}
+          selectedChapters={selectedChapters}
+          chapters={chapters}
+          userId={user?.id || ''}
+          onStartSession={handleAdvancedStartSession}
+        />
+      ) : (
+        <RevisionSessionModal
+          isOpen={isSessionModalOpen}
+          onClose={() => setIsSessionModalOpen(false)}
+          selectedChapters={selectedChapters}
+          chapters={chapters}
+          onStartSession={handleStartSession}
+        />
+      )}
     </div>
   )
 }
