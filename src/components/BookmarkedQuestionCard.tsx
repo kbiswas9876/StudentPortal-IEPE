@@ -59,6 +59,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
   const [tempTags, setTempTags] = useState<string[]>(question.custom_tags || [])
   const [tagInput, setTagInput] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [hoveredRating, setHoveredRating] = useState(0)
 
   const formatTime = (seconds: number | null) => {
     if (!seconds) return 'N/A'
@@ -107,6 +108,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
       // Update the local state
       question.user_difficulty_rating = tempRating || null
+      setHoveredRating(0)
       setIsEditingRating(false)
       
       // Notify parent to refresh if needed
@@ -192,6 +194,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
   const handleCancelRating = () => {
     setTempRating(question.user_difficulty_rating || 0)
+    setHoveredRating(0)
     setIsEditingRating(false)
   }
 
@@ -260,11 +263,24 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
     return text.substring(0, maxLength) + '...'
   }
 
+  const getRatingLabel = (rating: number) => {
+    const labels = {
+      1: 'Easy',
+      2: 'Easy-to-Moderate', 
+      3: 'Moderate',
+      4: 'Moderate-to-Hard',
+      5: 'Hard'
+    }
+    return labels[rating as keyof typeof labels] || ''
+  }
+
   const renderStars = () => {
     const currentRating = isEditingRating ? tempRating : (question.user_difficulty_rating || 0)
+    const displayRating = isEditingRating && hoveredRating > 0 ? hoveredRating : currentRating
+    const showTooltip = isEditingRating && hoveredRating > 0
     
     return (
-      <div className="flex items-center gap-1">
+      <div className="relative flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <motion.button
             key={star}
@@ -276,16 +292,42 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                 setTempRating(star)
               }
             }}
+            onMouseEnter={() => {
+              if (isEditingRating) {
+                setHoveredRating(star)
+              }
+            }}
+            onMouseLeave={() => {
+              if (isEditingRating) {
+                setHoveredRating(0)
+              }
+            }}
             disabled={!isEditingRating}
             className={`transition-all ${isEditingRating ? 'cursor-pointer' : 'cursor-default'}`}
           >
-            {star <= currentRating ? (
+            {star <= displayRating ? (
               <StarSolidIcon className="h-5 w-5 text-yellow-500 drop-shadow-md" />
             ) : (
               <StarIcon className="h-5 w-5 text-slate-300 dark:text-slate-600" />
             )}
           </motion.button>
         ))}
+        
+        {/* Descriptive Tooltip */}
+        <AnimatePresence>
+          {showTooltip && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+              className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-slate-900 dark:bg-slate-700 text-white text-xs font-medium px-2 py-1 rounded-lg shadow-lg whitespace-nowrap z-10"
+            >
+              {getRatingLabel(hoveredRating)}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900 dark:border-t-slate-700"></div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     )
   }
@@ -353,6 +395,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                           e.stopPropagation()
                           setIsEditingRating(true)
                           setTempRating(question.user_difficulty_rating || 0)
+                          setHoveredRating(0)
                         }}
                         className="p-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
                         title="Edit rating"
