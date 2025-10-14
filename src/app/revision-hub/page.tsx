@@ -67,7 +67,9 @@ export default function RevisionHubPage() {
   const [showRemovalModal, setShowRemovalModal] = useState(false)
   const [removalQuestionId, setRemovalQuestionId] = useState<string | null>(null)
   const [removalQuestionText, setRemovalQuestionText] = useState('')
+  const [removalUserRating, setRemovalUserRating] = useState<number>(1)
   const [isBulkRemoval, setIsBulkRemoval] = useState(false)
+  const [bulkDifficultyBreakdown, setBulkDifficultyBreakdown] = useState<{ [rating: number]: number }>({})
   
   // Bulk selection states
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set())
@@ -215,6 +217,7 @@ export default function RevisionHubPage() {
 
     setRemovalQuestionId(questionId)
     setRemovalQuestionText(question.questions.question_text)
+    setRemovalUserRating(question.user_difficulty_rating || 1)
     setIsBulkRemoval(false)
     setShowRemovalModal(true)
   }
@@ -223,6 +226,17 @@ export default function RevisionHubPage() {
   const handleBulkRemoveBookmarks = () => {
     if (selectedQuestions.size === 0) return
 
+    // Calculate difficulty breakdown for selected questions
+    const breakdown: { [rating: number]: number } = {}
+    selectedQuestions.forEach(questionId => {
+      const question = bookmarkedQuestions.find(q => q.question_id === questionId)
+      if (question) {
+        const rating = question.user_difficulty_rating || 1
+        breakdown[rating] = (breakdown[rating] || 0) + 1
+      }
+    })
+
+    setBulkDifficultyBreakdown(breakdown)
     setIsBulkRemoval(true)
     setRemovalQuestionId(null)
     setRemovalQuestionText('')
@@ -790,18 +804,18 @@ export default function RevisionHubPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Bulk Actions Bar */}
+                    {/* Contextual Bulk Actions Bar - Only appears when questions are selected */}
                     {showBulkActions && (
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4"
+                        className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4 mb-4"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                              <Archive className="h-5 w-5 text-blue-600 dark:text-blue-400" strokeWidth={2.5} />
+                            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                              <Archive className="h-5 w-5 text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
                             </div>
                             <div>
                               <h3 className="font-semibold text-slate-900 dark:text-slate-100">
@@ -812,7 +826,7 @@ export default function RevisionHubPage() {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-3">
                             <motion.button
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
@@ -820,7 +834,7 @@ export default function RevisionHubPage() {
                                 setSelectedQuestions(new Set())
                                 setShowBulkActions(false)
                               }}
-                              className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                              className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
                             >
                               Cancel
                             </motion.button>
@@ -828,7 +842,7 @@ export default function RevisionHubPage() {
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                               onClick={handleBulkRemoveBookmarks}
-                              className="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold text-sm rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                              className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold text-sm rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
                             >
                               <Archive className="h-4 w-4" strokeWidth={2.5} />
                               Remove Selected
@@ -886,6 +900,8 @@ export default function RevisionHubPage() {
         isBulk={isBulkRemoval}
         bulkCount={selectedQuestions.size}
         chapterNames={isBulkRemoval ? [selectedChapter || ''] : []}
+        userDifficultyRating={removalUserRating}
+        bulkDifficultyBreakdown={bulkDifficultyBreakdown}
       />
     </div>
   )

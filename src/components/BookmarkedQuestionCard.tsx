@@ -361,12 +361,32 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
     >
       {/* Collapsed/Compact View - Always Visible */}
           <div
-            className="p-5 cursor-pointer"
+            className="p-5 cursor-pointer relative"
             onClick={() => {
               setIsExpanded(!isExpanded)
               setShowAnswer(false) // Reset answer visibility when collapsing/expanding
             }}
           >
+        {/* Selection Checkbox - Top Left Corner */}
+        {onSelect && (
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="absolute top-3 left-3 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={(e) => {
+                e.stopPropagation()
+                onSelect(question.question_id, e.target.checked)
+              }}
+              className="w-4 h-4 text-blue-600 bg-white dark:bg-slate-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 shadow-sm"
+            />
+          </motion.div>
+        )}
+
         <div className="flex items-start justify-between gap-4">
           {/* Left Side - Main Content */}
           <div className="flex-1 min-w-0">
@@ -471,25 +491,6 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
           {/* Right Side - Actions */}
           <div className="flex-shrink-0 flex items-center gap-2">
-            {/* Selection Checkbox */}
-            {onSelect && (
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center"
-              >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={(e) => {
-                    e.stopPropagation()
-                    onSelect(question.question_id, e.target.checked)
-                  }}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                />
-              </motion.div>
-            )}
-
             {/* Remove Button */}
             {onRemove && (
               <motion.button

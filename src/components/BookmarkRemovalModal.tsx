@@ -2,7 +2,8 @@
 
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, AlertTriangle, Trash2 } from 'lucide-react'
+import { X, AlertTriangle, Trash2, Star } from 'lucide-react'
+import KatexRenderer from './ui/KatexRenderer'
 
 interface BookmarkRemovalModalProps {
   isOpen: boolean
@@ -13,6 +14,8 @@ interface BookmarkRemovalModalProps {
   isBulk?: boolean
   bulkCount?: number
   chapterNames?: string[]
+  userDifficultyRating?: number
+  bulkDifficultyBreakdown?: { [rating: number]: number }
 }
 
 export default function BookmarkRemovalModal({
@@ -23,7 +26,9 @@ export default function BookmarkRemovalModal({
   questionId,
   isBulk = false,
   bulkCount = 0,
-  chapterNames = []
+  chapterNames = [],
+  userDifficultyRating = 1,
+  bulkDifficultyBreakdown = {}
 }: BookmarkRemovalModalProps) {
   return (
     <AnimatePresence>
@@ -75,10 +80,10 @@ export default function BookmarkRemovalModal({
               {isBulk ? (
                 <div className="space-y-4">
                   <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 border border-slate-200 dark:border-slate-600">
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                       Bulk Removal Summary
                     </h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <p className="text-sm text-slate-600 dark:text-slate-400">
                         <span className="font-semibold">{bulkCount}</span> bookmarked questions will be removed from:
                       </p>
@@ -94,6 +99,49 @@ export default function BookmarkRemovalModal({
                       </div>
                     </div>
                   </div>
+
+                  {/* Difficulty Breakdown */}
+                  <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 border border-slate-200 dark:border-slate-600">
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                      Questions by Difficulty Rating
+                    </h3>
+                    <div className="space-y-2">
+                      {[1, 2, 3, 4, 5].map((rating) => {
+                        const count = bulkDifficultyBreakdown[rating] || 0
+                        if (count === 0) return null
+                        
+                        return (
+                          <div key={rating} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`h-3 w-3 ${
+                                      star <= rating
+                                        ? 'text-yellow-500 fill-current'
+                                        : 'text-slate-300 dark:text-slate-600'
+                                    }`}
+                                    strokeWidth={2.5}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-sm text-slate-600 dark:text-slate-400">
+                                {rating === 1 ? 'Easy' : 
+                                 rating === 2 ? 'Easy-to-Moderate' :
+                                 rating === 3 ? 'Moderate' :
+                                 rating === 4 ? 'Moderate-to-Hard' : 'Hard'}
+                              </span>
+                            </div>
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                              {count} question{count !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
                   <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
                     <AlertTriangle className="h-4 w-4" strokeWidth={2.5} />
                     <span className="font-medium">This action cannot be undone</span>
@@ -102,12 +150,39 @@ export default function BookmarkRemovalModal({
               ) : (
                 <div className="space-y-4">
                   <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 border border-slate-200 dark:border-slate-600">
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                      Question Preview
+                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                      Question to Remove
                     </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">
-                      {questionText}
-                    </p>
+                    <div className="space-y-3">
+                      {/* Full Question Text with LaTeX Rendering */}
+                      <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-600">
+                        <KatexRenderer 
+                          content={questionText}
+                          className="text-sm leading-relaxed text-slate-900 dark:text-slate-100"
+                        />
+                      </div>
+                      
+                      {/* User's Difficulty Rating */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-slate-600 dark:text-slate-400">My Rating:</span>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${
+                                star <= userDifficultyRating
+                                  ? 'text-yellow-500 fill-current'
+                                  : 'text-slate-300 dark:text-slate-600'
+                              }`}
+                              strokeWidth={2.5}
+                            />
+                          ))}
+                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 ml-1">
+                            ({userDifficultyRating}/5)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
                     <AlertTriangle className="h-4 w-4" strokeWidth={2.5} />
