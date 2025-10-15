@@ -167,17 +167,20 @@ export default function QuestionDisplay({
         </div>
       </div>
 
-      {/* Question Text */}
+      {/* Question Text - Premium Card Design */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-8 mb-8 shadow-sm"
+        className="bg-white dark:bg-slate-800 rounded-2xl p-8 mb-8"
+        style={{
+          boxShadow: '0px 4px 6px -1px rgba(0, 0, 0, 0.05), 0px 10px 15px -3px rgba(0, 0, 0, 0.1)'
+        }}
       >
         <div className="prose prose-lg max-w-none dark:prose-invert">
           <KatexRenderer 
             content={question.question_text}
-            className="text-slate-900 dark:text-slate-100 leading-relaxed"
+            className="text-slate-800 dark:text-slate-100 leading-relaxed text-lg font-medium"
           />
         </div>
       </motion.div>
@@ -187,27 +190,33 @@ export default function QuestionDisplay({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="space-y-3"
+        className="space-y-4"
       >
         {Object.entries(options).map(([key, value]) => (
           <motion.label
             key={key}
             className={`
-              block p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 hover:shadow-md
+              block p-6 rounded-2xl border-2 cursor-pointer transition-all duration-200 ease-out mb-4 relative overflow-hidden
               ${userAnswer === key
-                ? 'bg-blue-50 dark:bg-blue-900 border-blue-300 dark:border-blue-600 shadow-md'
-                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-600'
+                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-blue-400 dark:border-blue-500 shadow-lg shadow-blue-100/50 dark:shadow-blue-900/20'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md'
               }
             `}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+            style={{
+              transition: 'border-color 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out'
+            }}
           >
-            <div className="flex items-start space-x-3">
+            {/* Premium accent line for selected option */}
+            {userAnswer === key && (
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-l-2xl" />
+            )}
+            
+            <div className="flex items-start space-x-4">
               <div className={`
-                w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5
+                w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 ease-out
                 ${userAnswer === key
-                  ? 'bg-blue-600 border-blue-600 text-white'
-                  : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400'
+                  ? 'bg-gradient-to-br from-blue-500 to-indigo-600 border-blue-500 text-white shadow-md'
+                  : 'border-slate-300 dark:border-slate-500 text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800'
                 }
               `}>
                 {userAnswer === key && (
@@ -232,7 +241,11 @@ export default function QuestionDisplay({
               <div className="flex-1 min-h-0">
                 <KatexRenderer 
                   content={value}
-                  className="text-slate-700 dark:text-slate-300 leading-relaxed"
+                  className={`leading-relaxed text-base font-medium ${
+                    userAnswer === key 
+                      ? 'text-slate-800 dark:text-slate-100' 
+                      : 'text-slate-700 dark:text-slate-300'
+                  }`}
                 />
               </div>
             </div>

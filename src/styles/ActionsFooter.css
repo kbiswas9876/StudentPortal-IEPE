@@ -1,0 +1,74 @@
+/* ActionsFooter Styles - Fixed Layout Architecture */
+
+.actions-footer-wrapper {
+  /* This style is now in QuestionDisplayWindow.css */
+}
+
+.actions-footer-content {
+  display: flex;
+  justify-content: space-between; /* This is the key change */
+  align-items: center;
+  width: 100%;
+  max-width: 880px; /* CRITICAL: Must match the content card's max-width */
+  margin: 0 auto; /* Horizontally centers the entire footer */
+  padding: 0; /* Remove any extra padding that might misalign it */
+}
+
+.footer-left-zone, .footer-right-zone {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3); /* 12px gap between buttons in a group */
+}
+
+/* Base button style */
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px; /* Increased height for better visibility */
+  padding: 0 20px; /* Increased padding */
+  border-radius: var(--border-radius-sm); /* 8px */
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 120px; /* Ensure minimum width for visibility */
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary Button (Save & Next) */
+.action-button.primary {
+  background-color: var(--color-brand-primary);
+  color: var(--color-background-card);
+}
+.action-button.primary:hover:not(:disabled) {
+  background-color: #4338CA; /* Darker indigo */
+}
+
+/* Secondary Button (Mark for Review) */
+.action-button.secondary {
+  background-color: transparent;
+  color: var(--color-brand-primary);
+  border-color: #C7D2FE; /* Light indigo border */
+}
+.action-button.secondary:hover {
+  background-color: var(--color-brand-tint);
+  border-color: #A5B4FC;
+}
+
+/* Tertiary Button (Clear Response) */
+.action-button.tertiary {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: none;
+  padding: 0; /* No padding for a text-link feel */
+}
+.action-button.tertiary:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}

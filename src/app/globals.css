@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import design tokens */
+@import '../styles/tokens.css';
+
+/* CRITICAL: Prevent global page scrolling for fixed layout architecture */
+html, body {
+  overflow: hidden; /* CRITICAL: Prevents the main page scrollbar */
+  height: 100%;
+}
+
+/* Practice Page Wrapper - Ensures proper alignment between QuestionDisplayWindow and StatusPanel */
+.practice-page-wrapper {
+  display: flex;
+  align-items: flex-start; /* CRITICAL: Aligns both children to the top */
+  height: 100vh;
+  gap: 24px; /* Optional: adds space between the two panels */
+  padding: 24px 24px 0 24px; /* Top and sides padding, no bottom padding to align footer */
+}
+
+/* Ensure the children fill the space correctly */
+.question-window-container {
+  flex-grow: 1; /* Allows the main window to take up most of the space */
+  height: 100%; /* Make it fill the wrapper's height */
+}
+
+.status-panel-container {
+  flex-shrink: 0; /* Prevents the status panel from shrinking */
+  width: 25%; /* Restore original width - 1/4 of screen */
+  height: calc(100vh - 48px); /* Account for wrapper padding */
+  display: flex;
+  flex-direction: column;
+}
+
 /* Import KaTeX styles for mathematical typesetting */
 @import '../styles/katex.css';
 
@@ -101,8 +133,11 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  font-family: var(--font-family-sans);
+  background-color: var(--color-background-page);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
