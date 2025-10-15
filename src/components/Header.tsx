@@ -8,6 +8,7 @@ import { Menu, Transition } from '@headlessui/react'
 import { useAuth } from '@/lib/auth-context'
 import { useTheme } from '@/lib/theme-context'
 import { SunIcon, MoonIcon } from '@heroicons/react/24/outline'
+import NotificationBell from './NotificationBell'
 
 export default function Header() {
   const { user, signOut } = useAuth()
@@ -171,6 +172,10 @@ export default function Header() {
                 )}
               </motion.div>
             </motion.button>
+            
+            {/* Notification Bell - Only show for authenticated users */}
+            {user && <NotificationBell userId={user.id} />}
+            
             {user ? (
               <Menu as="div" className="relative">
                 <Menu.Button

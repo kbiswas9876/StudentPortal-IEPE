@@ -147,7 +147,7 @@ export default function RevisionPerformanceInsights({ analysisData }: RevisionPe
         <div className="text-sm text-green-800 dark:text-green-200">
           <p>• This session: {insightsData.totalQuestions} questions</p>
           <p>• Complete another revision to see improvement trends</p>
-          <p>• We'll track your mastery progress over time</p>
+          <p>• We&apos;ll track your mastery progress over time</p>
         </div>
       </motion.div>
     )

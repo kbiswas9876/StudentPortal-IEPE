@@ -17,6 +17,7 @@ const DynamicViewAllQuestionsModal = nextDynamic(() => import('@/components/View
 const DynamicQuestionNavigationFooter = nextDynamic(() => import('@/components/QuestionNavigationFooter'), { ssr: false })
 const DynamicBookmarkCreationModal = nextDynamic(() => import('@/components/BookmarkCreationModal'), { ssr: false })
 const DynamicBookmarkHistory = nextDynamic(() => import('@/components/BookmarkHistory'), { ssr: false })
+const DynamicSrsFeedbackControls = nextDynamic(() => import('@/components/SrsFeedbackControls'), { ssr: false })
 
 // Local type alias to avoid importing from StrategicPerformanceMatrix which uses framer-motion
 type QuadrantKey = 'strengths' | 'needsSpeed' | 'carelessErrors' | 'weaknesses'
@@ -78,6 +79,10 @@ export default function DetailedSolutionReviewPage() {
 
   // Bookmark map keyed by questions.question_id (string)
   const [bookmarkedMap, setBookmarkedMap] = useState<Record<string, boolean>>({})
+  
+  // SRS Feedback state
+  const [srsFeedbackGiven, setSrsFeedbackGiven] = useState<Set<string>>(new Set())
+  const [srsFeedbackError, setSrsFeedbackError] = useState<string | null>(null)
 
   // Prevent duplicate fetches during re-renders
   const dataFetchedRef = useRef(false)
@@ -300,6 +305,37 @@ const handleNext = () => {
   }
 }
 
+// SRS Feedback handlers
+const handleSrsFeedbackComplete = () => {
+  // Mark feedback as given for current question
+  if (currentQuestion) {
+    setSrsFeedbackGiven(prev => new Set(prev).add(currentQuestion.question_id))
+  }
+  // Automatically proceed to next question
+  handleNext()
+}
+
+const handleSrsFeedbackError = (error: string) => {
+  setSrsFeedbackError(error)
+  // Clear error after 5 seconds
+  setTimeout(() => setSrsFeedbackError(null), 5000)
+}
+
+// Helper: Check if current question needs SRS feedback
+const needsSrsFeedback = () => {
+  if (source !== 'srs-daily-review') return false
+  if (!currentQuestion) return false
+  if (!bookmarkedMap[currentQuestion.question_id]) return false // Only for bookmarked questions
+  return !srsFeedbackGiven.has(currentQuestion.question_id)
+}
+
+// Get bookmark ID for current question
+const getCurrentQuestionBookmarkId = () => {
+  // We need to fetch this - for now return null and handle in the component
+  // The component will need the bookmark ID to log the review
+  return null // This will be handled by the SrsFeedbackControls component
+}
+
 
   // Bookmark toggle - now opens creation modal for new bookmarks
   const handleToggleBookmark = async () => {
@@ -343,6 +379,8 @@ const handleNext = () => {
     difficultyRating: number
     customTags: string[]
     personalNote: string
+    isCustomReminderActive: boolean
+    customNextReviewDate: string | null
   }) => {
     if (!sessionData || !user) return
     const q = sessionData.questions[currentQuestionIndex]
@@ -350,6 +388,8 @@ const handleNext = () => {
 
     try {
       bookmarkInProgressRef.current = true
+      
+      // Step 1: Create the bookmark
       const response = await fetch('/api/revision-hub/bookmarks', {
         method: 'POST',
         headers: {
@@ -367,6 +407,28 @@ const handleNext = () => {
       const result = await response.json().catch(() => ({}))
       if (!response.ok) {
         throw new Error(result.error || 'Failed to create bookmark')
+      }
+      
+      const bookmarkId = result.data?.id
+      
+      // Step 2: If custom reminder is active, set it
+      if (bookmarkData.isCustomReminderActive && bookmarkId) {
+        const reminderResponse = await fetch(`/api/revision-hub/bookmarks/${bookmarkId}/custom-reminder`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({
+            isCustomReminderActive: bookmarkData.isCustomReminderActive,
+            customNextReviewDate: bookmarkData.customNextReviewDate,
+            userId: user.id
+          }),
+        })
+        
+        if (!reminderResponse.ok) {
+          console.error('Failed to set custom reminder, but bookmark was created')
+        }
       }
       
       // Update local state
@@ -480,6 +542,23 @@ const handleNext = () => {
                   filteredPosition={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos >= 0 ? pos + 1 : 1; })()}
                   filteredTotal={filteredIndices.length}
                 />
+                
+                {/* SRS Feedback Controls - Only for SRS Daily Review */}
+                {source === 'srs-daily-review' && currentQuestion && bookmarkedMap[currentQuestion.question_id] && !srsFeedbackGiven.has(currentQuestion.question_id) && user && (
+                  <div className="mt-6">
+                    {srsFeedbackError && (
+                      <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 rounded-lg">
+                        {srsFeedbackError}
+                      </div>
+                    )}
+                    <DynamicSrsFeedbackControls
+                      bookmarkId={currentQuestion.question_id} // Using question_id as a proxy - API will handle the lookup
+                      userId={user.id}
+                      onFeedbackComplete={handleSrsFeedbackComplete}
+                      onError={handleSrsFeedbackError}
+                    />
+                  </div>
+                )}
                 
                 {/* Post-Revision Feedback Loop: Bookmark History Component */}
                 {source === 'revision' && currentQuestion && (

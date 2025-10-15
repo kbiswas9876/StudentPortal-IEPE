@@ -160,6 +160,13 @@ export interface Database {
           user_difficulty_rating: number | null
           created_at: string
           updated_at: string
+          // SRS (Spaced Repetition System) fields
+          srs_repetitions: number
+          srs_ease_factor: number
+          srs_interval: number
+          next_review_date: string | null
+          is_custom_reminder_active: boolean
+          custom_next_review_date: string | null
         }
         Insert: {
           id?: string
@@ -170,6 +177,13 @@ export interface Database {
           user_difficulty_rating?: number | null
           created_at?: string
           updated_at?: string
+          // SRS fields (optional on insert, will use defaults)
+          srs_repetitions?: number
+          srs_ease_factor?: number
+          srs_interval?: number
+          next_review_date?: string | null
+          is_custom_reminder_active?: boolean
+          custom_next_review_date?: string | null
         }
         Update: {
           id?: string
@@ -180,6 +194,13 @@ export interface Database {
           user_difficulty_rating?: number | null
           created_at?: string
           updated_at?: string
+          // SRS fields
+          srs_repetitions?: number
+          srs_ease_factor?: number
+          srs_interval?: number
+          next_review_date?: string | null
+          is_custom_reminder_active?: boolean
+          custom_next_review_date?: string | null
         }
       }
       practice_plans: {
@@ -241,6 +262,61 @@ export interface Database {
           admin_notes?: string | null
           created_at?: string
           updated_at?: string
+        }
+      }
+      user_notification_preferences: {
+        Row: {
+          user_id: string
+          enable_email_reminders: boolean
+          enable_in_app_reminders: boolean
+          reminder_time: string
+          user_timezone: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          enable_email_reminders?: boolean
+          enable_in_app_reminders?: boolean
+          reminder_time?: string
+          user_timezone?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          enable_email_reminders?: boolean
+          enable_in_app_reminders?: boolean
+          reminder_time?: string
+          user_timezone?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      student_notifications: {
+        Row: {
+          id: string
+          user_id: string
+          message: string
+          link: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          message: string
+          link?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          message?: string
+          link?: string | null
+          is_read?: boolean
+          created_at?: string
         }
       }
     }

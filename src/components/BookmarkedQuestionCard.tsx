@@ -20,7 +20,8 @@ import {
   Clock,
   Eye,
   BookmarkMinus,
-  Archive
+  Archive,
+  Calendar
 } from 'lucide-react'
 import KatexRenderer from './ui/KatexRenderer'
 import { Database } from '@/types/database'
@@ -34,6 +35,8 @@ interface BookmarkedQuestion {
   user_difficulty_rating: number | null
   created_at: string
   updated_at: string
+  is_custom_reminder_active?: boolean
+  custom_next_review_date?: string | null
   questions: Database['public']['Tables']['questions']['Row']
   performance: {
     total_attempts: number
@@ -405,6 +408,15 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
               <span className="text-xs text-slate-500 dark:text-slate-400">
                 • Bookmarked: {formatDate(question.created_at)}
               </span>
+              {question.is_custom_reminder_active && question.custom_next_review_date && (
+                <span 
+                  className="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-md text-xs font-semibold"
+                  title={`Custom reminder set for ${formatDate(question.custom_next_review_date)}`}
+                >
+                  <Calendar className="h-3 w-3" strokeWidth={2.5} />
+                  {formatDate(question.custom_next_review_date)}
+                </span>
+              )}
               {question.questions.exam_metadata && (
                 <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                   • {question.questions.exam_metadata}

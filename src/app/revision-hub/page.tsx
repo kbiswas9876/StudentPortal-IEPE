@@ -11,9 +11,11 @@ import RevisionSessionModal from '@/components/RevisionSessionModal'
 import AdvancedRevisionSessionModal from '@/components/AdvancedRevisionSessionModal'
 import DifficultyBreakdown from '@/components/DifficultyBreakdown'
 import BookmarkRemovalModal from '@/components/BookmarkRemovalModal'
+import DueQuestionsCard from '@/components/DueQuestionsCard'
 import { FunnelIcon, BookmarkIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import { Archive, Play } from 'lucide-react'
+import type { DueQuestion } from '@/lib/srs/types'
 
 interface ChapterData {
   name: string
@@ -52,6 +54,11 @@ export default function RevisionHubPage() {
   const [loadingChapters, setLoadingChapters] = useState(true)
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // SRS Due Questions state
+  const [dueQuestions, setDueQuestions] = useState<DueQuestion[]>([])
+  const [loadingDueQuestions, setLoadingDueQuestions] = useState(true)
+  const [showLibrary, setShowLibrary] = useState(false)
 
   // Filter and Sort states
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false)
@@ -105,10 +112,35 @@ export default function RevisionHubPage() {
     // Only fetch if we haven't already
     if (!dataFetchedRef.current) {
       fetchChapters()
+      fetchDueQuestions()
       dataFetchedRef.current = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, router])
+
+  // Fetch due questions for SRS
+  const fetchDueQuestions = async () => {
+    try {
+      setLoadingDueQuestions(true)
+      console.log('Fetching due questions for user:', user?.id)
+
+      const response = await fetch(`/api/revision-hub/due-questions?userId=${user?.id}`)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch due questions')
+      }
+
+      console.log('Due questions fetched successfully:', result)
+      setDueQuestions(result.questions || [])
+    } catch (error) {
+      console.error('Error fetching due questions:', error)
+      // Don't show error to user - just log it and continue
+      setDueQuestions([])
+    } finally {
+      setLoadingDueQuestions(false)
+    }
+  }
 
   // Fetch unique chapters with bookmarks
   const fetchChapters = async () => {
@@ -382,6 +414,27 @@ export default function RevisionHubPage() {
     }
   }
 
+  const handleStartDailyReview = async () => {
+    try {
+      if (dueQuestions.length === 0) return
+
+      // Get all question_ids from due questions
+      const questionIds = dueQuestions.map(q => q.question_id)
+
+      // Navigate to practice with the due questions
+      const params = new URLSearchParams({
+        questions: questionIds.join(','),
+        mode: 'zen', // Use zen mode for focused review
+        source: 'srs-daily-review',
+      })
+
+      router.push(`/practice?${params.toString()}`)
+    } catch (error) {
+      console.error('Error starting daily review:', error)
+      alert('Failed to start daily review. Please try again.')
+    }
+  }
+
   const handleAdvancedStartSession = async (config: any) => {
     try {
       console.log('🚀 Starting Advanced Session with config:', config)
@@ -638,6 +691,15 @@ export default function RevisionHubPage() {
             Review and master your bookmarked questions, organized by chapter
           </p>
         </motion.div>
+
+        {/* Due Questions Card */}
+        <DueQuestionsCard
+          dueCount={dueQuestions.length}
+          totalBookmarks={bookmarkedQuestions.length}
+          isLoading={loadingDueQuestions}
+          onStartReview={handleStartDailyReview}
+          onBrowseLibrary={() => setShowLibrary(true)}
+        />
 
         {/* Two-Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-200px)]">

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Star, Bookmark, Tag, FileText } from 'lucide-react'
+import { X, Star, Bookmark, Tag, FileText, Calendar } from 'lucide-react'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import KatexRenderer from './ui/KatexRenderer'
 
@@ -13,6 +13,8 @@ interface BookmarkCreationModalProps {
     difficultyRating: number
     customTags: string[]
     personalNote: string
+    isCustomReminderActive: boolean
+    customNextReviewDate: string | null
   }) => Promise<void>
   questionText: string
   questionId: string
@@ -30,10 +32,26 @@ export default function BookmarkCreationModal({
   const [personalNote, setPersonalNote] = useState('')
   const [newTag, setNewTag] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  
+  // Custom Reminder state
+  const [isCustomReminderActive, setIsCustomReminderActive] = useState(false)
+  const [customNextReviewDate, setCustomNextReviewDate] = useState('')
+  
+  // Get minimum date (today) for the date picker
+  const getMinDate = () => {
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  }
 
   const handleSave = async () => {
     if (difficultyRating < 1) {
       return // Should not happen due to default, but safety check
+    }
+    
+    // Validate custom reminder if active
+    if (isCustomReminderActive && !customNextReviewDate) {
+      alert('Please select a reminder date')
+      return
     }
 
     setIsSaving(true)
@@ -41,9 +59,15 @@ export default function BookmarkCreationModal({
       await onSave({
         difficultyRating,
         customTags,
-        personalNote: personalNote.trim()
+        personalNote: personalNote.trim(),
+        isCustomReminderActive,
+        customNextReviewDate: isCustomReminderActive ? customNextReviewDate : null
       })
       onClose()
+      
+      // Reset custom reminder state
+      setIsCustomReminderActive(false)
+      setCustomNextReviewDate('')
     } catch (error) {
       console.error('Error saving bookmark:', error)
     } finally {
@@ -229,6 +253,81 @@ export default function BookmarkCreationModal({
                   rows={3}
                   className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 resize-none"
                 />
+              </div>
+              
+              {/* Custom Reminder - Optional */}
+              <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-600">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-purple-500" strokeWidth={2.5} />
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                      Set Custom Reminder
+                    </h3>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">(Optional)</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomReminderActive(!isCustomReminderActive)
+                      if (!isCustomReminderActive) {
+                        setCustomNextReviewDate('')
+                      }
+                    }}
+                    className={`
+                      relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                      ${isCustomReminderActive 
+                        ? 'bg-purple-600' 
+                        : 'bg-slate-300 dark:bg-slate-600'
+                      }
+                    `}
+                  >
+                    <span
+                      className={`
+                        inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                        ${isCustomReminderActive ? 'translate-x-6' : 'translate-x-1'}
+                      `}
+                    />
+                  </button>
+                </div>
+                
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Override automatic SRS scheduling and set your own review date
+                </p>
+                
+                {/* Date Picker - Only visible when toggle is ON */}
+                <AnimatePresence>
+                  {isCustomReminderActive && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-2">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                          Review Date
+                        </label>
+                        <input
+                          type="date"
+                          value={customNextReviewDate}
+                          onChange={(e) => setCustomNextReviewDate(e.target.value)}
+                          min={getMinDate()}
+                          className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800"
+                        />
+                        {customNextReviewDate && (
+                          <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">
+                            ✓ Reminder set for {new Date(customNextReviewDate).toLocaleDateString('en-US', { 
+                              month: 'long', 
+                              day: 'numeric', 
+                              year: 'numeric' 
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
