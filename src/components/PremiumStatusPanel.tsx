@@ -9,6 +9,7 @@ import StatusLegend from './StatusLegend'
 import ReviewStatusLegend from './ReviewStatusLegend'
 import { getAdvancedSpeedCategory, type AdvancedDifficulty, type SpeedCategory } from '@/lib/speed-calculator'
 import { Bookmark } from 'lucide-react'
+import '@/styles/PremiumStatusPanel.css'
 
 type Question = Database['public']['Tables']['questions']['Row']
 
@@ -525,18 +526,13 @@ export default function PremiumStatusPanel({
         )}
       </motion.div>
 
-      {/* Section 6: Premium Submit Button */}
+      {/* Section 6: Premium Submit Button - UNIFIED FOOTER (72px) */}
       {onSubmitTest && (
-        <motion.div 
-          className="p-5 border-t border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/20 dark:via-slate-800/20 dark:to-slate-700/20 rounded-b-2xl"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.4 }}
-        >
+        <div className="premium-submit-container bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/20 dark:via-slate-800/20 dark:to-slate-700/20 border-t border-slate-200/60 dark:border-slate-700/60 rounded-b-2xl">
           <motion.button
             onClick={onSubmitTest}
             disabled={isSubmitting}
-            className="w-full px-6 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-bold text-base transition-colors duration-300 flex items-center justify-center space-x-3 shadow-2xl hover:shadow-blue-500/25 disabled:shadow-none whitespace-nowrap"
+            className="w-full h-10 px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-xl font-bold text-base transition-colors duration-300 flex items-center justify-center space-x-3 shadow-2xl hover:shadow-blue-500/25 disabled:shadow-none whitespace-nowrap"
             whileHover={{
               scale: isSubmitting ? 1 : 1.02,
               y: -2
@@ -574,7 +570,7 @@ export default function PremiumStatusPanel({
               </>
             )}
           </motion.button>
-        </motion.div>
+        </div>
       )}
 
       {/* Mock Test Data Section */}
