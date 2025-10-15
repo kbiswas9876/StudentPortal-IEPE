@@ -11,9 +11,9 @@ import RevisionSessionModal from '@/components/RevisionSessionModal'
 import AdvancedRevisionSessionModal from '@/components/AdvancedRevisionSessionModal'
 import DifficultyBreakdown from '@/components/DifficultyBreakdown'
 import BookmarkRemovalModal from '@/components/BookmarkRemovalModal'
-import { FunnelIcon } from '@heroicons/react/24/outline'
+import { FunnelIcon, BookmarkIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
-import { Archive } from 'lucide-react'
+import { Archive, Play } from 'lucide-react'
 
 interface ChapterData {
   name: string
@@ -852,16 +852,51 @@ export default function RevisionHubPage() {
                       </motion.div>
                     )}
 
-                    {filteredAndSortedQuestions.map((question, index) => (
-                      <BookmarkedQuestionCard
-                        key={question.id}
-                        question={question}
-                        index={index}
-                        onRemove={handleRemoveBookmark}
-                        isSelected={selectedQuestions.has(question.question_id)}
-                        onSelect={handleQuestionSelect}
-                      />
-                    ))}
+                    {/* Empty State - Show when no questions */}
+                    {filteredAndSortedQuestions.length === 0 && !loadingQuestions ? (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="flex flex-col items-center justify-center py-16 px-6 text-center"
+                      >
+                        <div className="mb-6">
+                          <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center">
+                            <BookmarkIcon className="h-12 w-12 text-blue-500 dark:text-blue-400" />
+                          </div>
+                        </div>
+                        
+                        <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+                          Your Revision Hub is Empty
+                        </h3>
+                        
+                        <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-md leading-relaxed">
+                          Start by bookmarking questions after a practice session. They will all appear here, organized by chapter, ready for you to review and master!
+                        </p>
+                        
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => router.push('/practice')}
+                          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+                        >
+                          <Play className="h-5 w-5" strokeWidth={2.5} />
+                          Start Practicing
+                        </motion.button>
+                      </motion.div>
+                    ) : (
+                      /* Questions List */
+                      filteredAndSortedQuestions.map((question, index) => (
+                        <BookmarkedQuestionCard
+                          key={question.id}
+                          question={question}
+                          index={index}
+                          onRemove={handleRemoveBookmark}
+                          isSelected={selectedQuestions.has(question.question_id)}
+                          onSelect={handleQuestionSelect}
+                        />
+                      ))
+                    )}
                   </div>
                 )}
               </div>

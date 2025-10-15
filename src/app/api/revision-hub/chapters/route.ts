@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
     if (!bookmarks || bookmarks.length === 0) {
       console.log('No bookmarks found')
-      return NextResponse.json({ data: {} })
+      return NextResponse.json({ data: [] })
     }
 
     // Get question IDs
