@@ -29,9 +29,22 @@ html, body {
 .status-panel-container {
   flex-shrink: 0; /* Prevents the status panel from shrinking */
   width: 25%; /* Restore original width - 1/4 of screen */
-  height: calc(100vh - 48px); /* Account for wrapper padding */
+  height: calc(100vh - 24px); /* Extend further down - stretches beyond footer bottom edge */
   display: flex;
   flex-direction: column;
+}
+
+/* Responsive adjustments for status panel height */
+@media (max-width: 1024px) {
+  .status-panel-container {
+    height: calc(100vh - 24px); /* Extended height on tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .status-panel-container {
+    height: calc(100vh - 24px); /* Extended height on mobile */
+  }
 }
 
 /* Import KaTeX styles for mathematical typesetting */
