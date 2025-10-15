@@ -3,6 +3,7 @@
 import React from 'react'
 import { ChevronLeft, Flag, Clock, Play, Pause } from 'lucide-react'
 import '../styles/UnifiedHeader.css'
+import '@/styles/TimerTypography.css'
 
 interface UnifiedHeaderProps {
   currentQuestion: number
@@ -39,9 +40,9 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
       </div>
 
       <div className="header-zone center">
-        <div className="main-timer-pill">
-          <Clock size={18} className="timer-icon" />
-          <span>{mainTimer}</span>
+        <div className="premium-timer-container">
+          <Clock size={18} className="premium-timer-icon" />
+          <span className="premium-timer medium primary">{mainTimer}</span>
           {onTogglePause && (
             <button 
               onClick={onTogglePause}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import '@/styles/TimerTypography.css'
 
 interface TimerDisplayProps {
   milliseconds?: number // For per-question timer - receives final calculated milliseconds
@@ -65,9 +66,14 @@ export default function TimerDisplay({
   // If milliseconds prop is provided, this is a per-question timer - render directly
   if (milliseconds !== undefined) {
     return (
-      <span className="font-mono text-sm">
-        {formatTime(milliseconds)}
-      </span>
+      <div className="premium-timer-container">
+        <svg className="w-4 h-4 premium-timer-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span className="premium-timer small primary">
+          {formatTime(milliseconds)}
+        </span>
+      </div>
     );
   }
 
@@ -244,18 +250,7 @@ export default function TimerDisplay({
           </motion.div>
           
           {/* Timer display with modern premium typography - stable */}
-          <div
-            className={`font-black tracking-wider ${getSizeClasses()} ${getColorClasses()}`}
-            style={{
-              fontFamily: '"SF Pro Display", "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code", "Roboto Mono", "Source Code Pro", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace',
-              textShadow: '0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1)',
-              letterSpacing: '0.15em',
-              fontWeight: '900',
-              fontFeatureSettings: '"tnum" 1, "ss01" 1, "ss02" 1',
-              fontVariantNumeric: 'tabular-nums',
-              textRendering: 'optimizeLegibility'
-            }}
-          >
+          <div className={`premium-timer ${getSizeClasses()} ${getColorClasses()}`}>
             {time}
           </div>
 
@@ -361,19 +356,13 @@ export default function TimerDisplay({
 
   // Default variant
   return (
-    <div 
-      className={`font-semibold tracking-wide transition-colors duration-300 ${getSizeClasses()} ${getColorClasses()} ${className}`}
-      style={{
-        fontFamily: '"SF Pro Text", "SF Mono", "JetBrains Mono", "Fira Code", "Cascadia Code", "Roboto Mono", "Source Code Pro", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace',
-        letterSpacing: '0.06em',
-        fontWeight: '600',
-        fontFeatureSettings: '"tnum" 1',
-        fontVariantNumeric: 'tabular-nums',
-        textRendering: 'optimizeLegibility',
-        textShadow: '0 1px 2px rgba(0, 0, 0, 0.08)'
-      }}
-    >
-      {time}
+    <div className={`premium-timer-container ${className}`}>
+      <svg className="w-4 h-4 premium-timer-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span className={`premium-timer ${getSizeClasses()} ${getColorClasses()}`}>
+        {time}
+      </span>
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import '@/styles/TimerTypography.css'
 
 interface TimerProps {
   sessionStartTime: number
@@ -32,15 +33,15 @@ export default function Timer({ sessionStartTime, duration }: TimerProps) {
   }
 
   const getTimerColor = () => {
-    if (!duration) return 'text-slate-700 dark:text-slate-300'
+    if (!duration) return 'primary'
 
     const elapsedMinutes = elapsedTime / (1000 * 60)
     const remainingMinutes = duration - elapsedMinutes
 
-    if (remainingMinutes <= 0) return 'text-red-600 dark:text-red-400'
-    if (remainingMinutes <= 5) return 'text-red-500 dark:text-red-400'
-    if (remainingMinutes <= 10) return 'text-amber-500 dark:text-amber-400'
-    return 'text-slate-700 dark:text-slate-300'
+    if (remainingMinutes <= 0) return 'danger'
+    if (remainingMinutes <= 5) return 'danger'
+    if (remainingMinutes <= 10) return 'warning'
+    return 'primary'
   }
 
   const getTimerBgColor = () => {
@@ -79,7 +80,7 @@ export default function Timer({ sessionStartTime, duration }: TimerProps) {
         </div>
         
         <div className="flex items-center">
-          <span className={`font-mono text-base font-bold transition-colors duration-500 ${getTimerColor()}`}>
+          <span className={`premium-timer medium ${getTimerColor()}`}>
             {displayTime}
           </span>
           {duration && (
