@@ -1,5 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
+import { env } from '@/lib/env'
+
+if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
+}
+
+const supabaseAdmin = createClient(
+  env.SUPABASE_URL,
+  env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+)
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,29 +26,49 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Result ID is required' }, { status: 400 })
     }
 
-    const supabase = createClient()
+    console.log('Fetching revision insights for result ID:', resultId)
     
-    // Get the test result and its questions
-    const { data: testResult, error: testError } = await supabase
+    // Get the test result
+    const { data: testResult, error: testError } = await supabaseAdmin
       .from('test_results')
-      .select(`
-        *,
-        answer_log (
-          *,
-          questions (
-            *
-          )
-        )
-      `)
+      .select('*')
       .eq('id', resultId)
       .single()
 
     if (testError || !testResult) {
+      console.error('Error fetching test result:', testError)
       return NextResponse.json({ error: 'Test result not found' }, { status: 404 })
     }
 
-    const answerLog = testResult.answer_log || []
+    // Get answer log for this test result
+    const { data: answerLog, error: answerError } = await supabaseAdmin
+      .from('answer_log')
+      .select('*')
+      .eq('result_id', resultId)
+
+    if (answerError) {
+      console.error('Error fetching answer log:', answerError)
+      return NextResponse.json({ error: 'Failed to fetch answer log' }, { status: 500 })
+    }
+
+    if (!answerLog || answerLog.length === 0) {
+      return NextResponse.json({ error: 'No answer log found' }, { status: 404 })
+    }
+
+    // Get questions for this test result
+    const questionIds = answerLog.map(log => log.question_id)
+    const { data: questions, error: questionsError } = await supabaseAdmin
+      .from('questions')
+      .select('*')
+      .in('id', questionIds)
+
+    if (questionsError) {
+      console.error('Error fetching questions:', questionsError)
+      return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 })
+    }
+
     const userId = testResult.user_id
+    const testCreatedAt = testResult.created_at
 
     // Calculate mastery insights for each question
     const masteryInsights = await Promise.all(
@@ -40,12 +76,12 @@ export async function GET(request: NextRequest) {
         const questionId = log.question_id
         
         // Get the most recent previous attempt for this question
-        const { data: previousAttempt } = await supabase
+        const { data: previousAttempt } = await supabaseAdmin
           .from('answer_log')
           .select('status, time_taken, created_at')
           .eq('user_id', userId)
           .eq('question_id', questionId)
-          .lt('created_at', log.created_at)
+          .lt('created_at', testCreatedAt)
           .order('created_at', { ascending: false })
           .limit(1)
           .single()
@@ -81,10 +117,13 @@ export async function GET(request: NextRequest) {
           speedImprovement = previousAttempt.time_taken - log.time_taken
         }
 
+        // Find the question details
+        const question = questions?.find(q => q.id === questionId)
+
         return {
           questionId,
-          questionText: log.questions?.question_text || '',
-          chapter: log.questions?.chapter || '',
+          questionText: question?.question_text || '',
+          chapter: question?.chapter || '',
           currentStatus: log.status,
           currentTime: log.time_taken,
           currentScore,
@@ -169,6 +208,7 @@ export async function GET(request: NextRequest) {
       hasHistoricalData: questionsWithHistory.length > 0
     }
 
+    console.log('Revision insights calculated successfully:', insights)
     return NextResponse.json({ data: insights })
 
   } catch (error) {
