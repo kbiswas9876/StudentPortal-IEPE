@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { Database } from '@/types/database'
  // AnalysisSkeletonLoader dynamically imported below to avoid server bundling framer-motion
@@ -584,15 +585,28 @@ const getCurrentQuestionBookmarkId = () => {
               <X className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             </button>
 
-            {/* Desktop collapse control (external) */}
-            <button
+            {/* Desktop collapse control (external) - Apple-Inspired */}
+            <motion.button
               onClick={() => setIsRightPanelCollapsed(true)}
               aria-label="Collapse status panel"
               title="Collapse status panel"
-              className="hidden lg:flex absolute -left-12 top-1/2 -translate-y-1/2 z-40 inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-100/90 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60 shadow-md transition-colors hover:scale-[1.03]"
+              className="hidden lg:flex absolute -left-12 top-1/2 -translate-y-1/2 z-40 group relative w-12 h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              style={{
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+              }}
+              whileHover={{ 
+                scale: 1.08,
+                y: -1
+              }}
+              whileTap={{ scale: 0.96 }}
             >
-              <ChevronLeft className="w-5 h-5 text-slate-700 dark:text-slate-200" />
-            </button>
+              {/* Subtle background glow */}
+              <motion.div 
+                className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              />
+              
+              <ChevronLeft className="relative w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors duration-200" />
+            </motion.button>
             {sessionData && (
               <DynamicReviewPremiumStatusPanel
                 questions={sessionData.questions}
@@ -612,14 +626,27 @@ const getCurrentQuestionBookmarkId = () => {
       )}
 
       {isRightPanelCollapsed && (
-        <button
+        <motion.button
           onClick={() => setIsRightPanelCollapsed(false)}
           aria-label="Expand status panel"
           title="Expand status panel"
-          className="hidden lg:flex fixed right-6 top-1/2 -translate-y-1/2 z-40 inline-flex items-center justify-center w-10 h-10 rounded-full bg-slate-100/90 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/60 shadow-md transition-colors hover:scale-[1.03]"
+          className="hidden lg:flex fixed right-6 top-1/2 -translate-y-1/2 z-40 group relative w-12 h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+          style={{
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+          }}
+          whileHover={{ 
+            scale: 1.08,
+            y: -1
+          }}
+          whileTap={{ scale: 0.96 }}
         >
-          <ChevronRight className="w-5 h-5 text-slate-700 dark:text-slate-200" />
-        </button>
+          {/* Subtle background glow */}
+          <motion.div 
+            className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          />
+          
+          <ChevronRight className="relative w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors duration-200" />
+        </motion.button>
       )}
       {/* Report Error Modal */}
       {showReportModal && currentQuestion && (

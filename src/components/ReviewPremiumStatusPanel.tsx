@@ -167,56 +167,70 @@ export default function ReviewPremiumStatusPanel({
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
           }}
         >
-          {/* Premium Card Toggle Button - Always Visible (When Panel is Expanded) */}
+          {/* Apple-Inspired Toggle Button - Always Visible (When Panel is Expanded) */}
           {!hideInternalToggle && (
             <motion.button
               onClick={() => setIsCollapsed(true)}
-              className="absolute -left-14 top-1/2 -translate-y-1/2 w-12 h-24 bg-gradient-to-br from-white to-slate-50 dark:from-slate-50 dark:to-slate-100 border border-slate-200/60 dark:border-slate-300/60 rounded-l-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 z-[60] group backdrop-blur-md"
+              className="absolute -left-14 top-1/2 -translate-y-1/2 z-[60] group relative w-12 h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               style={{
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.1)',
               }}
               whileHover={{
-                scale: 1.05,
-                y: -2
+                scale: 1.08,
+                y: -1
               }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.96 }}
               initial={{ x: 0, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.3 }}
             >
-              <div className="w-full h-full flex items-center justify-center">
+              {/* Subtle background glow */}
+              <motion.div 
+                className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              />
+              
+              {/* Main icon container */}
+              <div className="relative w-full h-full flex items-center justify-center">
                 <motion.svg
-                  className="w-5 h-5 text-slate-600 dark:text-slate-700 group-hover:text-slate-900 dark:group-hover:text-slate-900 transition-all duration-300"
+                  className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors duration-200"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
-                  style={{ transform: 'rotate(180deg)' }}
-                  whileHover={{ scale: 1.2, rotate: 185 }}
-                  transition={{ duration: 0.2 }}
+                  strokeWidth={2}
+                  whileHover={{ 
+                    scale: 1.1,
+                    rotate: 3
+                  }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </motion.svg>
               </div>
-              {/* Premium card glow effect */}
+
+              {/* Subtle pulse effect */}
               <motion.div
-                className="absolute inset-0 rounded-r-2xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-all duration-500"
-                whileHover={{ opacity: 1 }}
-              />
-              {/* Subtle inner highlight */}
-              <motion.div
-                className="absolute top-0 left-0 right-0 h-1/2 rounded-r-2xl bg-gradient-to-b from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                whileHover={{ opacity: 1 }}
-              />
-              {/* Premium shimmer effect */}
-              <motion.div
-                className="absolute inset-0 rounded-r-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                className="absolute inset-0 rounded-full border-2 border-blue-500/20 opacity-0"
                 animate={{
-                  x: ['-100%', '100%'],
+                  scale: [1, 1.2, 1],
+                  opacity: [0, 0.3, 0],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Infinity,
-                  repeatDelay: 3,
+                  repeatDelay: 4,
+                  ease: "easeInOut"
+                }}
+              />
+
+              {/* Premium indicator dot */}
+              <motion.div 
+                className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full shadow-sm"
+                animate={{
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
                   ease: "easeInOut"
                 }}
               />
@@ -516,7 +530,7 @@ export default function ReviewPremiumStatusPanel({
 
         </motion.div>
       ) : (
-        // --- Panel Collapsed State - Premium Toggle Button ---
+        // --- Panel Collapsed State - Apple-Inspired Toggle Button ---
         <motion.div
           key="panel-collapsed"
           initial={{ opacity: 0, x: 20 }}
@@ -525,51 +539,66 @@ export default function ReviewPremiumStatusPanel({
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="fixed right-12 top-1/2 -translate-y-1/2 z-50 mr-4"
         >
-          {/* Premium Card Toggle Button */}
+          {/* Apple-Inspired Minimal Toggle Button */}
           <motion.button
             onClick={() => setIsCollapsed(false)}
-            className="w-12 h-24 bg-gradient-to-br from-white to-slate-50 dark:from-slate-50 dark:to-slate-100 border border-slate-200/60 dark:border-slate-300/60 rounded-l-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 group backdrop-blur-md"
+            className="group relative w-12 h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
             style={{
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.1)',
             }}
             whileHover={{ 
-              scale: 1.05,
-              y: -2
+              scale: 1.08,
+              y: -1
             }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.96 }}
           >
-            <div className="w-full h-full flex items-center justify-center">
+            {/* Subtle background glow */}
+            <motion.div 
+              className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            />
+            
+            {/* Main icon container */}
+            <div className="relative w-full h-full flex items-center justify-center">
               <motion.svg 
-                className="w-5 h-5 text-slate-600 dark:text-slate-700 group-hover:text-slate-900 dark:group-hover:text-slate-900 transition-all duration-300" 
+                className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors duration-200" 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
-                whileHover={{ scale: 1.2, rotate: -5 }}
-                transition={{ duration: 0.2 }}
+                strokeWidth={2}
+                whileHover={{ 
+                  scale: 1.1,
+                  rotate: -3
+                }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </motion.svg>
             </div>
-            {/* Premium card glow effect */}
-            <motion.div 
-              className="absolute inset-0 rounded-l-2xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-all duration-500"
-              whileHover={{ opacity: 1 }}
-            />
-            {/* Subtle inner highlight */}
-            <motion.div 
-              className="absolute top-0 left-0 right-0 h-1/2 rounded-l-2xl bg-gradient-to-b from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              whileHover={{ opacity: 1 }}
-            />
-            {/* Premium shimmer effect */}
+
+            {/* Subtle pulse effect */}
             <motion.div
-              className="absolute inset-0 rounded-l-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              className="absolute inset-0 rounded-full border-2 border-blue-500/20 opacity-0"
               animate={{
-                x: ['-100%', '100%'],
+                scale: [1, 1.2, 1],
+                opacity: [0, 0.3, 0],
               }}
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                repeatDelay: 3,
+                repeatDelay: 4,
+                ease: "easeInOut"
+              }}
+            />
+
+            {/* Premium indicator dot */}
+            <motion.div 
+              className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full shadow-sm"
+              animate={{
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
                 ease: "easeInOut"
               }}
             />
