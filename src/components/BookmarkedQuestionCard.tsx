@@ -317,7 +317,14 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
           </motion.button>
         ))}
         
-            {/* Descriptive Tooltip */}
+            {/* Descriptive Text Label - Always Visible */}
+            {currentRating > 0 && (
+              <span className="ml-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                {getRatingLabel(currentRating)}
+              </span>
+            )}
+            
+            {/* Descriptive Tooltip - Only during editing */}
             <AnimatePresence>
               {showTooltip && (
                 <motion.div
