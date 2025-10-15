@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import '../styles/QuestionDisplayWindow.css'
 import QuestionCard from './QuestionCard'
 import OptionCard from './OptionCard'
@@ -41,6 +41,9 @@ interface QuestionDisplayWindowProps {
   isPaused?: boolean
   showBookmark?: boolean
   onTogglePause?: () => void
+  // CRITICAL: Add missing button functionality props
+  onSaveAndNext?: () => void
+  onMarkForReviewAndNext?: () => void
 }
 
 const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({ 
@@ -60,14 +63,26 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   cumulativeTime,
   isPaused,
   showBookmark,
-  onTogglePause
+  onTogglePause,
+  // CRITICAL: Add missing button functionality props
+  onSaveAndNext,
+  onMarkForReviewAndNext
 }) => {
+  // FOUC Fix: State to control fade-in animation
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  useEffect(() => {
+    // This runs only once after the component has mounted
+    setIsLoaded(true)
+  }, []) // Empty dependency array ensures it runs once
   // Use props from PracticeInterface if available, otherwise use mock data
   const currentQuestion = question || mockQuestion
   const currentQuestionNumber = questionNumber || 2
   const currentTotalQuestions = totalQuestions || 5
   const currentUserAnswer = userAnswer || null
   const currentIsBookmarked = isBookmarked || false
+
+  // hasSelection is only used for Clear Response button - Save & Next and Mark for Review are always enabled
 
   const handleOptionSelect = (optionId: string) => {
     if (onAnswerChange) {
@@ -82,13 +97,21 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   }
 
   const handleMarkForReview = () => {
-    // Logic to mark question for review
-    console.log('Marked for review')
+    console.log('Mark for Review & Next button was clicked!') // DEBUG: Add this log
+    if (onMarkForReviewAndNext) {
+      onMarkForReviewAndNext() // Call the real function from PracticeInterface
+    } else {
+      console.log('Mark for Review & Next - no handler provided')
+    }
   }
 
   const handleSaveAndNext = () => {
-    // Logic to save answer and move to next question
-    console.log('Saved and moving to next question')
+    console.log('Save & Next button was clicked!') // DEBUG: Add this log
+    if (onSaveAndNext) {
+      onSaveAndNext() // Call the real function from PracticeInterface
+    } else {
+      console.log('Save & Next - no handler provided')
+    }
   }
 
   const handleBack = () => {
@@ -144,7 +167,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
         Part 1, Step C: Main Content Area. 
         This is the scrollable area for the question and options.
       */}
-      <main className="main-content-area">
+      <main className={`main-content-area ${isLoaded ? 'loaded' : ''}`}>
         <QuestionCard 
           questionText={currentQuestion.question_text} 
           inQuestionTimer={inQuestionTimer}

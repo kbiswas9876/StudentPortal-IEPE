@@ -1034,6 +1034,9 @@ useEffect(() => {
             isPaused={isPaused}
             showBookmark={false} // Disable bookmarking in practice interface
             onTogglePause={handlePauseSession}
+            // CRITICAL: Pass the real button handlers from PracticeInterface
+            onSaveAndNext={handleSaveAndNext}
+            onMarkForReviewAndNext={handleMarkForReviewAndNext}
           />
         </div>
       </div>

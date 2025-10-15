@@ -22,6 +22,12 @@
   flex-grow: 1; /* Allows this area to fill available space */
   overflow-y: auto; /* Allows content to scroll if it overflows */
   padding: var(--spacing-6) var(--spacing-8); /* 24px top/bottom, 32px left/right */
+  opacity: 0; /* Start as invisible to prevent FOUC */
+  transition: opacity 300ms ease-in-out; /* Smooth fade-in transition */
+}
+
+.main-content-area.loaded {
+  opacity: 1; /* Become visible when the 'loaded' class is added */
 }
 
 /* ActionsFooter is now inside main content area - no special positioning needed */

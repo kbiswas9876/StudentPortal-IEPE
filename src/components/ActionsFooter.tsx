@@ -22,6 +22,7 @@ const ActionsFooter: React.FC<ActionsFooterProps> = ({
         <button 
           className="action-button secondary"
           onClick={onMarkForReview}
+          // Mark for Review should always be enabled - user can mark unanswered questions
         >
           Mark for Review & Next
         </button>
@@ -37,7 +38,7 @@ const ActionsFooter: React.FC<ActionsFooterProps> = ({
         <button 
           className="action-button primary"
           onClick={onSaveAndNext}
-          disabled={!hasSelection}
+          // Save & Next should always be enabled - user can save unanswered questions
         >
           Save & Next
         </button>
