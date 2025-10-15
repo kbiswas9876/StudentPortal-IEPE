@@ -1,0 +1,34 @@
+/* QuestionCard Styles */
+
+.question-card {
+  width: 100%;
+  max-width: 920px; /* To maintain optimal reading line-length */
+  margin: 0 auto; /* Center the card horizontally */
+  margin-bottom: var(--spacing-6); /* 24px space before the options */
+  padding: var(--spacing-6); /* 24px internal padding */
+  background-color: var(--color-background-card);
+  border-radius: var(--border-radius-md); /* 12px */
+  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(229, 231, 235, 0.6); /* Optional faint border for clarity */
+}
+
+.question-text {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xl); /* 20px */
+  font-weight: var(--font-weight-semibold); /* 600 */
+  color: var(--color-text-primary);
+  line-height: 1.5; /* 30px */
+  margin: 0;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .question-card {
+    padding: var(--spacing-4); /* 16px */
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .question-text {
+    font-size: var(--font-size-lg); /* 18px on mobile */
+  }
+}

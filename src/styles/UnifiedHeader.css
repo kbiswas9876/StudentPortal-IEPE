@@ -1,0 +1,126 @@
+/* UnifiedHeader Styles */
+
+.unified-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+  width: 100%;
+  padding: 0 var(--spacing-6); /* 24px horizontal padding */
+  border-bottom: 1px solid var(--color-border-primary);
+  background-color: var(--color-background-card); /* White background for the header */
+}
+
+.header-zone {
+  display: flex;
+  align-items: center;
+}
+.header-zone.left { justify-content: flex-start; }
+.header-zone.center { justify-content: center; }
+.header-zone.right { justify-content: flex-end; }
+
+/* Icon Button Base Style */
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  color: var(--color-text-secondary);
+}
+.icon-button:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.back-button {
+  margin-right: var(--spacing-3); /* 12px */
+}
+
+.report-button {
+  color: var(--color-alert-report);
+}
+.report-button:hover {
+  background-color: rgba(239, 68, 68, 0.06);
+}
+
+/* Progress Indicator */
+.progress-indicator {
+  font-size: var(--font-size-sm); /* 14px */
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+/* Timers */
+.main-timer-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background-color: #F3F4F6;
+  border-radius: var(--border-radius-pill);
+  font-size: var(--font-size-lg); /* 18px */
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+.timer-icon {
+  color: var(--color-text-secondary);
+}
+
+.timer-control-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 8px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.timer-control-button:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  color: var(--color-text-primary);
+}
+
+.in-question-timer-pill {
+  padding: 6px 12px;
+  margin-right: var(--spacing-3);
+  background-color: #F3F4F6;
+  border-radius: var(--border-radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .unified-header {
+    padding: 0 var(--spacing-4); /* 16px */
+  }
+
+  /* On mobile, hide text labels to save space */
+  .progress-indicator {
+    display: none;
+  }
+
+  /* Make the main timer smaller and move it to the right */
+  .header-zone.center {
+    display: none; /* Hide the center zone */
+  }
+  .header-zone.right {
+    gap: var(--spacing-3); /* Add gap between items */
+  }
+  .in-question-timer-pill {
+    /* Re-style as the main timer on mobile */
+    padding: 8px 12px;
+    font-size: var(--font-size-base); /* 16px */
+  }
+}

@@ -143,18 +143,21 @@ export default function SrsFeedbackControls({
           return (
             <motion.button
               key={option.rating}
-              whileHover={isSubmitting ? {} : { scale: 1.05, y: -4 }}
-              whileTap={isSubmitting ? {} : { scale: 0.95 }}
+              whileHover={isSubmitting ? {} : { scale: 1.02 }}
+              whileTap={isSubmitting ? {} : { scale: 0.98 }}
               onClick={() => handleFeedback(option.rating)}
               disabled={isSubmitting}
               className={`
-                relative p-4 rounded-xl border-2 transition-all duration-200
+                relative p-4 rounded-xl border-2 transition-all duration-150 ease-out
                 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                 ${isSelected 
                   ? `bg-gradient-to-br ${option.bgColor} text-white border-transparent shadow-xl` 
-                  : `bg-white dark:bg-slate-800 ${option.borderColor} hover:shadow-lg`
+                  : `bg-white dark:bg-slate-800 ${option.borderColor}`
                 }
               `}
+              style={{
+                transition: 'transform 150ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out'
+              }}
             >
               {/* Loading Spinner (only on selected button) */}
               {isSelected && isSubmitting && (

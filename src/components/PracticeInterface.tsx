@@ -6,16 +6,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
-import TimerDisplay from './TimerDisplay'
+// Removed TimerDisplay - now using QuestionDisplayWindow
 import QuestionPalette from './QuestionPalette'
 import PremiumStatusPanel from './PremiumStatusPanel'
-import QuestionDisplay from './QuestionDisplay'
-import ActionBar from './ActionBar'
-import ProgressBar from './ProgressBar'
+import QuestionDisplayWindow from './QuestionDisplayWindow'
+// Removed old ActionBar and ProgressBar - now using QuestionDisplayWindow
 import EndSessionModal from './EndSessionModal'
 import ReportErrorModal from './ReportErrorModal'
 import ExitSessionModal from './ExitSessionModal'
-import ZenModeBackButton from './ZenModeBackButton'
+// Removed ZenModeBackButton - now using QuestionDisplayWindow back button
 import PauseOverlay from './PauseOverlay'
 import PauseModal from './PauseModal'
 import SubmissionConfirmationModal from './SubmissionConfirmationModal'
@@ -987,12 +986,7 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Progress Bar - Top of Screen */}
-      <ProgressBar
-        currentQuestion={currentIndex + 1}
-        totalQuestions={questions.length}
-        answeredQuestions={answeredQuestions}
-      />
+      {/* Progress Bar removed - now handled by QuestionDisplayWindow */}
 
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-12 left-0 right-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-4">
@@ -1010,52 +1004,20 @@ useEffect(() => {
               <div className="text-sm font-medium text-slate-600 dark:text-slate-300">
                 {mockTestData ? mockTestData.test.name : 'Practice Session'} - Question {currentIndex + 1} of {questions.length}
               </div>
-              <TimerDisplay
-                milliseconds={displayTime}
-                className="text-slate-600 dark:text-slate-400"
-                isPaused={isPaused}
-              />
+              {/* Timer removed - now handled by QuestionDisplayWindow */}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Ultra-Premium Main Timer - Fixed at top edge */}
-      <div className="lg:hidden fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
-        <TimerDisplay
-          startTime={effectiveSessionStartTime}
-          mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
-          duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-          onTimeUp={handleAutoSubmission}
-          size="large"
-          variant="ultra-premium"
-          className="shadow-2xl hover:shadow-3xl"
-          isPaused={isPaused}
-          onPause={handlePauseSession}
-          showPauseButton={true}
-        />
-      </div>
+      {/* Mobile timer removed - now handled by QuestionDisplayWindow */}
 
       {/* Main Content Area */}
       <div className={`flex-1 pt-28 lg:pt-12 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full' : 'lg:w-3/4'}`}>
-        {/* Desktop Ultra-Premium Main Timer - Fixed at top edge */}
-        <div className="hidden lg:block fixed top-0 left-1/2 transform -translate-x-1/2 z-50">
-          <TimerDisplay
-            startTime={effectiveSessionStartTime}
-            mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
-            duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-            onTimeUp={handleAutoSubmission}
-            size="ultra"
-            variant="ultra-premium"
-            className="shadow-2xl hover:shadow-3xl"
-            isPaused={isPaused}
-            onPause={handlePauseSession}
-            showPauseButton={true}
-          />
-        </div>
+        {/* Desktop timer removed - now handled by QuestionDisplayWindow */}
         
         <div className="h-screen overflow-y-auto">
-          <QuestionDisplay
+          <QuestionDisplayWindow
             question={currentQuestion}
             questionNumber={currentIndex + 1}
             totalQuestions={questions.length}
@@ -1064,12 +1026,14 @@ useEffect(() => {
             onAnswerChange={handleAnswerChange}
             onBookmark={handleBookmark}
             onReportError={() => setShowReportModal(true)}
+            onExit={() => setShowExitModal(true)}
             sessionStartTime={effectiveSessionStartTime}
             timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
             currentQuestionStartTime={currentQuestionStartRef.current}
             cumulativeTime={displayTime}
             isPaused={isPaused}
             showBookmark={false} // Disable bookmarking in practice interface
+            onTogglePause={handlePauseSession}
           />
         </div>
       </div>
@@ -1120,21 +1084,7 @@ useEffect(() => {
                   </button>
                 </div>
                 <div className="flex items-center justify-between mt-4">
-                  <TimerDisplay
-                    milliseconds={displayTime}
-                    className="text-slate-600 dark:text-slate-400"
-                    isPaused={isPaused}
-                  />
-                  <TimerDisplay
-                    startTime={effectiveSessionStartTime}
-                    mode={testMode === 'timed' ? 'countdown' : 'stopwatch'}
-                    duration={testMode === 'timed' ? timeLimitInMinutes : undefined}
-                    onTimeUp={handleSubmitTest}
-                    size="large"
-                    variant="premium"
-                    className="shadow-lg"
-                    isPaused={isPaused}
-                  />
+                  {/* Timers removed - now handled by QuestionDisplayWindow */}
                 </div>
               </div>
               
@@ -1155,13 +1105,7 @@ useEffect(() => {
       </AnimatePresence>
 
 
-      {/* Action Bar */}
-      <ActionBar
-        onSaveAndNext={handleSaveAndNext}
-        onMarkForReviewAndNext={handleMarkForReviewAndNext}
-        onClearResponse={handleClearResponse}
-        isLastQuestion={currentIndex === questions.length - 1}
-      />
+      {/* Action Bar removed - now handled by QuestionDisplayWindow */}
 
       {/* End Session Modal */}
       <EndSessionModal
@@ -1180,8 +1124,7 @@ useEffect(() => {
         />
       )}
 
-      {/* Zen Mode Back Button */}
-      <ZenModeBackButton onClick={() => setShowExitModal(true)} />
+      {/* Back button removed - now handled by QuestionDisplayWindow */}
 
       {/* Exit Session Modal */}
       <ExitSessionModal

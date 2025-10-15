@@ -1,0 +1,56 @@
+/* QuestionDisplayWindow Layout Styles */
+
+.question-window-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Or height of its parent container */
+  max-width: 1200px; /* Example max-width */
+  margin: 0 auto;
+  background-color: var(--color-background-page);
+}
+
+.unified-header {
+  flex-shrink: 0; /* Prevents the header from shrinking */
+  height: 64px;
+  width: 100%;
+  padding: 0 var(--spacing-6); /* 24px horizontal padding */
+  border-bottom: 1px solid var(--color-border-primary);
+  /* We will use flexbox here later to align header items */
+}
+
+.main-content-area {
+  flex-grow: 1; /* Allows this area to fill available space */
+  overflow-y: auto; /* Allows content to scroll if it overflows */
+  padding: var(--spacing-6) var(--spacing-8); /* 24px top/bottom, 32px left/right */
+}
+
+.actions-footer {
+  flex-shrink: 0; /* Prevents footer from shrinking */
+  width: 100%;
+  padding: var(--spacing-4) var(--spacing-8); /* 16px top/bottom, 32px left/right */
+  /* We will use flexbox later to align buttons to the right */
+}
+
+/* Tablet and smaller devices */
+@media (max-width: 1024px) {
+  .main-content-area {
+    padding: var(--spacing-4) var(--spacing-6); /* 16px 24px */
+  }
+}
+
+/* Mobile devices */
+@media (max-width: 768px) {
+  .main-content-area {
+    padding: var(--spacing-4); /* 16px on all sides */
+  }
+
+  .actions-footer {
+    /* Make the footer sticky on mobile */
+    position: sticky;
+    bottom: 0;
+    background-color: var(--color-background-card);
+    border-top: 1px solid var(--color-border-primary);
+    padding: var(--spacing-3) var(--spacing-4); /* 12px 16px */
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+  }
+}

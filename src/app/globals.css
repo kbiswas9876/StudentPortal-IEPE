@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import design tokens */
+@import '../styles/tokens.css';
+
 /* Import KaTeX styles for mathematical typesetting */
 @import '../styles/katex.css';
 
@@ -101,8 +104,11 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  font-family: var(--font-family-sans);
+  background-color: var(--color-background-page);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "rlig" 1, "calt" 1;
 }
 
