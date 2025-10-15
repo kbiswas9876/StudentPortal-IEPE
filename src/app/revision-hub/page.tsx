@@ -513,11 +513,11 @@ export default function RevisionHubPage() {
     )
   }
 
-  // Empty state
-  if (chapters.length === 0) {
+  // Empty state - show two-column layout even when empty
+  if (chapters.length === 0 && !loadingChapters) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -533,31 +533,85 @@ export default function RevisionHubPage() {
             </p>
           </motion.div>
 
-          {/* Empty State */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex items-center justify-center py-20"
-          >
-            <div className="bg-white dark:bg-slate-800 p-12 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-md text-center">
-              <div className="text-7xl mb-6">📚</div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
-                No Bookmarked Questions Yet
-              </h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-                Start bookmarking questions during practice sessions to build your personal revision collection.
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => router.push('/dashboard')}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg transition-all font-semibold shadow-md hover:shadow-lg"
-              >
-                Start Practicing
-              </motion.button>
-            </div>
-          </motion.div>
+          {/* Two-Column Layout - Empty State */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-200px)]">
+            {/* Left Column - Chapter Navigation (Empty) */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="lg:col-span-3"
+            >
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 h-full overflow-hidden">
+                <RevisionChapterNav
+                  chapters={chapters}
+                  selectedChapter={selectedChapter}
+                  onSelectChapter={handleSelectChapter}
+                  isLoading={loadingChapters}
+                  selectedChapters={selectedChapters}
+                  onChapterSelectionChange={handleChapterSelectionChange}
+                  onSelectAllChapters={handleSelectAllChapters}
+                  onDeselectAllChapters={handleDeselectAllChapters}
+                  onStartRevisionSession={handleStartRevisionSession}
+                />
+              </div>
+            </motion.div>
+
+            {/* Right Column - Empty State */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="lg:col-span-9"
+            >
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 h-full overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 flex-shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                        Your Revision Collection is Empty
+                      </h2>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Empty State Content */}
+                <div className="flex-1 flex items-center justify-center p-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-center"
+                  >
+                    <div className="mb-6">
+                      <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center">
+                        <BookmarkIcon className="h-10 w-10 text-blue-500 dark:text-blue-400" />
+                      </div>
+                    </div>
+                    
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+                      Your Revision Collection is Empty
+                    </h3>
+                    
+                    <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-sm leading-relaxed">
+                      Start bookmarking questions after your practice sessions. They will appear here, ready for you to review and master!
+                    </p>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => router.push('/dashboard')}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 mx-auto"
+                    >
+                      <Play className="h-5 w-5" strokeWidth={2.5} />
+                      Start Practicing
+                    </motion.button>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </div>
     )
@@ -858,26 +912,26 @@ export default function RevisionHubPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5 }}
-                        className="flex flex-col items-center justify-center py-16 px-6 text-center"
+                        className="flex flex-col items-center justify-center py-12 px-6 text-center"
                       >
                         <div className="mb-6">
-                          <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center">
-                            <BookmarkIcon className="h-12 w-12 text-blue-500 dark:text-blue-400" />
+                          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center">
+                            <BookmarkIcon className="h-10 w-10 text-blue-500 dark:text-blue-400" />
                           </div>
                         </div>
                         
-                        <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
-                          Your Revision Hub is Empty
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+                          Your Revision Collection is Empty
                         </h3>
                         
-                        <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-md leading-relaxed">
-                          Start by bookmarking questions after a practice session. They will all appear here, organized by chapter, ready for you to review and master!
+                        <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-sm leading-relaxed">
+                          Start bookmarking questions after your practice sessions. They will appear here, ready for you to review and master!
                         </p>
                         
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => router.push('/practice')}
+                          onClick={() => router.push('/dashboard')}
                           className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
                         >
                           <Play className="h-5 w-5" strokeWidth={2.5} />

@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { BookmarkIcon } from '@heroicons/react/24/outline'
-import { Play, Rocket } from 'lucide-react'
+import { Play, Rocket, Archive } from 'lucide-react'
 
 interface ChapterData {
   name: string
@@ -51,9 +51,12 @@ export default function RevisionChapterNav({
     return (
       <div className="h-full flex items-center justify-center p-6">
         <div className="text-center">
-          <BookmarkIcon className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            No bookmarked chapters yet
+          <Archive className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            No Chapters Yet
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Bookmark questions to see your chapters appear here.
           </p>
         </div>
       </div>
