@@ -51,7 +51,7 @@ export default function CriticalBugsTestPage() {
                   <li>✅ CSS: opacity: 0 → opacity: 1 transition</li>
                   <li>✅ JS: useEffect with empty dependency array</li>
                   <li>✅ State: isLoaded controls fade-in timing</li>
-                  <li>✅ Class: conditional 'loaded' class application</li>
+                  <li>✅ Class: conditional &apos;loaded&apos; class application</li>
                   <li>✅ Result: Smooth, professional loading</li>
                 </ul>
               </div>
@@ -84,9 +84,9 @@ export default function CriticalBugsTestPage() {
                   <h4 className="font-medium text-yellow-700 mb-2">Button Debug Test:</h4>
                   <ul className="text-yellow-600 space-y-1">
                     <li>□ Open browser console (F12)</li>
-                    <li>□ Click "Save & Next" - should see debug log</li>
-                    <li>□ Click "Mark for Review" - should see debug log</li>
-                    <li>□ Click "Clear Response" - should work normally</li>
+                    <li>□ Click &quot;Save &amp; Next&quot; - should see debug log</li>
+                    <li>□ Click &quot;Mark for Review&quot; - should see debug log</li>
+                    <li>□ Click &quot;Clear Response&quot; - should work normally</li>
                   </ul>
                 </div>
               </div>

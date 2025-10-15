@@ -59,8 +59,8 @@ export default function ButtonFunctionalityTestPage() {
               <div className="p-4 bg-orange-50 rounded-lg">
                 <h3 className="font-semibold text-orange-800 mb-2">🎯 Functionality Details</h3>
                 <ul className="text-orange-600 text-sm space-y-1">
-                  <li>✅ Save & Next: Updates status and navigates</li>
-                  <li>✅ Mark for Review: Sets status to 'marked_for_review'</li>
+                  <li>✅ Save &amp; Next: Updates status and navigates</li>
+                  <li>✅ Mark for Review: Sets status to &apos;marked_for_review&apos;</li>
                   <li>✅ Both buttons: Handle end-of-session correctly</li>
                   <li>✅ Both buttons: Preserve user answers</li>
                   <li>✅ Both buttons: Update session state properly</li>
@@ -74,8 +74,8 @@ export default function ButtonFunctionalityTestPage() {
                 <div>
                   <h4 className="font-medium text-yellow-700 mb-2">Button Functionality Tests:</h4>
                   <ul className="text-yellow-600 space-y-1">
-                    <li>□ Click "Save & Next" - should navigate to next question</li>
-                    <li>□ Click "Mark for Review" - should mark and navigate</li>
+                    <li>□ Click &quot;Save &amp; Next&quot; - should navigate to next question</li>
+                    <li>□ Click &quot;Mark for Review&quot; - should mark and navigate</li>
                     <li>□ Check console for debug logs</li>
                     <li>□ Verify question status updates</li>
                     <li>□ Test end-of-session behavior</li>

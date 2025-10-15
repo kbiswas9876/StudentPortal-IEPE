@@ -26,7 +26,7 @@ export default function ButtonStateFixTestPage() {
               <div className="p-4 bg-green-50 rounded-lg">
                 <h3 className="font-semibold text-green-800 mb-2">🎯 Save & Next Button</h3>
                 <ul className="text-green-600 text-sm space-y-1">
-                  <li>✅ Removed disabled={!hasSelection} logic</li>
+                  <li>✅ Removed disabled=&#123;!hasSelection&#125; logic</li>
                   <li>✅ Button now always enabled</li>
                   <li>✅ Matches old ActionBar behavior</li>
                   <li>✅ User can save unanswered questions</li>
@@ -37,7 +37,7 @@ export default function ButtonStateFixTestPage() {
               <div className="p-4 bg-blue-50 rounded-lg">
                 <h3 className="font-semibold text-blue-800 mb-2">🔍 Mark for Review Button</h3>
                 <ul className="text-blue-600 text-sm space-y-1">
-                  <li>✅ Removed disabled={!hasSelection} logic</li>
+                  <li>✅ Removed disabled=&#123;!hasSelection&#125; logic</li>
                   <li>✅ Button now always enabled</li>
                   <li>✅ User can mark unanswered questions</li>
                   <li>✅ Consistent with Save & Next behavior</li>
@@ -48,9 +48,9 @@ export default function ButtonStateFixTestPage() {
               <div className="p-4 bg-purple-50 rounded-lg">
                 <h3 className="font-semibold text-purple-800 mb-2">🔧 Clear Response Button</h3>
                 <ul className="text-purple-600 text-sm space-y-1">
-                  <li>✅ Keeps disabled={!hasSelection} logic</li>
-                  <li>✅ Only enabled when there's a selection</li>
-                  <li>✅ Makes logical sense - can't clear nothing</li>
+                  <li>✅ Keeps disabled=&#123;!hasSelection&#125; logic</li>
+                  <li>✅ Only enabled when there&apos;s a selection</li>
+                  <li>✅ Makes logical sense - can&apos;t clear nothing</li>
                   <li>✅ Correct UX behavior</li>
                   <li>✅ No changes needed</li>
                 </ul>
@@ -97,8 +97,8 @@ export default function ButtonStateFixTestPage() {
             <div className="mt-4 p-4 bg-red-50 rounded-lg">
               <h3 className="font-semibold text-red-800 mb-2">🚨 Critical Fix Summary</h3>
               <div className="text-red-600 text-sm">
-                <p className="mb-2"><strong>Problem:</strong> Save & Next button was incorrectly disabled after navigation because it was checking hasSelection, which was false for new questions.</p>
-                <p><strong>Solution:</strong> Removed the disabled={!hasSelection} logic from Save & Next and Mark for Review buttons, as users should be able to save/mark unanswered questions. Only Clear Response button should be disabled when there's no selection.</p>
+                <p className="mb-2"><strong>Problem:</strong> Save &amp; Next button was incorrectly disabled after navigation because it was checking hasSelection, which was false for new questions.</p>
+                <p><strong>Solution:</strong> Removed the disabled=&#123;!hasSelection&#125; logic from Save &amp; Next and Mark for Review buttons, as users should be able to save/mark unanswered questions. Only Clear Response button should be disabled when there&apos;s no selection.</p>
               </div>
             </div>
           </div>

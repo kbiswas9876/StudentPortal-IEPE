@@ -7,6 +7,7 @@ import OptionCard from './OptionCard'
 import UnifiedHeader from './UnifiedHeader'
 import ActionsFooter from './ActionsFooter'
 import QuestionDetails from './QuestionDetails'
+import TimerDisplay from './TimerDisplay'
 
 // --- MOCK DATA (for demonstration) ---
 const mockQuestion = {
@@ -140,10 +141,13 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   // CRITICAL FIX: Both timers must be synchronized with isPaused state
   // The PracticeInterface already handles timer synchronization - we just need to display correctly
   const mainTimer = sessionStartTime ? formatTime(Date.now() - sessionStartTime) : "11:01"
-  const inQuestionTimer = cumulativeTime ? formatTime(cumulativeTime) : "02:56"
+  
+  // FIX: Use TimerDisplay component for in-question timer to properly handle pause state
+  // Pass the cumulative time in milliseconds and isPaused state to TimerDisplay
+  const inQuestionTimer = cumulativeTime || 0
   
   // The isPaused state is already properly managed in PracticeInterface
-  // Both timers will automatically pause/resume together when isPaused changes
+  // TimerDisplay component will handle pause/resume correctly
 
   return (
     <div className="question-window-container">
@@ -164,13 +168,14 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
       />
 
       {/* 
-        Part 1, Step C: Main Content Area. 
-        This is the scrollable area for the question and options.
+        Main Content Area - Scrollable content only
+        This area will scroll independently while header and footer remain fixed
       */}
       <main className={`main-content-area ${isLoaded ? 'loaded' : ''}`}>
         <QuestionCard 
           questionText={currentQuestion.question_text} 
           inQuestionTimer={inQuestionTimer}
+          isPaused={isPaused}
         />
         
         <div className="options-container" role="radiogroup" aria-labelledby="question-text">
@@ -190,15 +195,18 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
           source={currentQuestion.exam_metadata}
           tags={currentQuestion.admin_tags}
         />
-
-        {/* The footer is now inside main content area for proper alignment */}
-        <ActionsFooter 
-          onClearResponse={handleClearResponse}
-          onMarkForReview={handleMarkForReview}
-          onSaveAndNext={handleSaveAndNext}
-          hasSelection={currentUserAnswer !== null && currentUserAnswer !== ''}
-        />
       </main>
+
+      {/* 
+        Fixed Footer - Always visible at bottom
+        This footer will remain fixed and not scroll with content
+      */}
+      <ActionsFooter 
+        onClearResponse={handleClearResponse}
+        onMarkForReview={handleMarkForReview}
+        onSaveAndNext={handleSaveAndNext}
+        hasSelection={currentUserAnswer !== null && currentUserAnswer !== ''}
+      />
     </div>
   )
 }
