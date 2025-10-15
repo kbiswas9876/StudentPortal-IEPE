@@ -5,9 +5,10 @@
   justify-content: space-between; /* This is the key change */
   align-items: center;
   width: 100%;
-  max-width: 920px;
-  margin: 0 auto;
-  padding-top: var(--spacing-4); /* 16px top padding */
+  max-width: 880px; /* CRITICAL: Must match the content card's max-width */
+  margin: 0 auto; /* Horizontally centers the entire footer */
+  margin-top: 24px; /* Reduced and consistent top margin */
+  padding: 0; /* Remove any extra padding that might misalign it */
 }
 
 .footer-left-zone, .footer-right-zone {

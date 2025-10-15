@@ -8,7 +8,6 @@ interface UnifiedHeaderProps {
   currentQuestion: number
   totalQuestions: number
   mainTimer: string
-  inQuestionTimer: string
   onBack?: () => void
   onReport?: () => void
   isPaused?: boolean
@@ -19,7 +18,6 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   currentQuestion,
   totalQuestions,
   mainTimer,
-  inQuestionTimer,
   onBack,
   onReport,
   isPaused = false,
@@ -57,9 +55,6 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
       </div>
 
       <div className="header-zone right">
-        <div className="in-question-timer-pill">
-          <span>{inQuestionTimer}</span>
-        </div>
         <button 
           className="icon-button report-button" 
           aria-label="Report this question"

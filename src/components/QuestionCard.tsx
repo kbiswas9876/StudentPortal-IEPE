@@ -7,14 +7,22 @@ import KatexRenderer from './ui/KatexRenderer'
 interface QuestionCardProps {
   questionNumber?: number
   questionText: string
+  inQuestionTimer?: string
 }
 
-const QuestionCard: React.FC<QuestionCardProps> = ({ questionNumber, questionText }) => {
+const QuestionCard: React.FC<QuestionCardProps> = ({ questionNumber, questionText, inQuestionTimer }) => {
   return (
     <div className="question-card">
-      <p className="question-text" id="question-text">
-        <KatexRenderer content={questionText} />
-      </p>
+      <div className="card-header">
+        <p className="question-text" id="question-text">
+          <KatexRenderer content={questionText} />
+        </p>
+        {inQuestionTimer && (
+          <div className="in-question-timer-pill-card">
+            {inQuestionTimer}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

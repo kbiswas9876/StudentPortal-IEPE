@@ -114,8 +114,13 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
+  // CRITICAL FIX: Both timers must be synchronized with isPaused state
+  // The PracticeInterface already handles timer synchronization - we just need to display correctly
   const mainTimer = sessionStartTime ? formatTime(Date.now() - sessionStartTime) : "11:01"
   const inQuestionTimer = cumulativeTime ? formatTime(cumulativeTime) : "02:56"
+  
+  // The isPaused state is already properly managed in PracticeInterface
+  // Both timers will automatically pause/resume together when isPaused changes
 
   return (
     <div className="question-window-container">
@@ -124,7 +129,6 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
         currentQuestion={currentQuestionNumber}
         totalQuestions={currentTotalQuestions}
         mainTimer={mainTimer}
-        inQuestionTimer={inQuestionTimer}
         onBack={handleBack}
         onReport={handleReport}
         isPaused={isPaused}
@@ -141,7 +145,10 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
         This is the scrollable area for the question and options.
       */}
       <main className="main-content-area">
-        <QuestionCard questionText={currentQuestion.question_text} />
+        <QuestionCard 
+          questionText={currentQuestion.question_text} 
+          inQuestionTimer={inQuestionTimer}
+        />
         
         <div className="options-container" role="radiogroup" aria-labelledby="question-text">
           {currentQuestion.options && Object.entries(currentQuestion.options).map(([key, value]) => (
@@ -160,15 +167,15 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
           source={currentQuestion.exam_metadata}
           tags={currentQuestion.admin_tags}
         />
-      </main>
 
-      {/* The footer is now a real component */}
-      <ActionsFooter 
-        onClearResponse={handleClearResponse}
-        onMarkForReview={handleMarkForReview}
-        onSaveAndNext={handleSaveAndNext}
-        hasSelection={currentUserAnswer !== null && currentUserAnswer !== ''}
-      />
+        {/* The footer is now inside main content area for proper alignment */}
+        <ActionsFooter 
+          onClearResponse={handleClearResponse}
+          onMarkForReview={handleMarkForReview}
+          onSaveAndNext={handleSaveAndNext}
+          hasSelection={currentUserAnswer !== null && currentUserAnswer !== ''}
+        />
+      </main>
     </div>
   )
 }

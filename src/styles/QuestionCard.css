@@ -2,7 +2,7 @@
 
 .question-card {
   width: 100%;
-  max-width: 920px; /* To maintain optimal reading line-length */
+  max-width: 880px; /* Slightly reduced width for better visual balance */
   margin: 0 auto; /* Center the card horizontally */
   margin-bottom: var(--spacing-6); /* 24px space before the options */
   padding: var(--spacing-6); /* 24px internal padding */
@@ -12,13 +12,31 @@
   border: 1px solid rgba(229, 231, 235, 0.6); /* Optional faint border for clarity */
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between; /* This is the key */
+  align-items: flex-start; /* Aligns items to the top */
+  gap: 16px; /* Space between text and timer */
+}
+
 .question-text {
+  flex-grow: 1; /* Allows the text to take up available space */
   font-family: var(--font-family-sans);
   font-size: var(--font-size-xl); /* 20px */
   font-weight: var(--font-weight-semibold); /* 600 */
   color: var(--color-text-primary);
   line-height: 1.5; /* 30px */
   margin: 0;
+}
+
+.in-question-timer-pill-card {
+  flex-shrink: 0; /* Prevents timer from shrinking */
+  padding: 4px 10px;
+  background-color: #F3F4F6;
+  border-radius: var(--border-radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
 }
 
 /* Mobile responsive adjustments */

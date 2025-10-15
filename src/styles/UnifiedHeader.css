@@ -90,15 +90,7 @@
   color: var(--color-text-primary);
 }
 
-.in-question-timer-pill {
-  padding: 6px 12px;
-  margin-right: var(--spacing-3);
-  background-color: #F3F4F6;
-  border-radius: var(--border-radius-pill);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-}
+/* In-question timer moved to QuestionCard - no longer needed here */
 
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
