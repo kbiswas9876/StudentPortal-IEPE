@@ -586,69 +586,88 @@ function ChapterConfigurationCard({
               transition={{ duration: 0.3 }}
               className="mt-4 p-5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm"
             >
-              <h5 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4">
-                Difficulty-Based Selection
-              </h5>
-              <div className="grid grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((rating) => {
+              <div className="flex items-center justify-between mb-4">
+                <h5 className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                  Difficulty-Based Selection
+                </h5>
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  Total Selected: <span className="font-bold text-blue-600 dark:text-blue-400">
+                    {Object.values(config.difficultyBreakdown || {}).reduce((sum, count) => sum + count, 0)}
+                  </span>
+                </span>
+              </div>
+              
+              <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 space-y-3">
+                {[1, 2, 3, 4, 5].map((rating) => {
                   const available = difficultyBreakdown[rating] || 0
                   const selected = config.difficultyBreakdown?.[rating] || 0
+                  const isDisabled = available === 0
                   
                   return (
-                    <div 
-                      key={rating} 
-                      className={`p-4 rounded-xl border transition-all duration-200 ${
-                        available > 0 
-                          ? 'bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-700 border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md' 
-                          : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-60'
-                      }`}
-                    >
-                      {/* Star Rating Header */}
-                      <div className="flex items-center justify-between mb-3">
+                    <div key={rating} className={`transition-all duration-200 ${isDisabled ? 'opacity-50' : ''}`}>
+                      {/* Star Rating and Available Count */}
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-1">
                           {Array.from({ length: rating }, (_, i) => (
                             <StarSolidIcon 
                               key={i} 
                               className={`h-4 w-4 ${
-                                available > 0 
-                                  ? 'text-yellow-500 drop-shadow-sm' 
-                                  : 'text-slate-300 dark:text-slate-600'
+                                isDisabled 
+                                  ? 'text-slate-300 dark:text-slate-600' 
+                                  : 'text-yellow-500 drop-shadow-sm'
                               }`} 
                             />
                           ))}
                         </div>
                         <span className={`text-xs font-medium ${
-                          available > 0 
-                            ? 'text-slate-600 dark:text-slate-400' 
-                            : 'text-slate-400 dark:text-slate-500'
+                          isDisabled 
+                            ? 'text-slate-400 dark:text-slate-500' 
+                            : 'text-slate-600 dark:text-slate-400'
                         }`}>
                           {available} available
                         </span>
                       </div>
                       
-                      {/* Input Control */}
-                      <div className="flex items-center gap-2">
+                      {/* Slider and Input Controls */}
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="range"
+                          min="0"
+                          max={available}
+                          value={selected}
+                          onChange={(e) => handleDifficultyCountChange(rating, parseInt(e.target.value) || 0)}
+                          disabled={isDisabled}
+                          className={`flex-1 h-2 rounded-lg appearance-none cursor-pointer slider ${
+                            isDisabled 
+                              ? 'cursor-not-allowed' 
+                              : ''
+                          }`}
+                          style={{
+                            background: isDisabled 
+                              ? '#e2e8f0' 
+                              : `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(selected / Math.max(available, 1)) * 100}%, #e2e8f0 ${(selected / Math.max(available, 1)) * 100}%, #e2e8f0 100%)`
+                          }}
+                        />
                         <input
                           type="number"
                           min="0"
                           max={available}
                           value={selected}
                           onChange={(e) => handleDifficultyCountChange(rating, parseInt(e.target.value) || 0)}
-                          disabled={available === 0}
-                          className={`w-full px-3 py-2 text-sm font-semibold text-center border rounded-lg transition-all ${
-                            available > 0
-                              ? 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800'
-                              : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                          disabled={isDisabled}
+                          className={`w-12 px-2 py-1 text-sm text-center border rounded-md transition-all ${
+                            isDisabled
+                              ? 'border-slate-200 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                              : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 dark:focus:ring-blue-800'
                           }`}
-                          placeholder="0"
                         />
                         <button
                           onClick={() => handleSelectAllDifficulty(rating)}
-                          disabled={available === 0}
-                          className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
-                            available > 0
-                              ? 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-sm hover:shadow-md'
-                              : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                          disabled={isDisabled}
+                          className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                            isDisabled
+                              ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                              : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
                           }`}
                         >
                           Max
@@ -657,77 +676,6 @@ function ChapterConfigurationCard({
                     </div>
                   )
                 })}
-                
-                {/* 5-Star Rating - Full Width Special Card */}
-                <div className="col-span-2">
-                  {(() => {
-                    const rating = 5
-                    const available = difficultyBreakdown[rating] || 0
-                    const selected = config.difficultyBreakdown?.[rating] || 0
-                    
-                    return (
-                      <div 
-                        className={`p-4 rounded-xl border transition-all duration-200 ${
-                          available > 0 
-                            ? 'bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-700 border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md' 
-                            : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-60'
-                        }`}
-                      >
-                        {/* Star Rating Header */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-1">
-                            {Array.from({ length: rating }, (_, i) => (
-                              <StarSolidIcon 
-                                key={i} 
-                                className={`h-4 w-4 ${
-                                  available > 0 
-                                    ? 'text-yellow-500 drop-shadow-sm' 
-                                    : 'text-slate-300 dark:text-slate-600'
-                                }`} 
-                              />
-                            ))}
-                          </div>
-                          <span className={`text-xs font-medium ${
-                            available > 0 
-                              ? 'text-slate-600 dark:text-slate-400' 
-                              : 'text-slate-400 dark:text-slate-500'
-                          }`}>
-                            {available} available
-                          </span>
-                        </div>
-                        
-                        {/* Input Control */}
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min="0"
-                            max={available}
-                            value={selected}
-                            onChange={(e) => handleDifficultyCountChange(rating, parseInt(e.target.value) || 0)}
-                            disabled={available === 0}
-                            className={`w-full px-3 py-2 text-sm font-semibold text-center border rounded-lg transition-all ${
-                              available > 0
-                                ? 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800'
-                                : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                            }`}
-                            placeholder="0"
-                          />
-                          <button
-                            onClick={() => handleSelectAllDifficulty(rating)}
-                            disabled={available === 0}
-                            className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
-                              available > 0
-                                ? 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-sm hover:shadow-md'
-                                : 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                            }`}
-                          >
-                            Max
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  })()}
-                </div>
               </div>
             </motion.div>
           )}

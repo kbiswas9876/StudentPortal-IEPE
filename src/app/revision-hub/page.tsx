@@ -472,7 +472,7 @@ export default function RevisionHubPage() {
       
       console.log(`🔗 Navigating to practice with params:`, params.toString())
       router.push(`/practice?${params.toString()}`)
-      setIsAdvancedSessionModalOpen(false)
+      setIsSessionModalOpen(false)
     } catch (error) {
       console.error('❌ Error starting advanced revision session:', error)
       // Re-throw the error so the modal can handle it
