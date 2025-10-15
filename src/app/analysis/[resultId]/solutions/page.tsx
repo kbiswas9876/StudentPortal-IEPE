@@ -345,7 +345,7 @@ const handleNext = () => {
 
     try {
       bookmarkInProgressRef.current = true
-      const response = await fetch('/api/revision-hub/bookmarks/update', {
+      const response = await fetch('/api/revision-hub/bookmarks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -353,6 +353,7 @@ const handleNext = () => {
         },
         body: JSON.stringify({
           questionId: q.question_id,
+          userId: user.id,
           difficultyRating: bookmarkData.difficultyRating,
           customTags: bookmarkData.customTags,
           personalNote: bookmarkData.personalNote

@@ -1060,6 +1060,7 @@ useEffect(() => {
             currentQuestionStartTime={currentQuestionStartRef.current}
             cumulativeTime={displayTime}
             isPaused={isPaused}
+            showBookmark={false} // Disable bookmarking in practice interface
           />
         </div>
       </div>

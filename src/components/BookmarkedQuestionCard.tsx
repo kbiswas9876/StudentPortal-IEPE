@@ -19,7 +19,7 @@ import {
   AlertTriangle,
   Clock,
   Eye,
-  BookmarkX,
+  BookmarkMinus,
   Archive
 } from 'lucide-react'
 import KatexRenderer from './ui/KatexRenderer'
@@ -360,13 +360,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
       className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
     >
       {/* Collapsed/Compact View - Always Visible */}
-          <div
-            className="p-5 cursor-pointer relative"
-            onClick={() => {
-              setIsExpanded(!isExpanded)
-              setShowAnswer(false) // Reset answer visibility when collapsing/expanding
-            }}
-          >
+          <div className="relative flex items-center justify-between p-5">
         {/* Selection Checkbox - Top Left Corner */}
         {onSelect && (
           <motion.div
@@ -387,11 +381,11 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
           </motion.div>
         )}
 
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           {/* Left Side - Main Content */}
           <div className="flex-1 min-w-0 pl-8">
             {/* Book & Question ID + Metadata Header */}
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap mb-3">
               <span className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm inline-flex items-center gap-1.5">
                 <BookOpenIcon className="h-3.5 w-3.5" />
                 {question.questions.book_source} #{question.questions.question_number_in_book}
@@ -408,22 +402,6 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                 <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                   • {question.questions.exam_metadata}
                 </span>
-              )}
-              
-              {/* Remove Button - Safely positioned in header */}
-              {onRemove && (
-                <motion.button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onRemove(question.question_id)
-                  }}
-                  className="p-1.5 rounded-lg bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 hover:from-red-100 hover:to-orange-100 dark:hover:from-red-900/30 dark:hover:to-orange-900/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-200 shadow-sm hover:shadow-md ml-auto"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  title="Remove from Revision Hub"
-                >
-                  <BookmarkX className="h-3.5 w-3.5" strokeWidth={2.5} />
-                </motion.button>
               )}
             </div>
 
@@ -506,16 +484,38 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
           </div>
 
           {/* Right Side - Actions */}
-          <div className="flex-shrink-0 flex items-center gap-2">
-            
-            {/* Expand/Collapse Icon */}
-            <motion.div
-              animate={{ rotate: isExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {onRemove && (
+              <motion.button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRemove(question.question_id)
+                }}
+                className="p-2 rounded-lg bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 hover:from-red-100 hover:to-orange-100 dark:hover:from-red-900/30 dark:hover:to-orange-900/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-200 shadow-sm hover:shadow-md"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Remove bookmark"
+                title="Remove from Revision Hub"
+              >
+                <BookmarkMinus className="h-4 w-4" strokeWidth={2.5} />
+              </motion.button>
+            )}
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsExpanded(!isExpanded)
+                setShowAnswer(false)
+              }}
               className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              aria-label="Expand/collapse"
+              title="Expand/collapse"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <ChevronDownIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-            </motion.div>
+              <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <ChevronDownIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              </motion.div>
+            </motion.button>
           </div>
         </div>
       </div>

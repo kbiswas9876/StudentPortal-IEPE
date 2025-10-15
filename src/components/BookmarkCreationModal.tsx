@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Star, Bookmark, Tag, FileText } from 'lucide-react'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
+import KatexRenderer from './ui/KatexRenderer'
 
 interface BookmarkCreationModalProps {
   isOpen: boolean
@@ -121,9 +122,9 @@ export default function BookmarkCreationModal({
                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                   Question Preview
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">
-                  {questionText}
-                </p>
+                <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">
+                  <KatexRenderer content={questionText} />
+                </div>
               </div>
 
               {/* Difficulty Rating - Mandatory */}
