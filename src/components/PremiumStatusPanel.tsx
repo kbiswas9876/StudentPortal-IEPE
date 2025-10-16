@@ -256,7 +256,7 @@ export default function PremiumStatusPanel({
           </motion.button>
       {/* Section 1: Premium Header */}
       <motion.div 
-        className="px-5 pt-3 pb-5 border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/40 dark:via-slate-800/40 dark:to-slate-700/40 rounded-t-2xl"
+        className="px-5 pt-0 pb-2 border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/40 dark:via-slate-800/40 dark:to-slate-700/40"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.4 }}
@@ -272,7 +272,7 @@ export default function PremiumStatusPanel({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </motion.div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight m-0">
               Questions
             </h3>
           </div>
@@ -429,7 +429,7 @@ export default function PremiumStatusPanel({
 
       {/* Section 4: Premium Question Grid */}
       <motion.div 
-        className="flex-1 p-5 overflow-y-auto min-h-0"
+        className="flex-1 px-5 pt-3 pb-3 overflow-y-auto min-h-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.25, duration: 0.4 }}
