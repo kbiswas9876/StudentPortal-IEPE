@@ -39,6 +39,12 @@
   color: var(--color-text-secondary);
 }
 
+/* Remove vertical bars from in-question timer */
+.in-question-timer-pill-card .premium-timer-container::before,
+.in-question-timer-pill-card .premium-timer-container::after {
+  display: none;
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .question-card {

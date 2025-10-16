@@ -88,47 +88,66 @@
   text-shadow: 0 2px 8px rgba(52, 211, 153, 0.2), 0 1px 3px rgba(52, 211, 153, 0.1);
 }
 
-/* Premium Timer Container */
+/* Premium Timer Container - Integrated Style with Vertical Bars */
 .premium-timer-container {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
-  backdrop-filter: blur(8px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.25rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  transition: none;
+  position: relative;
+}
+
+.premium-timer-container::before,
+.premium-timer-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--color-border-primary);
+}
+
+.premium-timer-container::before {
+  left: 0;
+}
+
+.premium-timer-container::after {
+  right: 0;
 }
 
 .premium-timer-container:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: none;
+  box-shadow: none;
 }
 
 .dark .premium-timer-container {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(51, 65, 85, 0.9) 100%);
-  border: 1px solid rgba(71, 85, 105, 0.8);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2), 0 1px 4px rgba(0, 0, 0, 0.1);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-/* Timer Icon Styling */
+/* Timer Icon Styling - Integrated */
 .premium-timer-icon {
-  color: #64748b; /* slate-500 */
-  transition: color 0.3s ease;
+  color: var(--color-text-secondary);
+  transition: color 0.2s ease;
 }
 
 .premium-timer-container:hover .premium-timer-icon {
-  color: #475569; /* slate-600 */
+  color: var(--color-text-primary);
 }
 
 .dark .premium-timer-icon {
-  color: #94a3b8; /* slate-400 */
+  color: var(--color-text-secondary);
 }
 
 .dark .premium-timer-container:hover .premium-timer-icon {
-  color: #cbd5e1; /* slate-300 */
+  color: var(--color-text-primary);
 }
 
 /* Pulsing animation for active timers */
