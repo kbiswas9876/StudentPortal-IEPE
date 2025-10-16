@@ -52,23 +52,23 @@
 
 /* Secondary Button (Mark for Review) */
 .action-button.secondary {
-  background-color: transparent;
-  color: var(--color-brand-primary);
-  border-color: #C7D2FE; /* Light indigo border */
+  background-color: #8B5CF6; /* Purple background */
+  color: white;
+  border-color: #8B5CF6;
 }
 .action-button.secondary:hover {
-  background-color: var(--color-brand-tint);
-  border-color: #A5B4FC;
+  background-color: #7C3AED; /* Darker purple on hover */
+  border-color: #7C3AED;
 }
 
 /* Tertiary Button (Clear Response) */
 .action-button.tertiary {
-  background-color: transparent;
-  color: var(--color-text-secondary);
-  border: none;
-  padding: 0; /* No padding for a text-link feel */
+  background-color: #EF4444; /* Red background */
+  color: white;
+  border-color: #EF4444;
+  padding: 0 20px; /* Restore padding for proper button appearance */
 }
 .action-button.tertiary:hover:not(:disabled) {
-  color: var(--color-text-primary);
-  text-decoration: underline;
+  background-color: #DC2626; /* Darker red on hover */
+  border-color: #DC2626;
 }
