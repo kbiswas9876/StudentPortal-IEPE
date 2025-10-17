@@ -207,9 +207,9 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
           tags={question.admin_tags}
         />
 
-        {/* Solution Box */}
+        {/* Solution Box - Same width as other components */}
         {question.solution_text && (
-          <div className="mt-6">
+          <div className="w-full max-w-[880px] mx-auto mt-6">
             <button
               onClick={() => setShowSolution((prev) => !prev)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
