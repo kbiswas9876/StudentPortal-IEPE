@@ -491,21 +491,12 @@ useEffect(() => {
   const handleNavigation = useCallback((newIndex: number) => {
     if (newIndex < 0 || newIndex >= questions.length || newIndex === currentIndex) return;
     
-    // CRITICAL: Discard temporary selections when navigating away without saving
+    // Mark as visited (unanswered) if not visited yet
     const currentState = sessionStates[currentIndex]
-    if (currentState) {
-      // If question has a temporary answer but hasn't been saved, discard it
-      if (currentState.user_answer && currentState.status !== 'answered' && currentState.status !== 'marked_for_review') {
-        updateSessionState(currentIndex, {
-          user_answer: null,
-          status: currentState.status === 'not_visited' ? 'unanswered' : currentState.status
-        })
-      } else if (currentState.status === 'not_visited') {
-        // Mark as visited (unanswered) if not visited yet
-        updateSessionState(currentIndex, {
-          status: 'unanswered'
-        })
-      }
+    if (currentState && currentState.status === 'not_visited') {
+      updateSessionState(currentIndex, {
+        status: 'unanswered'
+      })
     }
     
     // Save time for current question before switching
@@ -1003,6 +994,7 @@ useEffect(() => {
 
   const handleQuestionNavigation = (index: number) => {
     // CRITICAL: Discard temporary selections when navigating away without saving
+    // This only applies to direct navigation (clicking question numbers), NOT Save & Next or Mark for Review & Next
     const currentState = sessionStates[currentIndex]
     if (currentState) {
       // If question has a temporary answer but hasn't been saved, discard it
