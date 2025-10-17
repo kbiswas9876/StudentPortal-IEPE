@@ -14,10 +14,15 @@
   padding: 0; /* Remove any extra padding that might misalign it */
 }
 
-.footer-left-zone, .footer-right-zone {
+.footer-left-zone, .footer-right-zone, .footer-center-zone {
   display: flex;
   align-items: center;
   gap: var(--spacing-3); /* 12px gap between buttons in a group */
+}
+
+.footer-center-zone {
+  flex: 1;
+  justify-content: center;
 }
 
 /* Base button style */

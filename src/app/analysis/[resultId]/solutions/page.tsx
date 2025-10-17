@@ -10,7 +10,7 @@ import { Database } from '@/types/database'
 import nextDynamic from 'next/dynamic'
 // Dynamically import client-only components to avoid server bundling framer-motion
 const DynamicReviewPremiumStatusPanel = nextDynamic(() => import('@/components/ReviewPremiumStatusPanel'), { ssr: false })
-const DynamicMainQuestionView = nextDynamic(() => import('@/components/MainQuestionView'), { ssr: false })
+const DynamicSolutionQuestionDisplayWindow = nextDynamic(() => import('@/components/SolutionQuestionDisplayWindow'), { ssr: false })
 const DynamicAnalysisSkeletonLoader = nextDynamic(() => import('@/components/AnalysisSkeletonLoader'), { ssr: false })
 const DynamicZenModeBackButton = nextDynamic(() => import('@/components/ZenModeBackButton'), { ssr: false })
 const DynamicReportErrorModal = nextDynamic(() => import('@/components/ReportErrorModal'), { ssr: false })
@@ -478,38 +478,11 @@ const getCurrentQuestionBookmarkId = () => {
         </svg>
       </button>
       {/* Left column: main content */}
-      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full lg:pr-20' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} pt-6 lg:pt-6 pb-20 overflow-y-auto`}>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full lg:pr-20' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} h-full`}>
 
-        {/* Premium Back to Analysis button */}
-        <div className="px-4 pt-4 pb-2">
-          <Link 
-            href={`/analysis/${resultId}`} 
-            className="group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 border border-blue-500/20 backdrop-blur-sm"
-          >
-            {/* Premium glow effect */}
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-400/20 to-indigo-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            {/* Icon with animation */}
-            <div className="relative z-10">
-              <svg className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              </svg>
-            </div>
-            
-            {/* Text with enhanced styling */}
-            <span className="relative z-10 font-semibold text-sm tracking-wide">Back to Analysis</span>
-            
-            {/* Premium shimmer effect */}
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" 
-                 style={{
-                   background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-                   animation: 'shimmer 2s infinite'
-                 }} />
-          </Link>
-        </div>
 
         {/* Main question view */}
-        <div className="px-4">
+        <div className="h-full">
           {sessionData && (
             filteredIndices.length === 0 ? (
               <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-md p-6">
@@ -530,7 +503,7 @@ const getCurrentQuestionBookmarkId = () => {
               </div>
             ) : (
               <>
-                <DynamicMainQuestionView
+                <DynamicSolutionQuestionDisplayWindow
                   session={sessionData}
                   currentIndex={currentQuestionIndex}
                   onPrev={handlePrev}
@@ -684,30 +657,6 @@ const getCurrentQuestionBookmarkId = () => {
         />
       )}
 
-      {/* Navigation Footer */}
-      {sessionData && (
-        <DynamicQuestionNavigationFooter
-          currentIndex={currentQuestionIndex}
-          totalQuestions={sessionData.questions.length}
-          filteredPosition={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos >= 0 ? pos + 1 : 1; })()}
-          filteredTotal={filteredIndices.length}
-          onPrev={() => {
-            const currentPos = filteredIndices.findIndex(i => i === currentQuestionIndex)
-            if (currentPos > 0) {
-              setCurrentQuestionIndex(filteredIndices[currentPos - 1])
-            }
-          }}
-          onNext={() => {
-            const currentPos = filteredIndices.findIndex(i => i === currentQuestionIndex)
-            if (currentPos < filteredIndices.length - 1) {
-              setCurrentQuestionIndex(filteredIndices[currentPos + 1])
-            }
-          }}
-          canPrev={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos > 0; })()}
-          canNext={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos < filteredIndices.length - 1; })()}
-          onViewAllQuestions={handleViewAllQuestions}
-        />
-      )}
     </div>
   )
 }
