@@ -196,7 +196,7 @@ export default function QuestionDisplay({
           <motion.label
             key={key}
             className={`
-              block p-6 rounded-2xl border-2 cursor-pointer transition-all duration-200 ease-out mb-4 relative overflow-hidden
+              block p-6 rounded-2xl border-2 cursor-pointer transition-colors duration-200 ease-out mb-4 relative overflow-hidden
               ${userAnswer === key
                 ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-blue-400 dark:border-blue-500 shadow-lg shadow-blue-100/50 dark:shadow-blue-900/20'
                 : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md'

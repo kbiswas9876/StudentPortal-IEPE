@@ -466,19 +466,18 @@ export default function ReviewPremiumStatusPanel({
                     key={index}
                     onClick={() => onQuestionSelect(index)}
                   className={`
-                    relative w-14 h-14 rounded-xl border-2 transition-all duration-300 font-bold text-sm
+                    relative w-14 h-14 rounded-xl border-2 transition-colors duration-300 font-bold text-sm
                     ${getQuestionColor(index)}
                     ${isCurrent ? 'ring-3 ring-blue-500/50 dark:ring-blue-400/50 shadow-2xl scale-110' : 'hover:shadow-xl hover:scale-105'}
-                    active:scale-95 backdrop-blur-sm
+                    backdrop-blur-sm
                   `}
-                    whileHover={{ 
-                      scale: isCurrent ? 1.15 : 1.08,
-                      y: isCurrent ? -4 : -2,
-                      rotateX: isCurrent ? 8 : 3,
-                      rotateY: isCurrent ? 4 : 2,
-                      z: 10
-                    }}
-                    whileTap={{ scale: 0.95 }}
+                  whileHover={{ 
+                    scale: isCurrent ? 1.15 : 1.08,
+                    y: isCurrent ? -4 : -2,
+                    rotateX: isCurrent ? 8 : 3,
+                    rotateY: isCurrent ? 4 : 2,
+                    z: 10
+                  }}
                     initial={{ opacity: 0, scale: 0.8, rotateX: -5, rotateY: -2 }}
                     animate={{ 
                       opacity: 1, 

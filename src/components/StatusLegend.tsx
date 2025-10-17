@@ -61,6 +61,7 @@ export default function StatusLegend({
           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Not Visited</span>
         </div>
 
+
         {/* Row 3, Col 1: Marked and Answered (spans full width if needed) */}
         <div className="flex items-center space-x-3 col-span-2">
           <div className="relative w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center shadow-sm flex-shrink-0">

@@ -310,13 +310,11 @@ export default function QuestionPalette({
                 key={index}
                 onClick={() => onQuestionSelect(index)}
                 className={`
-                  relative w-12 h-12 rounded-lg border-2 transition-all duration-200 font-bold text-sm
+                  relative w-12 h-12 rounded-lg border-2 transition-colors duration-200 font-bold text-sm
                   ${getQuestionColor(index)}
                   ${isCurrent ? 'ring-2 ring-blue-500 dark:ring-blue-400 shadow-lg scale-105' : 'hover:shadow-md hover:scale-105'}
-                  active:scale-95
                 `}
                 whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
                 title={`Question ${index + 1}`}
               >
                 {index + 1}

@@ -479,9 +479,34 @@ useEffect(() => {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  const updateSessionState = useCallback((index: number, updates: Partial<SessionState>) => {
+    setSessionStates(prev => {
+      const newStates = [...prev]
+      newStates[index] = { ...newStates[index], ...updates }
+      return newStates
+    })
+  }, [])
+
   // Handle question navigation
   const handleNavigation = useCallback((newIndex: number) => {
     if (newIndex < 0 || newIndex >= questions.length || newIndex === currentIndex) return;
+    
+    // CRITICAL: Discard temporary selections when navigating away without saving
+    const currentState = sessionStates[currentIndex]
+    if (currentState) {
+      // If question has a temporary answer but hasn't been saved, discard it
+      if (currentState.user_answer && currentState.status !== 'answered' && currentState.status !== 'marked_for_review') {
+        updateSessionState(currentIndex, {
+          user_answer: null,
+          status: currentState.status === 'not_visited' ? 'unanswered' : currentState.status
+        })
+      } else if (currentState.status === 'not_visited') {
+        // Mark as visited (unanswered) if not visited yet
+        updateSessionState(currentIndex, {
+          status: 'unanswered'
+        })
+      }
+    }
     
     // Save time for current question before switching
     saveCurrentQuestionTime();
@@ -497,12 +522,24 @@ useEffect(() => {
     const previousTime = cumulativeTimeRef.current[newQuestionId] || 0;
     setDisplayTime(previousTime);
     
-  }, [currentIndex, questions, saveCurrentQuestionTime]);
+  }, [currentIndex, questions, saveCurrentQuestionTime, sessionStates, updateSessionState]);
   const currentState = sessionStates[currentIndex] || {
     status: 'not_visited' as QuestionStatus,
     user_answer: null,
     is_bookmarked: false
   }
+
+  // Mark current question as visited when it's first accessed
+  useEffect(() => {
+    if (isInitialized && sessionStates.length > 0) {
+      const currentState = sessionStates[currentIndex]
+      if (currentState && currentState.status === 'not_visited') {
+        updateSessionState(currentIndex, {
+          status: 'unanswered'
+        })
+      }
+    }
+  }, [currentIndex, isInitialized, sessionStates, updateSessionState])
 
   // Debug logging (development only)
   if (process.env.NODE_ENV !== 'production') {
@@ -515,26 +552,13 @@ useEffect(() => {
     })
   }
 
-  const updateSessionState = useCallback((index: number, updates: Partial<SessionState>) => {
-    setSessionStates(prev => {
-      const newStates = [...prev]
-      newStates[index] = { ...newStates[index], ...updates }
-      return newStates
-    })
-  }, [])
-
 
   const handleAnswerChange = (answer: string) => {
-    // Only update status if not already marked for review
-    // If marked for review and user changes answer, keep it marked
-    const currentState = sessionStates[currentIndex]
-    const newStatus = currentState?.status === 'marked_for_review' 
-      ? 'marked_for_review' 
-      : (answer ? 'answered' : 'unanswered')
-    
+    // Only update the user_answer, don't change status until Save & Next is pressed
+    // Status should remain as 'unanswered' or 'marked_for_review' until explicitly saved
     updateSessionState(currentIndex, {
-      user_answer: answer,
-      status: newStatus
+      user_answer: answer
+      // Don't update status here - it will be updated in handleSaveAndNext
     })
   }
 
@@ -759,17 +783,33 @@ useEffect(() => {
       // Get final time data
       const finalTimeData = { ...cumulativeTimeRef.current };
 
-      // Calculate final results
+      // Calculate final results based on the Ultimate Rule:
+      // Only count GREEN (answered) and PURPLE WITH GREEN TICK (answered and marked for review) questions
       const totalQuestions = questions.length
-      const correctAnswers = sessionStates.filter((state, index) => {
-        const question = questions[index]
+      
+      // Questions that WILL BE COUNTED for evaluation:
+      // 1. GREEN (answered) - status === 'answered'
+      // 2. PURPLE WITH GREEN TICK (answered and marked for review) - status === 'marked_for_review' AND has user_answer
+      const evaluatedQuestions = sessionStates.filter((state, index) => {
+        return (state.status === 'answered') || 
+               (state.status === 'marked_for_review' && state.user_answer)
+      })
+      
+      const correctAnswers = evaluatedQuestions.filter((state, index) => {
+        const originalIndex = sessionStates.indexOf(state)
+        const question = questions[originalIndex]
         return state.user_answer === question.correct_option
       }).length
-      const incorrectAnswers = sessionStates.filter((state, index) => {
-        const question = questions[index]
+      
+      const incorrectAnswers = evaluatedQuestions.filter((state, index) => {
+        const originalIndex = sessionStates.indexOf(state)
+        const question = questions[originalIndex]
         return state.user_answer && state.user_answer !== question.correct_option
       }).length
-      const skippedAnswers = sessionStates.filter(state => !state.user_answer).length
+      
+      // Questions that WILL NOT BE COUNTED:
+      // RED (unanswered), PURPLE (marked but not answered), GRAY (not visited)
+      const skippedAnswers = totalQuestions - evaluatedQuestions.length
 
       // Calculate score based on mock test rules or default percentage
       let score: number
@@ -859,17 +899,33 @@ useEffect(() => {
       // Get final time data
       const finalTimeData = { ...cumulativeTimeRef.current };
 
-      // Calculate final results
+      // Calculate final results based on the Ultimate Rule:
+      // Only count GREEN (answered) and PURPLE WITH GREEN TICK (answered and marked for review) questions
       const totalQuestions = questions.length
-      const correctAnswers = sessionStates.filter((state, index) => {
-        const question = questions[index]
+      
+      // Questions that WILL BE COUNTED for evaluation:
+      // 1. GREEN (answered) - status === 'answered'
+      // 2. PURPLE WITH GREEN TICK (answered and marked for review) - status === 'marked_for_review' AND has user_answer
+      const evaluatedQuestions = sessionStates.filter((state, index) => {
+        return (state.status === 'answered') || 
+               (state.status === 'marked_for_review' && state.user_answer)
+      })
+      
+      const correctAnswers = evaluatedQuestions.filter((state, index) => {
+        const originalIndex = sessionStates.indexOf(state)
+        const question = questions[originalIndex]
         return state.user_answer === question.correct_option
       }).length
-      const incorrectAnswers = sessionStates.filter((state, index) => {
-        const question = questions[index]
+      
+      const incorrectAnswers = evaluatedQuestions.filter((state, index) => {
+        const originalIndex = sessionStates.indexOf(state)
+        const question = questions[originalIndex]
         return state.user_answer && state.user_answer !== question.correct_option
       }).length
-      const skippedAnswers = sessionStates.filter(state => !state.user_answer).length
+      
+      // Questions that WILL NOT BE COUNTED:
+      // RED (unanswered), PURPLE (marked but not answered), GRAY (not visited)
+      const skippedAnswers = totalQuestions - evaluatedQuestions.length
 
       // Calculate score based on mock test rules or default percentage
       let score: number
@@ -946,6 +1002,23 @@ useEffect(() => {
   }
 
   const handleQuestionNavigation = (index: number) => {
+    // CRITICAL: Discard temporary selections when navigating away without saving
+    const currentState = sessionStates[currentIndex]
+    if (currentState) {
+      // If question has a temporary answer but hasn't been saved, discard it
+      if (currentState.user_answer && currentState.status !== 'answered' && currentState.status !== 'marked_for_review') {
+        updateSessionState(currentIndex, {
+          user_answer: null,
+          status: currentState.status === 'not_visited' ? 'unanswered' : currentState.status
+        })
+      } else if (currentState.status === 'not_visited') {
+        // Mark as visited (unanswered) if not visited yet
+        updateSessionState(currentIndex, {
+          status: 'unanswered'
+        })
+      }
+    }
+    
     handleNavigation(index)
     setShowMobileSidebar(false) // Close mobile sidebar
   }
