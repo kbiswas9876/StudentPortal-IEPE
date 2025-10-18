@@ -207,41 +207,87 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
           tags={question.admin_tags}
         />
 
-        {/* Solution Box - Same width as other components */}
+        {/* Professional Solution Box */}
         {question.solution_text && (
           <div className="w-full max-w-[880px] mx-auto mt-6">
-            <button
+            {/* Clean Solution Toggle Button */}
+            <motion.button
               onClick={() => setShowSolution((prev) => !prev)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className={`
+                group w-full flex items-center justify-between px-5 py-3 rounded-xl border transition-colors duration-200 shadow-sm
+                ${showSolution 
+                  ? 'bg-blue-600 border-blue-600 text-white' 
+                  : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:border-blue-400 dark:hover:border-blue-500'
+                }
+              `}
               aria-expanded={showSolution}
             >
-              <svg
-                className={`w-4 h-4 transition-transform ${showSolution ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+              <div className="flex items-center gap-3">
+                {/* Simple icon */}
+                <div className={`
+                  w-8 h-8 rounded-lg flex items-center justify-center transition-colors
+                  ${showSolution 
+                    ? 'bg-white/20 text-white' 
+                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                  }
+                `}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                
+                <div className="text-left">
+                  <h3 className={`font-semibold ${showSolution ? 'text-white' : 'text-slate-800 dark:text-slate-200'}`}>
+                    {showSolution ? 'Hide Solution' : 'View Solution'}
+                  </h3>
+                </div>
+              </div>
+              
+              {/* Simple chevron */}
+              <motion.div
+                className={`
+                  w-6 h-6 rounded-md flex items-center justify-center transition-colors
+                  ${showSolution 
+                    ? 'bg-white/20 text-white' 
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                  }
+                `}
+                animate={{ rotate: showSolution ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-              <span>{showSolution ? 'Hide Solution' : 'View Solution'}</span>
-            </button>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </motion.div>
+            </motion.button>
 
+            {/* Clean Solution Card */}
             <AnimatePresence initial={false}>
               {showSolution && (
                 <motion.div
-                  layout
-                  initial={{ opacity: 0, scaleY: 0 }}
-                  animate={{ opacity: 1, scaleY: 1 }}
-                  exit={{ opacity: 0, scaleY: 0 }}
-                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ transformOrigin: 'top', willChange: 'transform, opacity' }}
-                  className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 overflow-hidden"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="mt-4 overflow-hidden"
                 >
-                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Solution</h4>
-                  <KatexRenderer
-                    content={question.solution_text}
-                    className="text-blue-800 dark:text-blue-200 leading-relaxed"
-                  />
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                    {/* Simple header */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                      </div>
+                      <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Solution</h4>
+                    </div>
+                    
+                    {/* Solution content */}
+                    <KatexRenderer
+                      content={question.solution_text}
+                      className="text-slate-700 dark:text-slate-300 leading-relaxed"
+                    />
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
