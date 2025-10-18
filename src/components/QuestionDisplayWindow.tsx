@@ -151,35 +151,45 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   // This useEffect hook will update the 'now' state every 100ms,
   // forcing the timer display to re-render and stay in sync.
   useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 100);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      const newNow = Date.now();
+      setNow(newNow);
+    }, 100);
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   const mainTimer = useMemo(() => {
-    if (!sessionStartTime) return "00:00";
+    if (!sessionStartTime) {
+      return "00:00";
+    }
 
     if (testMode === 'timed' && timeLimitInMinutes) {
-      // --- COUNTDOWN LOGIC ---
+      // --- COUNTDOWN LOGIC (with the fix) ---
       const totalTimeMs = timeLimitInMinutes * 60 * 1000;
       const elapsedMs = now - sessionStartTime;
       const remainingMs = Math.max(0, totalTimeMs - elapsedMs);
-      return formatTime(remainingMs);
+
+      // FIX: Use Math.ceil() on the seconds to ensure the initial display
+      // is rounded up to the full minute (e.g., 1799995ms -> 1800s -> 30:00).
+      // This effectively "snaps" the initial display to the correct starting value.
+      const remainingSeconds = Math.ceil(remainingMs / 1000);
+      
+      // Create a new formatting function to handle seconds directly
+      const formatSecondsToMMSS = (totalSeconds: number) => {
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = totalSeconds % 60;
+          return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      };
+
+      return formatSecondsToMMSS(remainingSeconds);
     } else {
-      // --- COUNT-UP LOGIC (Existing Behavior) ---
+      // --- COUNT-UP LOGIC (Existing Behavior - Unchanged) ---
       const elapsedMs = now - sessionStartTime;
       return formatTime(elapsedMs);
     }
   }, [now, sessionStartTime, testMode, timeLimitInMinutes]);
-  
-  // DEBUG: Log timer calculation details
-  console.log('TIMER CALCULATION:', { 
-    sessionStartTime, 
-    timeLimitInMinutes, 
-    testMode,
-    currentTime: now,
-    elapsed: sessionStartTime ? now - sessionStartTime : 0,
-    mainTimer 
-  });
   
   // FIX: Use TimerDisplay component for in-question timer to properly handle pause state
   // Pass the cumulative time in milliseconds and isPaused state to TimerDisplay
