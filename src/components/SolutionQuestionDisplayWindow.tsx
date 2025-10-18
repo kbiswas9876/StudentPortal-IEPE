@@ -271,7 +271,12 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
                   transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="mt-4 overflow-hidden"
                 >
-                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+                  <div 
+                    className="bg-white dark:bg-slate-800 rounded-xl p-6" 
+                    style={{ 
+                      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important'
+                    }}
+                  >
                     {/* Solution content */}
                     <KatexRenderer
                       content={question.solution_text}
