@@ -269,86 +269,8 @@ export default function ReviewPremiumStatusPanel({
             </div>
           </motion.div>
 
-          {/* Section 2: Performance Matrix */}
-          <motion.div 
-            className="p-5 border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/30 dark:via-slate-800/30 dark:to-slate-700/30"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.4 }}
-          >
-            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Performance Matrix</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {/* Correct & Fast */}
-              <motion.button
-                onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-fast' ? null : 'correct-fast')}
-                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
-                  activePerformanceFilter === 'correct-fast' 
-                    ? 'bg-green-500 border-green-600 text-white shadow-lg' 
-                    : 'bg-green-100 border-green-300 text-green-800 hover:bg-green-200 dark:bg-green-900/40 dark:border-green-600 dark:text-green-200 dark:hover:bg-green-900/60'
-                }`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium">Correct & Fast</span>
-                  <span className="text-sm font-bold">{performanceMatrix.correctFast}</span>
-                </div>
-              </motion.button>
 
-              {/* Correct & Slow */}
-              <motion.button
-                onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-slow' ? null : 'correct-slow')}
-                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
-                  activePerformanceFilter === 'correct-slow' 
-                    ? 'bg-yellow-500 border-yellow-600 text-white shadow-lg' 
-                    : 'bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900/60'
-                }`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium">Correct & Slow</span>
-                  <span className="text-sm font-bold">{performanceMatrix.correctSlow}</span>
-                </div>
-              </motion.button>
-
-              {/* Incorrect & Fast */}
-              <motion.button
-                onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-fast' ? null : 'incorrect-fast')}
-                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
-                  activePerformanceFilter === 'incorrect-fast' 
-                    ? 'bg-orange-500 border-orange-600 text-white shadow-lg' 
-                    : 'bg-orange-100 border-orange-300 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-200 dark:hover:bg-orange-900/60'
-                }`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium">Incorrect & Fast</span>
-                  <span className="text-sm font-bold">{performanceMatrix.incorrectFast}</span>
-                </div>
-              </motion.button>
-
-              {/* Incorrect & Slow */}
-              <motion.button
-                onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-slow' ? null : 'incorrect-slow')}
-                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
-                  activePerformanceFilter === 'incorrect-slow' 
-                    ? 'bg-red-500 border-red-600 text-white shadow-lg' 
-                    : 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:border-red-600 dark:text-red-200 dark:hover:bg-red-900/60'
-                }`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium">Incorrect & Slow</span>
-                  <span className="text-sm font-bold">{performanceMatrix.incorrectSlow}</span>
-                </div>
-              </motion.button>
-            </div>
-          </motion.div>
-
-          {/* Section 3: Compact Filter Button */}
+          {/* Section 2: Compact Filter Button */}
           <motion.div 
             className="p-5 border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/20 dark:via-slate-800/20 dark:to-slate-700/20"
             initial={{ opacity: 0, y: 10 }}
@@ -388,7 +310,81 @@ export default function ReviewPremiumStatusPanel({
                     transition={{ duration: 0.2 }}
                     className="absolute top-full left-0 right-0 mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 shadow-lg z-50"
                   >
-                    <div className="space-y-3">
+                    <div className="space-y-4">
+                      {/* Performance Matrix Section */}
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Performance Matrix</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {/* Correct & Fast */}
+                          <motion.button
+                            onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-fast' ? null : 'correct-fast')}
+                            className={`p-2 rounded-lg border-2 transition-all duration-200 ${
+                              activePerformanceFilter === 'correct-fast' 
+                                ? 'bg-green-500 border-green-600 text-white shadow-lg' 
+                                : 'bg-green-100 border-green-300 text-green-800 hover:bg-green-200 dark:bg-green-900/40 dark:border-green-600 dark:text-green-200 dark:hover:bg-green-900/60'
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium">Correct & Fast</span>
+                              <span className="text-sm font-bold">{performanceMatrix.correctFast}</span>
+                            </div>
+                          </motion.button>
+
+                          {/* Correct & Slow */}
+                          <motion.button
+                            onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-slow' ? null : 'correct-slow')}
+                            className={`p-2 rounded-lg border-2 transition-all duration-200 ${
+                              activePerformanceFilter === 'correct-slow' 
+                                ? 'bg-yellow-500 border-yellow-600 text-white shadow-lg' 
+                                : 'bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900/60'
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium">Correct & Slow</span>
+                              <span className="text-sm font-bold">{performanceMatrix.correctSlow}</span>
+                            </div>
+                          </motion.button>
+
+                          {/* Incorrect & Fast */}
+                          <motion.button
+                            onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-fast' ? null : 'incorrect-fast')}
+                            className={`p-2 rounded-lg border-2 transition-all duration-200 ${
+                              activePerformanceFilter === 'incorrect-fast' 
+                                ? 'bg-orange-500 border-orange-600 text-white shadow-lg' 
+                                : 'bg-orange-100 border-orange-300 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-200 dark:hover:bg-orange-900/60'
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium">Incorrect & Fast</span>
+                              <span className="text-sm font-bold">{performanceMatrix.incorrectFast}</span>
+                            </div>
+                          </motion.button>
+
+                          {/* Incorrect & Slow */}
+                          <motion.button
+                            onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-slow' ? null : 'incorrect-slow')}
+                            className={`p-2 rounded-lg border-2 transition-all duration-200 ${
+                              activePerformanceFilter === 'incorrect-slow' 
+                                ? 'bg-red-500 border-red-600 text-white shadow-lg' 
+                                : 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:border-red-600 dark:text-red-200 dark:hover:bg-red-900/60'
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium">Incorrect & Slow</span>
+                              <span className="text-sm font-bold">{performanceMatrix.incorrectSlow}</span>
+                            </div>
+                          </motion.button>
+                        </div>
+                      </div>
+
                       {/* Two-column layout for Status and Difficulty filters */}
                       <div className="grid grid-cols-2 gap-3">
                         {/* Status Filter */}
@@ -445,7 +441,7 @@ export default function ReviewPremiumStatusPanel({
             </div>
           </motion.div>
 
-          {/* Section 4: Premium Question Grid */}
+          {/* Section 3: Premium Question Grid */}
           <motion.div 
             className="flex-1 px-5 pt-3 pb-3 overflow-y-auto min-h-0"
             initial={{ opacity: 0 }}
@@ -513,7 +509,7 @@ export default function ReviewPremiumStatusPanel({
             </div>
           </motion.div>
 
-          {/* Section 3: Premium Status Legend for Review Mode */}
+          {/* Section 4: Premium Status Legend for Review Mode */}
           <motion.div 
             className="p-5 border-t border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/30 dark:via-slate-800/30 dark:to-slate-700/30"
             initial={{ opacity: 0, y: 20 }}
