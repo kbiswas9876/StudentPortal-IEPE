@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
 import ReviewStatusLegend from './ReviewStatusLegend'
@@ -42,6 +42,27 @@ export default function ReviewPremiumStatusPanel({
   const [difficultyFilter, setDifficultyFilter] = useState<string>('All')
   const [bookmarksOnly, setBookmarksOnly] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  
+  // Ref for click-outside detection
+  const filterRef = useRef<HTMLDivElement>(null)
+  
+  // Handle click outside to close filter modal
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false)
+      }
+    }
+
+    if (showFilters) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showFilters])
+  
   // When external page controls collapse, hide internal toggle UI and keep panel visible
   const showCollapsed = !hideInternalToggle && isCollapsed
 
@@ -272,6 +293,7 @@ export default function ReviewPremiumStatusPanel({
 
           {/* Filter Icon in Top Right Corner */}
           <motion.div 
+            ref={filterRef}
             className="absolute top-4 right-4 z-40"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
