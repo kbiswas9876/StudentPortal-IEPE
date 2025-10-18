@@ -561,9 +561,7 @@ const getCurrentQuestionBookmarkId = () => {
             {/* Desktop collapse control (external) - Apple-Inspired */}
             <motion.button
               onClick={() => setIsRightPanelCollapsed(true)}
-              aria-label="Collapse status panel"
-              title="Collapse status panel"
-              className="hidden lg:flex absolute -left-12 top-1/2 -translate-y-1/2 z-40 group relative w-12 h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              className="hidden lg:flex absolute -left-12 top-1/2 -translate-y-1/2 z-30 group relative w-12 h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               style={{
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.1)',
               }}
@@ -572,13 +570,60 @@ const getCurrentQuestionBookmarkId = () => {
                 y: -1
               }}
               whileTap={{ scale: 0.96 }}
+              initial={{ x: 0, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
             >
               {/* Subtle background glow */}
               <motion.div 
                 className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               />
               
-              <ChevronLeft className="relative w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors duration-200" />
+              {/* Main icon container */}
+              <div className="relative w-full h-full flex items-center justify-center">
+                <motion.svg 
+                  className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors duration-200" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  whileHover={{ 
+                    scale: 1.1,
+                    rotate: 3
+                  }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </motion.svg>
+              </div>
+
+              {/* Subtle pulse effect */}
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-blue-500/20 opacity-0"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0, 0.3, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatDelay: 4,
+                  ease: "easeInOut"
+                }}
+              />
+
+              {/* Premium indicator dot */}
+              <motion.div 
+                className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full shadow-sm"
+                animate={{
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
             </motion.button>
             {sessionData && (
               <DynamicReviewPremiumStatusPanel
@@ -601,9 +646,7 @@ const getCurrentQuestionBookmarkId = () => {
       {isRightPanelCollapsed && (
         <motion.button
           onClick={() => setIsRightPanelCollapsed(false)}
-          aria-label="Expand status panel"
-          title="Expand status panel"
-          className="hidden lg:flex fixed right-6 top-1/2 -translate-y-1/2 z-40 group relative w-12 h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+          className="hidden lg:flex fixed right-6 top-1/2 -translate-y-1/2 z-30 group relative w-12 h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
           style={{
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.1)',
           }}
@@ -618,7 +661,51 @@ const getCurrentQuestionBookmarkId = () => {
             className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           />
           
-          <ChevronRight className="relative w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors duration-200" />
+          {/* Main icon container */}
+          <div className="relative w-full h-full flex items-center justify-center">
+            <motion.svg 
+              className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors duration-200" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              whileHover={{ 
+                scale: 1.1,
+                rotate: -3
+              }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </motion.svg>
+          </div>
+
+          {/* Subtle pulse effect */}
+          <motion.div
+            className="absolute inset-0 rounded-full border-2 border-blue-500/20 opacity-0"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0, 0.3, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatDelay: 4,
+              ease: "easeInOut"
+            }}
+          />
+
+          {/* Premium indicator dot */}
+          <motion.div 
+            className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full shadow-sm"
+            animate={{
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
         </motion.button>
       )}
       {/* Report Error Modal */}

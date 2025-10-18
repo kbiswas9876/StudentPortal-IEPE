@@ -171,11 +171,11 @@ export default function ReviewPremiumStatusPanel({
           {!hideInternalToggle && (
             <motion.button
               onClick={() => setIsCollapsed(true)}
-              className="absolute -left-14 top-1/2 -translate-y-1/2 z-[60] group relative w-12 h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              className="absolute -left-12 top-1/2 -translate-y-1/2 z-30 group relative w-12 h-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               style={{
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.1)',
               }}
-              whileHover={{
+              whileHover={{ 
                 scale: 1.08,
                 y: -1
               }}
@@ -191,10 +191,10 @@ export default function ReviewPremiumStatusPanel({
               
               {/* Main icon container */}
               <div className="relative w-full h-full flex items-center justify-center">
-                <motion.svg
-                  className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors duration-200"
-                  fill="none"
-                  stroke="currentColor"
+                <motion.svg 
+                  className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors duration-200" 
+                  fill="none" 
+                  stroke="currentColor" 
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                   whileHover={{ 
@@ -536,7 +536,7 @@ export default function ReviewPremiumStatusPanel({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="fixed right-12 top-1/2 -translate-y-1/2 z-50 mr-4"
+          className="fixed right-6 top-1/2 -translate-y-1/2 z-30"
         >
           {/* Apple-Inspired Minimal Toggle Button */}
           <motion.button
