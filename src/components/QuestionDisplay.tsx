@@ -196,10 +196,10 @@ export default function QuestionDisplay({
           <motion.label
             key={key}
             className={`
-              block p-6 rounded-2xl border-2 cursor-pointer transition-colors duration-200 ease-out mb-4 relative overflow-hidden
+              block p-6 rounded-2xl cursor-pointer transition-colors duration-200 ease-out mb-4 relative overflow-hidden
               ${userAnswer === key
-                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border-blue-400 dark:border-blue-500 shadow-lg shadow-blue-100/50 dark:shadow-blue-900/20'
-                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md'
+                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 shadow-lg shadow-blue-100/50 dark:shadow-blue-900/20'
+                : 'bg-white dark:bg-slate-800 shadow-sm hover:shadow-md'
               }
             `}
             style={{
@@ -259,7 +259,7 @@ export default function QuestionDisplay({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-8 p-6 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"
+          className="mt-8 p-6 bg-slate-50 dark:bg-slate-800 rounded-xl"
         >
           <h4 className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-3">
             Question Details

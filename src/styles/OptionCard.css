@@ -9,7 +9,7 @@
   margin-bottom: var(--spacing-3); /* 12px gap between options */
   padding: 14px 18px;
   background-color: var(--color-background-card);
-  border: 1.5px solid var(--color-border-primary);
+  /* border: 1.5px solid var(--color-border-primary); */
   border-radius: var(--border-radius-sm); /* 8px */
   cursor: pointer;
   

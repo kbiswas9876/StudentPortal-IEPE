@@ -275,12 +275,12 @@ export default function MainQuestionView({
           const isIncorrectChoice = isUserChoice && !isCorrect
 
           const baseClasses =
-            'block p-4 rounded-xl border-2 transition-all duration-200'
+            'block p-4 rounded-xl transition-all duration-200'
           const stateClasses = isCorrect
-            ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+            ? 'bg-green-50 dark:bg-green-900/20'
             : isIncorrectChoice
-              ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700'
-              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
+              ? 'bg-red-50 dark:bg-red-900/20'
+              : 'bg-white dark:bg-slate-800'
 
         return (
             <motion.div
