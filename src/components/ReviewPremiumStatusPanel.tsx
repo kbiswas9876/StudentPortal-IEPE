@@ -510,18 +510,12 @@ export default function ReviewPremiumStatusPanel({
           </motion.div>
 
           {/* Section 4: Premium Status Legend for Review Mode */}
-          <motion.div 
+          <ReviewStatusLegend
+            correctCount={correctCount}
+            incorrectCount={incorrectCount}
+            skippedCount={skippedCount}
             className="p-5 border-t border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/30 dark:via-slate-800/30 dark:to-slate-700/30"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-          >
-            <ReviewStatusLegend
-              correctCount={correctCount}
-              incorrectCount={incorrectCount}
-              skippedCount={skippedCount}
-            />
-          </motion.div>
+          />
 
         </motion.div>
       ) : (
