@@ -25,12 +25,12 @@
   justify-content: center;
 }
 
-/* Base button style */
+/* Base button style - Updated for compact design */
 .action-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 44px; /* Increased height for better visibility */
+  /* Removed fixed height to allow Tailwind classes to control */
   padding: 0 20px; /* Increased padding */
   border-radius: var(--border-radius-sm); /* 8px */
   font-size: 15px;

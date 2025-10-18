@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { ChevronLeft, Flag, Clock, Bookmark } from 'lucide-react'
+import { ChevronLeft, Flag, Bookmark } from 'lucide-react'
 import '../styles/UnifiedHeader.css'
 import { getAdvancedThreeTierSpeedCategory, type AdvancedDifficulty } from '@/lib/speed-calculator'
 
@@ -86,6 +86,51 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
     return 'text-gray-500 dark:text-gray-400'
   }
 
+  // Get background color and icon for time display
+  const getTimeDisplayStyle = (timeTakenSeconds: number, difficulty: string | null, status: string) => {
+    // Only apply enhanced styling to correct answers
+    if (status !== 'correct') {
+      return {
+        bgClass: 'bg-gray-50 dark:bg-gray-800/50',
+        borderClass: 'border-gray-200 dark:border-gray-700',
+        icon: '⏱️',
+        label: 'Time'
+      }
+    }
+    
+    const speedCategory = getAdvancedThreeTierSpeedCategory(timeTakenSeconds, difficulty as AdvancedDifficulty)
+    
+    if (speedCategory === 'Fast') {
+      return {
+        bgClass: 'bg-green-50 dark:bg-green-900/20',
+        borderClass: 'border-green-300 dark:border-green-700',
+        icon: '⚡',
+        label: 'Fast'
+      }
+    } else if (speedCategory === 'Average') {
+      return {
+        bgClass: 'bg-yellow-50 dark:bg-yellow-900/20',
+        borderClass: 'border-yellow-300 dark:border-yellow-700',
+        icon: '⏰',
+        label: 'Average'
+      }
+    } else if (speedCategory === 'Slow') {
+      return {
+        bgClass: 'bg-red-50 dark:bg-red-900/20',
+        borderClass: 'border-red-300 dark:border-red-700',
+        icon: '🐌',
+        label: 'Slow'
+      }
+    }
+    
+    return {
+      bgClass: 'bg-gray-50 dark:bg-gray-800/50',
+      borderClass: 'border-gray-200 dark:border-gray-700',
+      icon: '⏱️',
+      label: 'Time'
+    }
+  }
+
   return (
     <header className="unified-header">
       <div className="header-zone left">
@@ -105,11 +150,16 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
       </div>
 
       <div className="header-zone center">
-        <div className="premium-timer-container">
-          <Clock size={18} className="premium-timer-icon" />
-          <span className={`premium-timer medium primary ${getTimeColor(timeTakenSeconds, difficulty, status)}`}>
-            {formatTime(timeTakenSeconds)}
-          </span>
+        <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg border-2 transition-all duration-200 ${getTimeDisplayStyle(timeTakenSeconds, difficulty, status).bgClass} ${getTimeDisplayStyle(timeTakenSeconds, difficulty, status).borderClass}`}>
+          <span className="text-lg">{getTimeDisplayStyle(timeTakenSeconds, difficulty, status).icon}</span>
+          <div className="flex flex-col items-start">
+            <span className={`font-mono text-base font-bold leading-tight ${getTimeColor(timeTakenSeconds, difficulty, status)}`}>
+              {formatTime(timeTakenSeconds)}
+            </span>
+            <span className="text-[10px] uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-400 mt-0.5">
+              {getTimeDisplayStyle(timeTakenSeconds, difficulty, status).label}
+            </span>
+          </div>
         </div>
       </div>
 
