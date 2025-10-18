@@ -34,17 +34,17 @@
 }
 
 /* Fixed Footer Styles */
-/* Practice-only alignment: Increase top padding by 20px (to 40px) so the footer's top edge aligns with the status legend container top edge.
-   Bottom padding remains 20px. Solution styles remain unchanged. */
+/* Practice-only alignment: Enhanced padding to align footer top edge with sidebar Submit Test button container.
+   This creates a strong horizontal baseline across the interface. Solution styles remain unchanged. */
 .actions-footer-wrapper {
-  flex-shrink: 0; /* CRITICAL: Prevents the footer from shrinking */
-  width: 100%;
-  padding: 40px 0 20px 0; /* Top: 40px, Left/Right: 0, Bottom: 20px */
-  background-color: var(--color-background-page); /* Ensures it has a solid background */
-  border-top: 1px solid var(--color-border-primary); /* Thinner border for compact design */
-  z-index: 10; /* Ensure footer stays on top */
-  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05); /* Lighter shadow for compact design */
-  position: relative; /* Ensure proper positioning */
+  flex-shrink: 0 !important; /* CRITICAL: Prevents the footer from shrinking */
+  width: 100% !important;
+  padding: 8px 0 20px 0 !important; /* Top: 8px, Left/Right: 0, Bottom: 20px - Reduced by 1em (16px) */
+  background-color: var(--color-background-page) !important; /* Ensures it has a solid background */
+  border-top: 1px solid var(--color-border-primary) !important; /* Thinner border for compact design */
+  z-index: 10 !important; /* Ensure footer stays on top */
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05) !important; /* Lighter shadow for compact design */
+  position: relative !important; /* Ensure proper positioning */
 }
 
 /* Tablet and smaller devices */
@@ -52,8 +52,11 @@
   .main-content-area {
     padding: var(--spacing-4) var(--spacing-6); /* 16px 24px */
   }
-  
-  /* Removed fixed padding to allow Tailwind classes to control height */
+
+  /* Enhanced footer padding for tablets - maintains alignment with sidebar */
+  .actions-footer-wrapper {
+    padding: 6px 0 18px 0 !important; /* Reduced by 1em (16px) */
+  }
 }
 
 /* Mobile devices */
@@ -62,8 +65,11 @@
     padding: var(--spacing-4); /* 16px on all sides */
   }
   
-  /* Removed fixed padding to allow Tailwind classes to control height */
-  
+  /* Enhanced footer padding for mobile - maintains alignment with sidebar */
+  .actions-footer-wrapper {
+    padding: 5px 0 16px 0 !important; /* Reduced by 1em (16px) */
+  }
+
   .actions-footer-content {
     max-width: 100%; /* Full width on mobile */
   }

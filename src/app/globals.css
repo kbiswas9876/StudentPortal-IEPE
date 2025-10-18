@@ -143,8 +143,15 @@ html, body {
 
 * {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
+}
+
+/* Preserve padding for specific layout components */
+.actions-footer-wrapper,
+.premium-submit-container,
+.question-display-window,
+.main-content-area {
+  padding: inherit;
 }
 
 html,
