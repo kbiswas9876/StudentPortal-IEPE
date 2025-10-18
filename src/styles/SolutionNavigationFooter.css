@@ -1,0 +1,46 @@
+/* SolutionNavigationFooter Styles - Independent from Practice Interface */
+
+.solution-footer-wrapper {
+  flex-shrink: 0; /* CRITICAL: Prevents the footer from shrinking */
+  width: 100%;
+  padding: 16px 0; /* Proper vertical padding for solution page */
+  background-color: rgba(255, 255, 255, 0.95); /* Semi-transparent white */
+  backdrop-filter: blur(12px); /* Backdrop blur effect */
+  border-top: 1px solid rgba(226, 232, 240, 0.8); /* Light border */
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06); /* Enhanced shadow */
+  z-index: 10; /* Ensure footer stays on top */
+  position: relative; /* Ensure proper positioning */
+}
+
+.solution-footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 72rem; /* max-w-6xl equivalent */
+  margin: 0 auto;
+  padding: 0 16px; /* px-4 equivalent */
+}
+
+/* Dark mode support */
+.dark .solution-footer-wrapper {
+  background-color: rgba(15, 23, 42, 0.95); /* Semi-transparent dark slate */
+  border-top-color: rgba(51, 65, 85, 0.8); /* Dark border */
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .solution-footer-wrapper {
+    padding: 14px 0; /* Slightly reduced padding on tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .solution-footer-wrapper {
+    padding: 12px 0; /* Reduced padding on mobile */
+  }
+  
+  .solution-footer-content {
+    padding: 0 12px; /* Reduced horizontal padding on mobile */
+  }
+}

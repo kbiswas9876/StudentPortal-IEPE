@@ -100,7 +100,7 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
 
   if (!question) {
     return (
-      <div className="question-window-container">
+      <div className="question-display-window">
         <SolutionUnifiedHeader 
           currentQuestion={currentIndex + 1}
           totalQuestions={totalQuestions}
@@ -119,7 +119,7 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
   }
 
   return (
-    <div className="question-window-container">
+    <div className="question-display-window">
       {/* Fixed Header - Same as Practice Interface */}
       <SolutionUnifiedHeader 
         currentQuestion={displayPosition}

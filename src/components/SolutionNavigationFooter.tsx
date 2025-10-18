@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
+import '../styles/SolutionNavigationFooter.css'
 
 interface SolutionNavigationFooterProps {
   onPrev: () => void
@@ -29,8 +30,8 @@ const SolutionNavigationFooter: React.FC<SolutionNavigationFooterProps> = ({
   const progressPercentage = (displayPosition / displayTotal) * 100
 
   return (
-    <div className="actions-footer-wrapper bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-700/80 shadow-lg">
-      <div className="actions-footer-content max-w-6xl mx-auto px-4 py-3">
+    <div className="solution-footer-wrapper">
+      <div className="solution-footer-content">
         <div className="flex items-center justify-between gap-2">
           {/* Left: Previous Button */}
           <div className="flex-shrink-0">
