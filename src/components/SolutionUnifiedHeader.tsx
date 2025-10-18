@@ -151,7 +151,7 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
         <div className="progress-indicator">
           Question {currentQuestion} of {totalQuestions}
         </div>
-        <div className={`px-3 py-1 rounded-lg text-sm font-medium ml-3 ${getStatusPillClasses(status)}`}>
+        <div className={`px-3 py-1 rounded-full text-sm font-medium ml-3 ${getStatusPillClasses(status)}`}>
           {getStatusLabel(status)}
         </div>
       </div>
