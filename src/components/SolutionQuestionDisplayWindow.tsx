@@ -149,12 +149,12 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
               const isUserChoice = userAnswerKey === key
               const isIncorrectChoice = isUserChoice && !isCorrect
               
-              // Solution-specific styling
+              // Premium solid-fill highlighting with contrast inversion
               const baseClasses = 'block p-4 rounded-xl transition-all duration-200'
               const stateClasses = isCorrect
-                ? 'bg-green-50 dark:bg-green-900/20'
+                ? 'bg-green-600' // Deep saturated green
                 : isIncorrectChoice
-                  ? 'bg-red-50 dark:bg-red-900/20'
+                  ? 'bg-red-600' // Deep saturated red
                   : 'bg-white dark:bg-slate-800'
               
               return (
@@ -166,11 +166,11 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
                   whileTap={{ scale: 0.99 }}
                 >
                   <div className="flex items-start gap-3">
-                    {/* Option label badge */}
+                    {/* Inverted contrast label badge - white circle with colored letter */}
                     <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5
-                      ${isCorrect ? 'bg-green-600 border-green-600 text-white'
-                        : isIncorrectChoice ? 'bg-red-600 border-red-600 text-white'
-                        : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400'}
+                      ${isCorrect ? 'bg-white border-green-600 text-green-600'
+                        : isIncorrectChoice ? 'bg-white border-red-600 text-red-600'
+                        : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800'}
                     `}>
                       <span className="text-sm font-bold">{key}</span>
                     </div>
@@ -178,21 +178,35 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
                     <div className="flex-1 min-h-0">
                       <KatexRenderer
                         content={value}
-                        className="text-slate-700 dark:text-slate-300 leading-relaxed"
+                        className={`text-base leading-relaxed ${
+                          isCorrect || isIncorrectChoice 
+                            ? 'text-white' // White text on colored backgrounds
+                            : 'text-slate-700 dark:text-slate-300'
+                        }`}
                       />
                     </div>
 
-                    {/* Status labels */}
+                    {/* Professional status icons */}
                     <div className="flex flex-col items-end gap-2">
                       {isCorrect && (
-                        <span className="px-2 py-1 rounded-md text-xs font-medium bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200">
-                          Correct
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-1 rounded-md text-xs font-medium bg-white/20 text-white">
+                            Correct
+                          </span>
+                          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
                       )}
                       {isIncorrectChoice && (
-                        <span className="px-2 py-1 rounded-md text-xs font-medium bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200">
-                          Your Answer
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-1 rounded-md text-xs font-medium bg-white/20 text-white">
+                            Your Answer
+                          </span>
+                          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </div>
                       )}
                     </div>
                   </div>

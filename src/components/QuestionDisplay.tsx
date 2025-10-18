@@ -244,7 +244,7 @@ export default function QuestionDisplay({
               <div className="flex-1 min-h-0">
                 <KatexRenderer 
                   content={value}
-                  className={`leading-relaxed text-base font-medium ${
+                  className={`leading-relaxed text-lg font-medium ${
                     userAnswer === key 
                       ? 'text-slate-800 dark:text-slate-100' 
                       : 'text-slate-700 dark:text-slate-300'

@@ -22,7 +22,7 @@
 .question-text {
   flex-grow: 1; /* Allows the text to take up available space */
   font-family: var(--font-family-sans);
-  font-size: var(--font-size-xl); /* 20px */
+  font-size: var(--font-size-lg); /* 18px - slightly smaller */
   font-weight: var(--font-weight-semibold); /* 600 */
   color: var(--color-text-primary);
   line-height: 1.5; /* 30px */
@@ -53,6 +53,6 @@
   }
   
   .question-text {
-    font-size: var(--font-size-lg); /* 18px on mobile */
+    font-size: var(--font-size-base); /* 16px on mobile - slightly smaller */
   }
 }
