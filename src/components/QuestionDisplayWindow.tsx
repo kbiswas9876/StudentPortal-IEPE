@@ -178,11 +178,6 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
       // This effectively "snaps" the initial display to the correct starting value.
       const remainingSeconds = Math.ceil(remainingMs / 1000);
       
-      // AUTO-SUBMISSION TRIGGER:
-      if (remainingSeconds <= 0 && onTimeUp) {
-        onTimeUp();
-      }
-      
       // Create a new formatting function to handle seconds directly
       const formatSecondsToMMSS = (totalSeconds: number) => {
           const minutes = Math.floor(totalSeconds / 60);
@@ -196,7 +191,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
       const elapsedMs = now - sessionStartTime;
       return formatTime(elapsedMs);
     }
-  }, [now, sessionStartTime, testMode, timeLimitInMinutes, onTimeUp]);
+  }, [now, sessionStartTime, testMode, timeLimitInMinutes]);
   
   // Calculate remaining seconds for visual cues
   const remainingSeconds = useMemo(() => {
@@ -207,6 +202,17 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
     const remainingMs = Math.max(0, totalTimeMs - elapsedMs);
     return Math.ceil(remainingMs / 1000);
   }, [now, sessionStartTime, testMode, timeLimitInMinutes]);
+  
+  // FIX: Add this new useEffect to handle the side effect of auto-submission.
+  useEffect(() => {
+    // This effect runs after every render where remainingSeconds changes.
+    if (remainingSeconds !== null && remainingSeconds <= 0) {
+      if (onTimeUp) {
+        console.log("TIMER EXPIRED: Triggering auto-submission via useEffect.");
+        onTimeUp();
+      }
+    }
+  }, [remainingSeconds, onTimeUp]); // Dependency array ensures this runs only when needed.
   
   // FIX: Use TimerDisplay component for in-question timer to properly handle pause state
   // Pass the cumulative time in milliseconds and isPaused state to TimerDisplay
