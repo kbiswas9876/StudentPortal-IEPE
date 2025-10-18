@@ -150,7 +150,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   // TimerDisplay component will handle pause/resume correctly
 
   return (
-    <div className="question-window-container">
+    <div className="question-display-window">
       {/* The header is now a real component */}
       <UnifiedHeader 
         currentQuestion={currentQuestionNumber}

@@ -1,9 +1,9 @@
 /* QuestionDisplayWindow Layout Styles - Fixed Header/Footer Architecture */
 
-.question-window-container {
+.question-display-window {
   display: flex;
   flex-direction: column; /* Stack children vertically */
-  height: 100vh; /* Make the container take up the full screen height */
+  height: 100%; /* Use 100% instead of 100vh to work within parent container */
   width: 100%;
   background-color: var(--color-background-page);
   overflow: hidden; /* Prevent the whole page from scrolling */
@@ -37,7 +37,7 @@
 .actions-footer-wrapper {
   flex-shrink: 0; /* CRITICAL: Prevents the footer from shrinking */
   width: 100%;
-  /* Removed fixed padding to allow Tailwind classes to control height */
+  padding: 12px 0; /* Reduced vertical padding to align with submit button */
   background-color: var(--color-background-page); /* Ensures it has a solid background */
   border-top: 1px solid var(--color-border-primary); /* Thinner border for compact design */
   z-index: 10; /* Ensure footer stays on top */

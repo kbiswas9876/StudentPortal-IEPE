@@ -11,7 +11,7 @@
   width: 100%;
   max-width: 880px; /* CRITICAL: Must match the content card's max-width */
   margin: 0 auto; /* Horizontally centers the entire footer */
-  padding: 0; /* Remove any extra padding that might misalign it */
+  padding: 0 24px; /* Added horizontal padding for proper spacing */
 }
 
 .footer-left-zone, .footer-right-zone, .footer-center-zone {
@@ -25,20 +25,20 @@
   justify-content: center;
 }
 
-/* Base button style - Updated for compact design */
+/* Base button style - Updated for proper height */
 .action-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* Removed fixed height to allow Tailwind classes to control */
-  padding: 0 20px; /* Increased padding */
+  height: 44px; /* Slightly reduced height for better alignment */
+  padding: 0 24px; /* Increased horizontal padding */
   border-radius: var(--border-radius-sm); /* 8px */
   font-size: 15px;
   font-weight: var(--font-weight-semibold);
   border: 1.5px solid transparent;
   cursor: pointer;
   transition: all var(--transition-fast);
-  min-width: 120px; /* Ensure minimum width for visibility */
+  min-width: 140px; /* Increased minimum width for better visibility */
 }
 
 .action-button:disabled {
