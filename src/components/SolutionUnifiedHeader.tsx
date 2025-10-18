@@ -90,50 +90,63 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
     }
   }
 
-  // Get background color and icon for time display
-  const getTimeDisplayStyle = (timeTakenSeconds: number, difficulty: string | null, status: string) => {
+  // Get target time based on difficulty
+  const getTargetTime = (difficulty: string | null): number => {
+    const ADVANCED_TIME_THRESHOLDS = {
+      'Easy': 20,
+      'Easy-Moderate': 30,
+      'Moderate': 45,
+      'Moderate-Hard': 60,
+      'Hard': 90,
+      'default': 36
+    }
+    return ADVANCED_TIME_THRESHOLDS[difficulty as keyof typeof ADVANCED_TIME_THRESHOLDS] || ADVANCED_TIME_THRESHOLDS.default
+  }
+
+  // Get premium performance chip styling
+  const getPremiumPerformanceChipStyle = (timeTakenSeconds: number, difficulty: string | null, status: string) => {
     const performanceState = getNuancedPerformanceState(
       timeTakenSeconds, 
       difficulty as AdvancedDifficulty, 
       status as 'correct' | 'incorrect' | 'skipped'
     )
     
-    // Nuanced styling system based on performance state
+    // Premium styling system with dynamic backgrounds and effects
     switch (performanceState) {
       case 'Slow':
         return {
-          bgClass: 'bg-red-50 dark:bg-red-900/20',
-          borderClass: 'border-red-300 dark:border-red-700',
+          containerClass: 'bg-red-500 text-white shadow-lg shadow-red-200/50 dark:shadow-red-900/30',
           icon: '😞',
-          label: 'Slow'
+          label: 'SLOW',
+          labelClass: 'font-bold text-sm uppercase tracking-wide'
         }
       case 'Superfast':
         return {
-          bgClass: 'bg-green-50 dark:bg-green-900/20',
-          borderClass: 'border-green-300 dark:border-green-700',
+          containerClass: 'bg-green-500 text-white shadow-lg shadow-green-200/50 dark:shadow-green-900/30',
           icon: '😄',
-          label: 'Superfast'
+          label: 'SUPERFAST',
+          labelClass: 'font-bold text-sm uppercase tracking-wide'
         }
       case 'OnTime':
         return {
-          bgClass: 'bg-green-50 dark:bg-green-900/20',
-          borderClass: 'border-green-300 dark:border-green-700',
+          containerClass: 'bg-green-500 text-white shadow-lg shadow-green-200/50 dark:shadow-green-900/30',
           icon: '🙂',
-          label: 'On Time'
+          label: 'ON TIME',
+          labelClass: 'font-bold text-sm uppercase tracking-wide'
         }
       case 'OnTimeButNotCorrect':
         return {
-          bgClass: 'bg-gray-50 dark:bg-gray-800/50',
-          borderClass: 'border-gray-200 dark:border-gray-700',
+          containerClass: 'bg-gray-500 text-white shadow-lg shadow-gray-200/50 dark:shadow-gray-900/30',
           icon: '😐',
-          label: 'On Time but not Correct'
+          label: 'ON TIME BUT NOT CORRECT',
+          labelClass: 'font-bold text-xs uppercase tracking-wide'
         }
       default:
         return {
-          bgClass: 'bg-gray-50 dark:bg-gray-800/50',
-          borderClass: 'border-gray-200 dark:border-gray-700',
+          containerClass: 'bg-gray-500 text-white shadow-lg shadow-gray-200/50 dark:shadow-gray-900/30',
           icon: '⏱️',
-          label: 'Time'
+          label: 'TIME',
+          labelClass: 'font-bold text-sm uppercase tracking-wide'
         }
     }
   }
@@ -157,15 +170,36 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
       </div>
 
       <div className="header-zone center">
-        <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg border-2 transition-all duration-200 ${getTimeDisplayStyle(timeTakenSeconds, difficulty, status).bgClass} ${getTimeDisplayStyle(timeTakenSeconds, difficulty, status).borderClass}`}>
-          <span className="text-lg">{getTimeDisplayStyle(timeTakenSeconds, difficulty, status).icon}</span>
-          <div className="flex flex-col items-start">
-            <span className={`font-mono text-base font-bold leading-tight ${getTimeColor(timeTakenSeconds, difficulty, status)}`}>
-              {formatTime(timeTakenSeconds)}
-            </span>
-            <span className="text-[10px] uppercase tracking-wide font-semibold text-gray-600 dark:text-gray-400 mt-0.5">
-              {getTimeDisplayStyle(timeTakenSeconds, difficulty, status).label}
-            </span>
+        {/* Premium Performance Chip */}
+        <div className={`flex items-center space-x-3 px-4 py-3 rounded-full transition-all duration-300 ${getPremiumPerformanceChipStyle(timeTakenSeconds, difficulty, status).containerClass}`}>
+          {/* Icon */}
+          <span className="text-lg flex-shrink-0">{getPremiumPerformanceChipStyle(timeTakenSeconds, difficulty, status).icon}</span>
+          
+          {/* Performance Label */}
+          <span className={`${getPremiumPerformanceChipStyle(timeTakenSeconds, difficulty, status).labelClass} flex-shrink-0`}>
+            {getPremiumPerformanceChipStyle(timeTakenSeconds, difficulty, status).label}
+          </span>
+          
+          {/* Separator */}
+          <span className="text-white/60 font-bold">|</span>
+          
+          {/* Time Information */}
+          <div className="flex items-center space-x-4 text-sm">
+            {/* User's Time */}
+            <div className="flex items-center space-x-1">
+              <span className="font-medium opacity-90">You:</span>
+              <span className="font-mono font-bold text-white">
+                {formatTime(timeTakenSeconds)}
+              </span>
+            </div>
+            
+            {/* Target Time */}
+            <div className="flex items-center space-x-1">
+              <span className="font-medium opacity-90">Target:</span>
+              <span className="font-mono font-bold text-white">
+                {formatTime(getTargetTime(difficulty))}
+              </span>
+            </div>
           </div>
         </div>
       </div>
