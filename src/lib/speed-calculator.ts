@@ -109,6 +109,69 @@ export function getAdvancedThreeTierSpeedCategory(timeTakenInSeconds: number, di
 }
 
 /**
+ * NEW NUANCED SPEED & ACCURACY ALGORITHM
+ * Hierarchical algorithm that provides sophisticated feedback based on speed and accuracy.
+ * Priority: Slow > Accuracy > Speed analysis
+ *
+ * @param timeTakenInSeconds - The time the user took to answer.
+ * @param difficulty - The difficulty level from the five-tier model.
+ * @param answerStatus - The correctness of the answer ('correct', 'incorrect', 'skipped').
+ * @returns 'Slow', 'Superfast', 'OnTime', or 'OnTimeButNotCorrect'.
+ */
+export function getNuancedPerformanceState(
+  timeTakenInSeconds: number, 
+  difficulty: AdvancedDifficulty, 
+  answerStatus: 'correct' | 'incorrect' | 'skipped'
+): 'Slow' | 'Superfast' | 'OnTime' | 'OnTimeButNotCorrect' {
+  // Step 1: Get the base parameters for this question
+  let threshold: number;
+
+  switch (difficulty) {
+    case 'Easy':
+      threshold = ADVANCED_TIME_THRESHOLDS['Easy'];
+      break;
+    case 'Easy-Moderate':
+      threshold = ADVANCED_TIME_THRESHOLDS['Easy-Moderate'];
+      break;
+    case 'Moderate':
+      threshold = ADVANCED_TIME_THRESHOLDS['Moderate'];
+      break;
+    case 'Moderate-Hard':
+      threshold = ADVANCED_TIME_THRESHOLDS['Moderate-Hard'];
+      break;
+    case 'Hard':
+      threshold = ADVANCED_TIME_THRESHOLDS['Hard'];
+      break;
+    default:
+      threshold = ADVANCED_TIME_THRESHOLDS['default'];
+      break;
+  }
+
+  const slowThreshold = threshold * 1.10; // 110% of target time
+  const superfastThreshold = threshold * 0.80; // 80% of target time
+
+  // PRIORITY 1: The "Slow" Check. This overrides everything else.
+  if (timeTakenInSeconds > slowThreshold) {
+    return 'Slow';
+  }
+
+  // PRIORITY 2: The "Accuracy" Check (only runs if the user was NOT slow).
+  if (answerStatus === 'correct') {
+    // If Correct, check for exceptional speed.
+    if (timeTakenInSeconds < superfastThreshold) {
+      return 'Superfast';
+    } else {
+      // Correct and within the normal time range.
+      return 'OnTime';
+    }
+  } else {
+    // This block handles both 'incorrect' and 'skipped' statuses.
+    // Since the "Slow" check failed, we know they were within the time limit.
+    return 'OnTimeButNotCorrect';
+  }
+}
+
+/**
  * LEGACY 3-TIER ALGORITHM (Deprecated - kept for backward compatibility)
  * Use getAdvancedSpeedCategory() for new implementations.
  * 

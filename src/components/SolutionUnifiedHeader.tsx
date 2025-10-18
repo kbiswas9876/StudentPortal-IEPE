@@ -4,7 +4,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, Flag, Bookmark } from 'lucide-react'
 import '../styles/UnifiedHeader.css'
-import { getAdvancedThreeTierSpeedCategory, type AdvancedDifficulty } from '@/lib/speed-calculator'
+import { getNuancedPerformanceState, type AdvancedDifficulty } from '@/lib/speed-calculator'
 
 interface SolutionUnifiedHeaderProps {
   currentQuestion: number
@@ -34,9 +34,11 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
   const getStatusPillClasses = (s: 'correct' | 'incorrect' | 'skipped') => {
     switch (s) {
       case 'correct':
-        return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+        return 'bg-green-500 text-white font-bold'
       case 'incorrect':
-        return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+        return 'bg-red-600 text-white font-bold'
+      case 'skipped':
+        return 'bg-gray-500 text-white font-bold'
       default:
         return 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200'
     }
@@ -67,67 +69,72 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
 
   // Get color coding for time taken based on performance
   const getTimeColor = (timeTakenSeconds: number, difficulty: string | null, status: string) => {
-    // Only apply color-coding to correct answers
-    if (status !== 'correct') {
-      return 'text-gray-500 dark:text-gray-400'
+    const performanceState = getNuancedPerformanceState(
+      timeTakenSeconds, 
+      difficulty as AdvancedDifficulty, 
+      status as 'correct' | 'incorrect' | 'skipped'
+    )
+    
+    // Nuanced color system based on performance state
+    switch (performanceState) {
+      case 'Slow':
+        return 'text-red-600 dark:text-red-400' // Slow - Red
+      case 'Superfast':
+        return 'text-green-600 dark:text-green-400' // Superfast - Green
+      case 'OnTime':
+        return 'text-green-600 dark:text-green-400' // On Time - Green
+      case 'OnTimeButNotCorrect':
+        return 'text-gray-500 dark:text-gray-400' // On Time but not correct - Gray
+      default:
+        return 'text-gray-500 dark:text-gray-400'
     }
-    
-    const speedCategory = getAdvancedThreeTierSpeedCategory(timeTakenSeconds, difficulty as AdvancedDifficulty)
-    
-    // Three-tier color system for correct answers only
-    if (speedCategory === 'Fast') {
-      return 'text-green-600 dark:text-green-400' // Fast - Green
-    } else if (speedCategory === 'Average') {
-      return 'text-yellow-600 dark:text-yellow-400' // Average - Yellow/Amber
-    } else if (speedCategory === 'Slow') {
-      return 'text-red-600 dark:text-red-400' // Slow - Red
-    }
-    
-    return 'text-gray-500 dark:text-gray-400'
   }
 
   // Get background color and icon for time display
   const getTimeDisplayStyle = (timeTakenSeconds: number, difficulty: string | null, status: string) => {
-    // Only apply enhanced styling to correct answers
-    if (status !== 'correct') {
-      return {
-        bgClass: 'bg-gray-50 dark:bg-gray-800/50',
-        borderClass: 'border-gray-200 dark:border-gray-700',
-        icon: '⏱️',
-        label: 'Time'
-      }
-    }
+    const performanceState = getNuancedPerformanceState(
+      timeTakenSeconds, 
+      difficulty as AdvancedDifficulty, 
+      status as 'correct' | 'incorrect' | 'skipped'
+    )
     
-    const speedCategory = getAdvancedThreeTierSpeedCategory(timeTakenSeconds, difficulty as AdvancedDifficulty)
-    
-    if (speedCategory === 'Fast') {
-      return {
-        bgClass: 'bg-green-50 dark:bg-green-900/20',
-        borderClass: 'border-green-300 dark:border-green-700',
-        icon: '⚡',
-        label: 'Fast'
-      }
-    } else if (speedCategory === 'Average') {
-      return {
-        bgClass: 'bg-yellow-50 dark:bg-yellow-900/20',
-        borderClass: 'border-yellow-300 dark:border-yellow-700',
-        icon: '⏰',
-        label: 'Average'
-      }
-    } else if (speedCategory === 'Slow') {
-      return {
-        bgClass: 'bg-red-50 dark:bg-red-900/20',
-        borderClass: 'border-red-300 dark:border-red-700',
-        icon: '🐌',
-        label: 'Slow'
-      }
-    }
-    
-    return {
-      bgClass: 'bg-gray-50 dark:bg-gray-800/50',
-      borderClass: 'border-gray-200 dark:border-gray-700',
-      icon: '⏱️',
-      label: 'Time'
+    // Nuanced styling system based on performance state
+    switch (performanceState) {
+      case 'Slow':
+        return {
+          bgClass: 'bg-red-50 dark:bg-red-900/20',
+          borderClass: 'border-red-300 dark:border-red-700',
+          icon: '😞',
+          label: 'Slow'
+        }
+      case 'Superfast':
+        return {
+          bgClass: 'bg-green-50 dark:bg-green-900/20',
+          borderClass: 'border-green-300 dark:border-green-700',
+          icon: '😄',
+          label: 'Superfast'
+        }
+      case 'OnTime':
+        return {
+          bgClass: 'bg-green-50 dark:bg-green-900/20',
+          borderClass: 'border-green-300 dark:border-green-700',
+          icon: '🙂',
+          label: 'On Time'
+        }
+      case 'OnTimeButNotCorrect':
+        return {
+          bgClass: 'bg-gray-50 dark:bg-gray-800/50',
+          borderClass: 'border-gray-200 dark:border-gray-700',
+          icon: '😐',
+          label: 'On Time but not Correct'
+        }
+      default:
+        return {
+          bgClass: 'bg-gray-50 dark:bg-gray-800/50',
+          borderClass: 'border-gray-200 dark:border-gray-700',
+          icon: '⏱️',
+          label: 'Time'
+        }
     }
   }
 
