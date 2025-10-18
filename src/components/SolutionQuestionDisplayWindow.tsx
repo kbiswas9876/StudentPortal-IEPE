@@ -177,7 +177,7 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
 
                     <div className="flex-1 min-h-0">
                       <KatexRenderer
-                        content={value}
+                        content={value as string}
                         className={`text-base leading-relaxed ${
                           isCorrect || isIncorrectChoice 
                             ? 'text-white' // White text on colored backgrounds
@@ -218,8 +218,8 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
 
         {/* Question Details - Same as Practice Interface */}
         <QuestionDetails 
-          source={question.exam_metadata}
-          tags={question.admin_tags}
+          source={question.exam_metadata || undefined}
+          tags={question.admin_tags || undefined}
         />
 
         {/* Professional Solution Box */}
