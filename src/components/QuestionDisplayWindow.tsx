@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import '../styles/QuestionDisplayWindow.css'
 import QuestionCard from './QuestionCard'
 import OptionCard from './OptionCard'
@@ -37,6 +37,7 @@ interface QuestionDisplayWindowProps {
   onExit?: () => void
   sessionStartTime?: number
   timeLimitInMinutes?: number
+  testMode?: 'practice' | 'timed'
   currentQuestionStartTime?: number
   cumulativeTime?: number
   isPaused?: boolean
@@ -60,6 +61,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   onExit,
   sessionStartTime,
   timeLimitInMinutes,
+  testMode,
   currentQuestionStartTime,
   cumulativeTime,
   isPaused,
@@ -143,9 +145,41 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
   }
 
-  // CRITICAL FIX: Both timers must be synchronized with isPaused state
-  // The PracticeInterface already handles timer synchronization - we just need to display correctly
-  const mainTimer = sessionStartTime ? formatTime(Date.now() - sessionStartTime) : "11:01"
+  // CRITICAL FIX: Implement conditional timer logic based on testMode
+  const [now, setNow] = useState(Date.now());
+
+  // This useEffect hook will update the 'now' state every 100ms,
+  // forcing the timer display to re-render and stay in sync.
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  const mainTimer = useMemo(() => {
+    if (!sessionStartTime) return "00:00";
+
+    if (testMode === 'timed' && timeLimitInMinutes) {
+      // --- COUNTDOWN LOGIC ---
+      const totalTimeMs = timeLimitInMinutes * 60 * 1000;
+      const elapsedMs = now - sessionStartTime;
+      const remainingMs = Math.max(0, totalTimeMs - elapsedMs);
+      return formatTime(remainingMs);
+    } else {
+      // --- COUNT-UP LOGIC (Existing Behavior) ---
+      const elapsedMs = now - sessionStartTime;
+      return formatTime(elapsedMs);
+    }
+  }, [now, sessionStartTime, testMode, timeLimitInMinutes]);
+  
+  // DEBUG: Log timer calculation details
+  console.log('TIMER CALCULATION:', { 
+    sessionStartTime, 
+    timeLimitInMinutes, 
+    testMode,
+    currentTime: now,
+    elapsed: sessionStartTime ? now - sessionStartTime : 0,
+    mainTimer 
+  });
   
   // FIX: Use TimerDisplay component for in-question timer to properly handle pause state
   // Pass the cumulative time in milliseconds and isPaused state to TimerDisplay

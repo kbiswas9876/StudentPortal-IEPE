@@ -58,6 +58,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   // Check if this is a fresh start
   const isFreshStart = searchParams.get('fresh') === 'true'
   
+  // DEBUG: Log timer props for analysis
+  console.log('TIMER PROPS:', { testMode, timeLimitInMinutes });
+  
   // Extract stable primitive values from auth context to prevent unnecessary effect re-runs
   const userId = user?.id
   const sessionToken = session?.access_token
@@ -1099,6 +1102,7 @@ useEffect(() => {
           onExit={() => setShowExitModal(true)}
           sessionStartTime={effectiveSessionStartTime}
           timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
+          testMode={testMode}
           currentQuestionStartTime={currentQuestionStartRef.current}
           cumulativeTime={displayTime}
           isPaused={isPaused}
