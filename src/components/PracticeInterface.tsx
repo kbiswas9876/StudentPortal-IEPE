@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
 import { useAuth } from '@/lib/auth-context'
@@ -53,6 +53,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const { user, session } = useAuth()
   const { showToast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Check if this is a fresh start
+  const isFreshStart = searchParams.get('fresh') === 'true'
   
   // Extract stable primitive values from auth context to prevent unnecessary effect re-runs
   const userId = user?.id
@@ -255,88 +259,96 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   // Initialize session states - ENHANCED WITH SESSIONSTORAGE PERSISTENCE
   useEffect(() => {
     if (questions.length > 0) {
-      // STEP 1: Check sessionStorage first (highest priority - survives re-mounts)
-      const persistedState = restoreStateFromSessionStorage();
-      
-      if (persistedState) {
-        // RESTORE FROM SESSIONSTORAGE - This handles tab switches and re-mounts
-        console.log('✅ RESTORING FROM SESSIONSTORAGE');
+      let restored = false;
+
+      // ONLY attempt to restore if this is NOT a fresh start
+      if (!isFreshStart) {
+        // STEP 1: Check sessionStorage first (highest priority - survives re-mounts)
+        const persistedState = restoreStateFromSessionStorage();
         
-        setSessionStates(persistedState.sessionStates);
-        setCurrentIndex(persistedState.currentIndex);
-        
-        // Restore timer state with adjusted start time
-        const elapsedTime = Date.now() - persistedState.timestamp;
-        const adjustedStartTime = persistedState.sessionStartTime + elapsedTime;
-        setSessionStartTime(adjustedStartTime);
-        sessionStartTimeRef.current = adjustedStartTime;
-        
-        // Restore per-question timing data
-        cumulativeTimeRef.current = persistedState.cumulativeTime;
-        activeQuestionIdRef.current = persistedState.activeQuestionId;
-        currentQuestionStartRef.current = Date.now();
-        
-        // Set initial display time
-        const initialTime = cumulativeTimeRef.current[persistedState.activeQuestionId] || 0;
-        setDisplayTime(initialTime);
-        
-        setIsInitialized(true);
-        
-      } else if (savedSessionState) {
-        // STEP 2: Restore from saved session (database restore)
-        console.log('✅ RESTORING FROM SAVED SESSION');
-        
-        const restoredStates: SessionState[] = questions.map((q, index) => {
-          const questionId = q.id
-          return {
-            status: (savedSessionState?.questionStatuses?.[questionId] as QuestionStatus) || 'not_visited',
-            user_answer: savedSessionState?.userAnswers?.[questionId] || null,
-            is_bookmarked: savedSessionState?.bookmarkedQuestions?.[questionId] || false
-          }
-        })
-        
-        // RE-HYDRATE ALL STATE FROM SAVED SESSION
-        setSessionStates(restoredStates)
-        setCurrentIndex(savedSessionState?.currentIndex || 0)
-        
-        // --- The Core Fix: Main Session Timer State Persistence ---
-        // Instead of using the old startTime, we calculate a NEW adjusted startTime.
-        // This implements the "Adjusted Start Time" trick to pause/resume the main timer.
-        const savedMainTimerValue = savedSessionState?.mainTimerValue || 0; // This is in seconds
-        const savedMainTimerValueMs = savedMainTimerValue * 1000; // Convert to milliseconds
-        const adjustedStartTime = Date.now() - savedMainTimerValueMs;
-        
-        // Use this new adjusted start time to initialize the session
-        // The timer component will now calculate: Date.now() - adjustedStartTime = savedMainTimerValueMs
-        // This effectively "pauses" and "resumes" the timer across sessions
-        setSessionStartTime(adjustedStartTime);
-        sessionStartTimeRef.current = adjustedStartTime; // Keep ref in sync
-        
-        // Restore per-question timing data into ref
-        if (savedSessionState?.timePerQuestion) {
-          const restoredTimePerQuestion: Record<string, number> = {}
-          Object.entries(savedSessionState.timePerQuestion).forEach(([questionId, timeInSeconds]) => {
-            restoredTimePerQuestion[questionId] = (timeInSeconds as number) * 1000 // Convert back to milliseconds
-          })
-          cumulativeTimeRef.current = restoredTimePerQuestion
-        }
-        
-        // Set initial active question ID and start time
-        if (questions.length > 0) {
-          const initialQuestionId = questions[savedSessionState?.currentIndex || 0].id.toString()
-          activeQuestionIdRef.current = initialQuestionId
-          currentQuestionStartRef.current = Date.now()
+        if (persistedState) {
+          // RESTORE FROM SESSIONSTORAGE - This handles tab switches and re-mounts
+          console.log('%c RESTORATION: Applying state from sessionStorage.', 'color: green; font-weight: bold;');
+          
+          setSessionStates(persistedState.sessionStates);
+          setCurrentIndex(persistedState.currentIndex);
+          
+          // Restore timer state with adjusted start time
+          const elapsedTime = Date.now() - persistedState.timestamp;
+          const restoredStartTime = persistedState.sessionStartTime + elapsedTime;
+          setSessionStartTime(restoredStartTime);
+          sessionStartTimeRef.current = restoredStartTime;
+          
+          // Restore per-question timing data
+          cumulativeTimeRef.current = persistedState.cumulativeTime;
+          activeQuestionIdRef.current = persistedState.activeQuestionId;
+          currentQuestionStartRef.current = Date.now();
           
           // Set initial display time
-          const initialTime = cumulativeTimeRef.current[initialQuestionId] || 0
-          setDisplayTime(initialTime)
+          const initialTime = cumulativeTimeRef.current[persistedState.activeQuestionId] || 0;
+          setDisplayTime(initialTime);
+          
+          // CRITICAL: Clear the session data after restoring to prevent re-loading on refresh
+          clearSessionStorage();
+          restored = true;
+          
+          // STEP 2: Restore from saved session (database restore)
+          console.log('%c RESTORATION: Applying state from database-saved session.', 'color: blue; font-weight: bold;');
+          
+          const restoredStates: SessionState[] = questions.map((q, index) => {
+            const questionId = q.id
+            return {
+              status: (savedSessionState?.questionStatuses?.[questionId] as QuestionStatus) || 'not_visited',
+              user_answer: savedSessionState?.userAnswers?.[questionId] || null,
+              is_bookmarked: savedSessionState?.bookmarkedQuestions?.[questionId] || false
+            }
+          })
+          
+          // RE-HYDRATE ALL STATE FROM SAVED SESSION
+          setSessionStates(restoredStates)
+          setCurrentIndex(savedSessionState?.currentIndex || 0)
+          
+          // --- The Core Fix: Main Session Timer State Persistence ---
+          // Instead of using the old startTime, we calculate a NEW adjusted startTime.
+          // This implements the "Adjusted Start Time" trick to pause/resume the main timer.
+          const savedMainTimerValue = savedSessionState?.mainTimerValue || 0; // This is in seconds
+          const savedMainTimerValueMs = savedMainTimerValue * 1000; // Convert to milliseconds
+          const databaseAdjustedStartTime = Date.now() - savedMainTimerValueMs;
+          
+          // Use this new adjusted start time to initialize the session
+          // The timer component will now calculate: Date.now() - databaseAdjustedStartTime = savedMainTimerValueMs
+          // This effectively "pauses" and "resumes" the timer across sessions
+          setSessionStartTime(databaseAdjustedStartTime);
+          sessionStartTimeRef.current = databaseAdjustedStartTime; // Keep ref in sync
+          
+          // Restore per-question timing data into ref
+          if (savedSessionState?.timePerQuestion) {
+            const restoredTimePerQuestion: Record<string, number> = {}
+            Object.entries(savedSessionState.timePerQuestion).forEach(([questionId, timeInSeconds]) => {
+              restoredTimePerQuestion[questionId] = (timeInSeconds as number) * 1000 // Convert back to milliseconds
+            })
+            cumulativeTimeRef.current = restoredTimePerQuestion
+          }
+          
+          // Set initial active question ID and start time
+          if (questions.length > 0) {
+            const initialQuestionId = questions[savedSessionState?.currentIndex || 0].id.toString()
+            activeQuestionIdRef.current = initialQuestionId
+            currentQuestionStartRef.current = Date.now()
+            
+            // Set initial display time
+            const initialTime = cumulativeTimeRef.current[initialQuestionId] || 0
+            setDisplayTime(initialTime)
+          }
+          
+          setIsInitialized(true)
+          restored = true;
         }
-        
-        setIsInitialized(true)
-        
-      } else {
-        // STEP 3: Initialize new session - NEW SESSION MODE
-        console.log('✅ INITIALIZING NEW SESSION');
+      }
+
+      // If no state was restored (either because it's a fresh start or nothing was found)
+      if (!restored) {
+        console.log('%c INITIALIZATION: Starting a completely new session.', 'color: orange; font-weight: bold;');
         
         // First, initialize with default bookmark state (false)
         const initialStates: SessionState[] = questions.map(() => ({
@@ -357,10 +369,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           setDisplayTime(0) // Start from 0 for new session
         }
         
-         setIsInitialized(true)
+        setIsInitialized(true)
       }
     }
-  }, [questions, savedSessionState, restoreStateFromSessionStorage])
+  }, [questions, savedSessionState, isFreshStart, restoreStateFromSessionStorage])
 
 // Effect: Fetch bookmark statuses ONCE on initialization
 // FIX: This should only run once when initialized, not on every session change

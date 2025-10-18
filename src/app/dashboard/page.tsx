@@ -148,7 +148,8 @@ export default function DashboardPage() {
       // Navigate to practice session with complete payload
       const queryParams: Record<string, string> = {
         questions: sequencedQuestionIds.join(','),
-        testMode: config.testMode || 'practice'
+        testMode: config.testMode || 'practice',
+        fresh: 'true' // Signal that this is a fresh start
       }
       
       // Add time limit if in timed mode

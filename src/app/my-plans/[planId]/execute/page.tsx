@@ -72,7 +72,7 @@ export default function ExecutePlanPage() {
     // For now, we'll navigate to the practice page with a placeholder
     // In a full implementation, this would fetch the actual questions based on the day's configuration
     console.log('Starting day:', day.name)
-    router.push(`/practice?planDay=${day.id}&planId=${planId}&testMode=practice`)
+    router.push(`/practice?planDay=${day.id}&planId=${planId}&testMode=practice&fresh=true`)
   }
 
   const getPlanTypeColor = (planType: string) => {

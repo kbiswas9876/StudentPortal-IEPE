@@ -520,6 +520,7 @@ export default function RevisionHubPage() {
         questions: allQuestionIds.join(','),
         mode: config.testMode,
         source: 'revision', // Add revision source tracking
+        fresh: 'true', // Signal that this is a fresh start
         ...(config.timeLimit && { timeLimit: config.timeLimit.toString() })
       })
       
