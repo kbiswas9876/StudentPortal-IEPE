@@ -11,6 +11,7 @@
   background-color: var(--color-background-card);
   /* border: 1.5px solid var(--color-border-primary); */
   border-radius: var(--border-radius-sm); /* 8px */
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
   cursor: pointer;
   
   /* The key animation part */

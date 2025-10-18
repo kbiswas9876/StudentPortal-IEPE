@@ -286,6 +286,7 @@ export default function MainQuestionView({
             <motion.div
               key={key}
               className={`${baseClasses} ${stateClasses}`}
+              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.1)' }}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
             >
@@ -392,7 +393,7 @@ export default function MainQuestionView({
                 <div 
                   className="bg-white dark:bg-slate-800 rounded-xl p-6" 
                   style={{ 
-                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important'
+                    boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.1) !important'
                   }}
                 >
                   {/* Solution content */}
