@@ -1,24 +1,55 @@
 /* ActionsFooter Styles - Fixed Layout Architecture */
 
+/* Wrapper remains for compatibility; positioning (fixed/sticky) is managed in QuestionDisplayWindow.css */
 .actions-footer-wrapper {
   /* This style is now in QuestionDisplayWindow.css */
 }
 
-.actions-footer-content {
-  display: flex;
-  justify-content: space-between; /* This is the key change */
-  align-items: center;
+/* Full-width footer container; preserves horizontal padding and visual treatment.
+   Do NOT set fixed/sticky here to avoid regressions. */
+.actions-footer {
   width: 100%;
-  max-width: 880px; /* CRITICAL: Must match the content card's max-width */
-  margin: 0 auto; /* Horizontally centers the entire footer */
-  padding: 0 24px; /* Added horizontal padding for proper spacing */
-  margin-left: 0; /* Remove left margin for edge-to-edge alignment */
+  padding: 0 24px;
 }
 
+/* 3-column grid:
+   - 1fr left gutter
+   - centered content column matching the question card width
+   - 1fr right gutter starting exactly at content's right edge */
+.actions-footer-grid {
+  display: grid;
+  grid-template-columns: 1fr var(--content-max, 880px) 1fr;
+  align-items: center;
+  column-gap: var(--spacing-3);
+}
+
+/* Legacy container neutralized; retained if referenced elsewhere */
+.actions-footer-content {
+  display: contents;
+}
+
+/* Group base layout */
 .footer-left-zone, .footer-right-zone, .footer-center-zone {
   display: flex;
   align-items: center;
   gap: var(--spacing-3); /* 12px gap between buttons in a group */
+}
+
+/* Left/secondary group lives in the centered content column */
+.footer-left-zone {
+  grid-column: 2;
+  justify-self: start;
+}
+
+/* PRIMARY zone placed in the right column and left-aligned so its LEFT EDGE aligns
+   to the RIGHT EDGE of the main content column above via the grid boundary. */
+.footer-primary-zone {
+  grid-column: 3;
+  justify-self: start; /* Critical alignment rule */
+}
+
+.footer-right-zone {
+  /* Unused in practice layout after refactor; retained for compatibility */
 }
 
 .footer-center-zone {
@@ -61,6 +92,7 @@
   background-color: #8B5CF6; /* Purple background */
   color: white;
   border-color: #8B5CF6;
+  /* margin spacing now handled by group gap */
 }
 .action-button.secondary:hover {
   background-color: #7C3AED; /* Darker purple on hover */
@@ -73,8 +105,26 @@
   color: white;
   border-color: #EF4444;
   padding: 0 20px; /* Restore padding for proper button appearance */
+  /* margin spacing now handled by group gap */
 }
 .action-button.tertiary:hover:not(:disabled) {
   background-color: #DC2626; /* Darker red on hover */
   border-color: #DC2626;
+}
+
+/* Responsive: stack zones on narrow screens */
+@media (max-width: 640px) {
+  .actions-footer-grid {
+    grid-template-columns: 1fr;
+  }
+  .footer-left-zone {
+    grid-column: 1;
+    justify-self: stretch;
+    flex-wrap: wrap;
+  }
+  .footer-primary-zone {
+    grid-column: 1;
+    justify-self: stretch;
+    margin-top: var(--spacing-3);
+  }
 }

@@ -34,10 +34,12 @@
 }
 
 /* Fixed Footer Styles */
+/* Practice-only alignment: Increase top padding by 20px (to 40px) so the footer's top edge aligns with the status legend container top edge.
+   Bottom padding remains 20px. Solution styles remain unchanged. */
 .actions-footer-wrapper {
   flex-shrink: 0; /* CRITICAL: Prevents the footer from shrinking */
   width: 100%;
-  padding: 12px 0; /* Reduced vertical padding to align with submit button */
+  padding: 40px 0 20px 0; /* Top: 40px, Left/Right: 0, Bottom: 20px */
   background-color: var(--color-background-page); /* Ensures it has a solid background */
   border-top: 1px solid var(--color-border-primary); /* Thinner border for compact design */
   z-index: 10; /* Ensure footer stays on top */

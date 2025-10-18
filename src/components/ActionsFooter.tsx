@@ -17,17 +17,17 @@ const ActionsFooter: React.FC<ActionsFooterProps> = ({
   hasSelection = false
 }) => {
   return (
-    <div className="actions-footer-wrapper">
-      <div className="actions-footer-content">
+    <div className="actions-footer actions-footer-wrapper">
+      <div className="actions-footer-grid">
         <div className="footer-left-zone">
-          <button 
+          <button
             className="action-button secondary"
             onClick={onMarkForReview}
             // Mark for Review should always be enabled - user can mark unanswered questions
           >
             Mark for Review & Next
           </button>
-          <button 
+          <button
             className="action-button tertiary"
             onClick={onClearResponse}
             disabled={!hasSelection}
@@ -35,8 +35,9 @@ const ActionsFooter: React.FC<ActionsFooterProps> = ({
             Clear Response
           </button>
         </div>
-        <div className="footer-right-zone">
-          <button 
+
+        <div className="footer-primary-zone">
+          <button
             className="action-button primary"
             onClick={onSaveAndNext}
             // Save & Next should always be enabled - user can save unanswered questions
