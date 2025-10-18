@@ -1106,6 +1106,7 @@ useEffect(() => {
           isPaused={isPaused}
           showBookmark={false} // Disable bookmarking in practice interface
           onTogglePause={handlePauseSession}
+          onTimeUp={handleAutoSubmission} // NEW: Pass auto-submission handler
           // CRITICAL: Pass the real button handlers from PracticeInterface
           onSaveAndNext={handleSaveAndNext}
           onMarkForReviewAndNext={handleMarkForReviewAndNext}

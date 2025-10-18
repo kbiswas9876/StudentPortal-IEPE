@@ -43,6 +43,7 @@ interface QuestionDisplayWindowProps {
   isPaused?: boolean
   showBookmark?: boolean
   onTogglePause?: () => void
+  onTimeUp?: () => void // NEW: Callback for when time reaches 0
   // CRITICAL: Add missing button functionality props
   onSaveAndNext?: () => void
   onMarkForReviewAndNext?: () => void
@@ -67,6 +68,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   isPaused,
   showBookmark,
   onTogglePause,
+  onTimeUp, // NEW: Add this parameter
   // CRITICAL: Add missing button functionality props
   onSaveAndNext,
   onMarkForReviewAndNext
@@ -176,6 +178,11 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
       // This effectively "snaps" the initial display to the correct starting value.
       const remainingSeconds = Math.ceil(remainingMs / 1000);
       
+      // AUTO-SUBMISSION TRIGGER:
+      if (remainingSeconds <= 0 && onTimeUp) {
+        onTimeUp();
+      }
+      
       // Create a new formatting function to handle seconds directly
       const formatSecondsToMMSS = (totalSeconds: number) => {
           const minutes = Math.floor(totalSeconds / 60);
@@ -189,6 +196,16 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
       const elapsedMs = now - sessionStartTime;
       return formatTime(elapsedMs);
     }
+  }, [now, sessionStartTime, testMode, timeLimitInMinutes, onTimeUp]);
+  
+  // Calculate remaining seconds for visual cues
+  const remainingSeconds = useMemo(() => {
+    if (!sessionStartTime || testMode !== 'timed' || !timeLimitInMinutes) return null;
+    
+    const totalTimeMs = timeLimitInMinutes * 60 * 1000;
+    const elapsedMs = now - sessionStartTime;
+    const remainingMs = Math.max(0, totalTimeMs - elapsedMs);
+    return Math.ceil(remainingMs / 1000);
   }, [now, sessionStartTime, testMode, timeLimitInMinutes]);
   
   // FIX: Use TimerDisplay component for in-question timer to properly handle pause state
@@ -205,6 +222,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
         currentQuestion={currentQuestionNumber}
         totalQuestions={currentTotalQuestions}
         mainTimer={mainTimer}
+        isLowTime={remainingSeconds !== null && remainingSeconds < 60} // NEW: Pass low time flag
         onBack={handleBack}
         onReport={handleReport}
         isPaused={isPaused}

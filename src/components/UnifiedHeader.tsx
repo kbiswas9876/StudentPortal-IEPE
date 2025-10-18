@@ -9,6 +9,7 @@ interface UnifiedHeaderProps {
   currentQuestion: number
   totalQuestions: number
   mainTimer: string
+  isLowTime?: boolean // NEW: Flag for low time styling
   onBack?: () => void
   onReport?: () => void
   isPaused?: boolean
@@ -19,6 +20,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   currentQuestion,
   totalQuestions,
   mainTimer,
+  isLowTime = false, // NEW: Add this parameter
   onBack,
   onReport,
   isPaused = false,
@@ -42,7 +44,16 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
       <div className="header-zone center">
         <div className="premium-timer-container">
           <Clock size={18} className="premium-timer-icon" />
-          <span className="premium-timer medium primary">{mainTimer}</span>
+          <span
+            key={mainTimer} // CRITICAL: This key changes every second, forcing a re-render and re-animation.
+            className={`premium-timer medium font-semibold transition-colors duration-300 ${
+              isLowTime 
+                ? 'text-red-500 dark:text-red-400 timer-heartbeat' // Use our new custom animation class
+                : 'text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            {mainTimer}
+          </span>
           {onTogglePause && (
             <button 
               onClick={onTogglePause}
