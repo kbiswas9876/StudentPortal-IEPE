@@ -12,6 +12,7 @@
   max-width: 880px; /* CRITICAL: Must match the content card's max-width */
   margin: 0 auto; /* Horizontally centers the entire footer */
   padding: 0 24px; /* Added horizontal padding for proper spacing */
+  margin-left: 0; /* Remove left margin for edge-to-edge alignment */
 }
 
 .footer-left-zone, .footer-right-zone, .footer-center-zone {

@@ -11,39 +11,47 @@ html, body {
   height: 100%;
 }
 
-/* Practice Page Wrapper - Ensures proper alignment between QuestionDisplayWindow and StatusPanel */
+/* Practice Page Wrapper - Edge-to-edge layout with content gutter */
 .practice-page-wrapper {
   display: flex;
   align-items: flex-start; /* CRITICAL: Aligns both children to the top */
   height: 100vh;
-  gap: 24px; /* Optional: adds space between the two panels */
-  padding: 24px 24px 0 24px; /* Top and sides padding, no bottom padding to align footer */
+  gap: 1.5rem; /* 24px gap for visual separation between content and status panel */
+  padding: 0; /* Remove all padding for edge-to-edge layout */
 }
 
 /* Ensure the children fill the space correctly */
 .question-window-container {
   flex-grow: 1; /* Allows the main window to take up most of the space */
-  height: 100%; /* Make it fill the wrapper's height */
+  height: 100vh; /* Full viewport height for edge-to-edge design */
 }
 
 .status-panel-container {
   flex-shrink: 0; /* Prevents the status panel from shrinking */
-  width: 25%; /* Restore original width - 1/4 of screen */
-  height: calc(100vh - 24px); /* Extend further down - stretches beyond footer bottom edge */
+  width: calc(25% - 1.5rem); /* Account for gap in width calculation */
+  height: 100vh; /* Full viewport height for seamless edge-to-edge design */
   display: flex;
   flex-direction: column;
 }
 
-/* Responsive adjustments for status panel height */
+/* Responsive adjustments for status panel height and gap */
 @media (max-width: 1024px) {
+  .practice-page-wrapper {
+    gap: 1rem; /* Slightly smaller gap on tablets */
+  }
   .status-panel-container {
-    height: calc(100vh - 24px); /* Extended height on tablets */
+    height: 100vh; /* Full height on tablets */
+    width: calc(25% - 1rem); /* Account for smaller gap */
   }
 }
 
 @media (max-width: 768px) {
+  .practice-page-wrapper {
+    gap: 0.75rem; /* Even smaller gap on mobile */
+  }
   .status-panel-container {
-    height: calc(100vh - 24px); /* Extended height on mobile */
+    height: 100vh; /* Full height on mobile */
+    width: calc(25% - 0.75rem); /* Account for mobile gap */
   }
 }
 

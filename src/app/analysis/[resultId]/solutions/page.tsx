@@ -478,7 +478,7 @@ const getCurrentQuestionBookmarkId = () => {
         </svg>
       </button>
       {/* Left column: main content */}
-      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full lg:pr-20' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} h-full`}>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full lg:pr-0' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} h-full`}>
 
 
         {/* Main question view */}
@@ -546,8 +546,8 @@ const getCurrentQuestionBookmarkId = () => {
 
       {/* Right column: Premium Status Panel */}
       {!isRightPanelCollapsed && (
-        <div className="lg:block w-full lg:w-1/4 xl:w-1/4 2xl:w-1/4 h-screen p-4 lg:p-6 pb-20 fixed lg:relative top-0 right-0 z-40 lg:z-auto bg-white dark:bg-slate-800 lg:bg-transparent overflow-visible">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl h-full flex flex-col relative backdrop-blur-sm">
+        <div className="lg:block w-full lg:w-1/4 xl:w-1/4 2xl:w-1/4 h-screen p-0 lg:p-0 pb-0 fixed lg:relative top-0 right-0 z-40 lg:z-auto bg-white dark:bg-slate-800 lg:bg-transparent overflow-visible">
+          <div className="bg-white dark:bg-slate-800 rounded-none border-none shadow-none h-full flex flex-col relative">
             {/* Mobile close button */}
             <button
               onClick={() => setIsRightPanelCollapsed(true)}
