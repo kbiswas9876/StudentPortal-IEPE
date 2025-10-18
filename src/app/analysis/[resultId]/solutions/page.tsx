@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { Database } from '@/types/database'
  // AnalysisSkeletonLoader dynamically imported below to avoid server bundling framer-motion
@@ -545,9 +545,26 @@ const getCurrentQuestionBookmarkId = () => {
       </div>
 
       {/* Right column: Premium Status Panel */}
-      {!isRightPanelCollapsed && (
-        <div className="lg:block w-full lg:w-1/4 xl:w-1/4 2xl:w-1/4 h-screen p-0 lg:p-0 pb-0 fixed lg:relative top-0 right-0 z-40 lg:z-auto bg-white dark:bg-slate-800 lg:bg-transparent overflow-visible">
-          <div className="bg-white dark:bg-slate-800 rounded-none border-none shadow-none h-full flex flex-col relative">
+      <AnimatePresence>
+        {!isRightPanelCollapsed && (
+          <motion.div 
+            className="lg:block w-full lg:w-1/4 xl:w-1/4 2xl:w-1/4 h-screen p-0 lg:p-0 pb-0 fixed lg:relative top-0 right-0 z-40 lg:z-auto bg-white dark:bg-slate-800 lg:bg-transparent overflow-visible"
+            initial={{ x: '100%', opacity: 0, scale: 0.95 }}
+            animate={{ x: 0, opacity: 1, scale: 1 }}
+            exit={{ x: '100%', opacity: 0, scale: 0.95 }}
+            transition={{ 
+              type: 'spring', 
+              duration: 0.5, 
+              bounce: 0.1,
+              ease: "easeOut"
+            }}
+          >
+            <motion.div 
+              className="bg-white dark:bg-slate-800 rounded-2xl border-none shadow-none h-full flex flex-col relative"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.4 }}
+            >
             {/* Mobile close button */}
             <button
               onClick={() => setIsRightPanelCollapsed(true)}
@@ -639,9 +656,10 @@ const getCurrentQuestionBookmarkId = () => {
                 timePerQuestion={timePerQuestion}
               />
             )}
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {isRightPanelCollapsed && (
         <motion.button
