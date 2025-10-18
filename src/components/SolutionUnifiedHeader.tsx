@@ -170,8 +170,8 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
       </div>
 
       <div className="header-zone center">
-        {/* Premium Performance Chip */}
-        <div className={`flex items-center space-x-3 px-4 py-3 rounded-full transition-all duration-300 ${getPremiumPerformanceChipStyle(timeTakenSeconds, difficulty, status).containerClass}`}>
+        {/* Premium Performance Chip v2.0 - Refined Design */}
+        <div className={`flex items-center space-x-3 px-4 py-2 rounded-full transition-all duration-300 ${getPremiumPerformanceChipStyle(timeTakenSeconds, difficulty, status).containerClass}`}>
           {/* Icon */}
           <span className="text-lg flex-shrink-0">{getPremiumPerformanceChipStyle(timeTakenSeconds, difficulty, status).icon}</span>
           
@@ -181,22 +181,22 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
           </span>
           
           {/* Separator */}
-          <span className="text-white/60 font-bold">|</span>
+          <span className="text-white font-bold">|</span>
           
           {/* Time Information */}
           <div className="flex items-center space-x-4 text-sm">
             {/* User's Time */}
             <div className="flex items-center space-x-1">
-              <span className="font-medium opacity-90">You:</span>
-              <span className="font-mono font-bold text-white">
+              <span className="font-medium text-white">You:</span>
+              <span className="font-mono font-bold text-white text-base">
                 {formatTime(timeTakenSeconds)}
               </span>
             </div>
             
             {/* Target Time */}
             <div className="flex items-center space-x-1">
-              <span className="font-medium opacity-90">Target:</span>
-              <span className="font-mono font-bold text-white">
+              <span className="font-medium text-white">Target:</span>
+              <span className="font-mono font-bold text-white text-base">
                 {formatTime(getTargetTime(difficulty))}
               </span>
             </div>
