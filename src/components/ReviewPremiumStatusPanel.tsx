@@ -162,7 +162,7 @@ export default function ReviewPremiumStatusPanel({
             bounce: 0.1,
             ease: "easeOut"
           }}
-          className="bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 shadow-2xl h-full flex flex-col relative backdrop-blur-sm overflow-visible"
+          className="bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 shadow-2xl h-full flex flex-col relative backdrop-blur-sm overflow-visible rounded-bl-2xl"
           style={{
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
           }}
@@ -244,201 +244,213 @@ export default function ReviewPremiumStatusPanel({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.4 }}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <motion.div 
-                  className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </motion.div>
+            <div className="flex items-center space-x-3">
+              <motion.div 
+                className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg"
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={{ duration: 0.2 }}
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </motion.div>
+              <div className="flex items-center space-x-2">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight m-0">
                   Questions
                 </h3>
+                <motion.span 
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 rounded-lg font-bold text-sm shadow-lg"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {questions.length} / {questions.length}
+                </motion.span>
               </div>
-              <motion.div 
-                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.2 }}
-              >
-                {questions.length} / {questions.length}
-              </motion.div>
             </div>
           </motion.div>
 
 
-          {/* Section 2: Compact Filter Button */}
+          {/* Filter Icon in Top Right Corner */}
           <motion.div 
-            className="p-5 border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 via-white to-slate-50 dark:from-slate-700/20 dark:via-slate-800/20 dark:to-slate-700/20"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            className="absolute top-4 right-4 z-40"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.4 }}
           >
-            <div className="relative">
-              <motion.button
-                onClick={() => setShowFilters(!showFilters)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+            <motion.button
+              onClick={() => setShowFilters(!showFilters)}
+              className="w-10 h-10 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border border-slate-200/60 dark:border-slate-600/60 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                boxShadow: showFilters 
+                  ? '0 8px 32px rgba(59, 130, 246, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)' 
+                  : '0 8px 25px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+              }}
+            >
+              <svg 
+                className={`w-5 h-5 transition-all duration-200 ${
+                  showFilters 
+                    ? 'text-blue-600 dark:text-blue-400' 
+                    : 'text-slate-600 dark:text-slate-400'
+                } ${showFilters ? 'rotate-180' : ''}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                strokeWidth={2}
               >
-                <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-                  </svg>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Advanced Filters</span>
-                </div>
-                <svg 
-                  className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${showFilters ? 'rotate-180' : ''}`}
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+              </svg>
+              
+              {/* Subtle active state glow */}
+              {showFilters && (
+                <motion.div
+                  className="absolute inset-0 rounded-full bg-blue-500/10"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+            </motion.button>
+
+            {/* Filter Popover */}
+            <AnimatePresence>
+              {showFilters && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-12 right-0 w-80 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 shadow-lg z-50"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </motion.button>
-
-              {/* Filter Popover */}
-              <AnimatePresence>
-                {showFilters && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-full left-0 right-0 mt-2 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 shadow-lg z-50"
-                  >
-                    <div className="space-y-4">
-                      {/* Performance Matrix Section */}
-                      <div>
-                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Performance Matrix</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {/* Correct & Fast */}
-                          <motion.button
-                            onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-fast' ? null : 'correct-fast')}
-                            className={`p-2 rounded-lg border-2 transition-all duration-200 ${
-                              activePerformanceFilter === 'correct-fast' 
-                                ? 'bg-green-500 border-green-600 text-white shadow-lg' 
-                                : 'bg-green-100 border-green-300 text-green-800 hover:bg-green-200 dark:bg-green-900/40 dark:border-green-600 dark:text-green-200 dark:hover:bg-green-900/60'
-                            }`}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-medium">Correct & Fast</span>
-                              <span className="text-sm font-bold">{performanceMatrix.correctFast}</span>
-                            </div>
-                          </motion.button>
-
-                          {/* Correct & Slow */}
-                          <motion.button
-                            onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-slow' ? null : 'correct-slow')}
-                            className={`p-2 rounded-lg border-2 transition-all duration-200 ${
-                              activePerformanceFilter === 'correct-slow' 
-                                ? 'bg-yellow-500 border-yellow-600 text-white shadow-lg' 
-                                : 'bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900/60'
-                            }`}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-medium">Correct & Slow</span>
-                              <span className="text-sm font-bold">{performanceMatrix.correctSlow}</span>
-                            </div>
-                          </motion.button>
-
-                          {/* Incorrect & Fast */}
-                          <motion.button
-                            onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-fast' ? null : 'incorrect-fast')}
-                            className={`p-2 rounded-lg border-2 transition-all duration-200 ${
-                              activePerformanceFilter === 'incorrect-fast' 
-                                ? 'bg-orange-500 border-orange-600 text-white shadow-lg' 
-                                : 'bg-orange-100 border-orange-300 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-200 dark:hover:bg-orange-900/60'
-                            }`}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-medium">Incorrect & Fast</span>
-                              <span className="text-sm font-bold">{performanceMatrix.incorrectFast}</span>
-                            </div>
-                          </motion.button>
-
-                          {/* Incorrect & Slow */}
-                          <motion.button
-                            onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-slow' ? null : 'incorrect-slow')}
-                            className={`p-2 rounded-lg border-2 transition-all duration-200 ${
-                              activePerformanceFilter === 'incorrect-slow' 
-                                ? 'bg-red-500 border-red-600 text-white shadow-lg' 
-                                : 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:border-red-600 dark:text-red-200 dark:hover:bg-red-900/60'
-                            }`}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-medium">Incorrect & Slow</span>
-                              <span className="text-sm font-bold">{performanceMatrix.incorrectSlow}</span>
-                            </div>
-                          </motion.button>
-                        </div>
-                      </div>
-
-                      {/* Two-column layout for Status and Difficulty filters */}
-                      <div className="grid grid-cols-2 gap-3">
-                        {/* Status Filter */}
-                        <div>
-                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Status</label>
-                          <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          >
-                            <option value="All">All</option>
-                            <option value="Correct">Correct</option>
-                            <option value="Incorrect">Incorrect</option>
-                            <option value="Skipped">Skipped</option>
-                          </select>
-                        </div>
-
-                        {/* Difficulty Filter */}
-                        <div>
-                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Difficulty</label>
-                          <select
-                            value={difficultyFilter}
-                            onChange={(e) => setDifficultyFilter(e.target.value)}
-                            className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          >
-                            <option value="All">All</option>
-                            <option value="Easy">Easy</option>
-                            <option value="Medium">Medium</option>
-                            <option value="Hard">Hard</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Bookmarks Only Toggle */}
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Bookmarks only</label>
-                        <button
-                          onClick={() => setBookmarksOnly(!bookmarksOnly)}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            bookmarksOnly ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-600'
+                  <div className="space-y-4">
+                    {/* Performance Matrix Section */}
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Performance Matrix</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {/* Correct & Fast */}
+                        <motion.button
+                          onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-fast' ? null : 'correct-fast')}
+                          className={`p-2 rounded-lg border-2 transition-all duration-200 ${
+                            activePerformanceFilter === 'correct-fast' 
+                              ? 'bg-green-500 border-green-600 text-white shadow-lg' 
+                              : 'bg-green-100 border-green-300 text-green-800 hover:bg-green-200 dark:bg-green-900/40 dark:border-green-600 dark:text-green-200 dark:hover:bg-green-900/60'
                           }`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                         >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              bookmarksOnly ? 'translate-x-6' : 'translate-x-1'
-                            }`}
-                          />
-                        </button>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium">Correct & Fast</span>
+                            <span className="text-sm font-bold">{performanceMatrix.correctFast}</span>
+                          </div>
+                        </motion.button>
+
+                        {/* Correct & Slow */}
+                        <motion.button
+                          onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'correct-slow' ? null : 'correct-slow')}
+                          className={`p-2 rounded-lg border-2 transition-all duration-200 ${
+                            activePerformanceFilter === 'correct-slow' 
+                              ? 'bg-yellow-500 border-yellow-600 text-white shadow-lg' 
+                              : 'bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:border-yellow-600 dark:text-yellow-200 dark:hover:bg-yellow-900/60'
+                          }`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium">Correct & Slow</span>
+                            <span className="text-sm font-bold">{performanceMatrix.correctSlow}</span>
+                          </div>
+                        </motion.button>
+
+                        {/* Incorrect & Fast */}
+                        <motion.button
+                          onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-fast' ? null : 'incorrect-fast')}
+                          className={`p-2 rounded-lg border-2 transition-all duration-200 ${
+                            activePerformanceFilter === 'incorrect-fast' 
+                              ? 'bg-orange-500 border-orange-600 text-white shadow-lg' 
+                              : 'bg-orange-100 border-orange-300 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/40 dark:border-orange-600 dark:text-orange-200 dark:hover:bg-orange-900/60'
+                          }`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium">Incorrect & Fast</span>
+                            <span className="text-sm font-bold">{performanceMatrix.incorrectFast}</span>
+                          </div>
+                        </motion.button>
+
+                        {/* Incorrect & Slow */}
+                        <motion.button
+                          onClick={() => setActivePerformanceFilter(activePerformanceFilter === 'incorrect-slow' ? null : 'incorrect-slow')}
+                          className={`p-2 rounded-lg border-2 transition-all duration-200 ${
+                            activePerformanceFilter === 'incorrect-slow' 
+                              ? 'bg-red-500 border-red-600 text-white shadow-lg' 
+                              : 'bg-red-100 border-red-300 text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:border-red-600 dark:text-red-200 dark:hover:bg-red-900/60'
+                          }`}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium">Incorrect & Slow</span>
+                            <span className="text-sm font-bold">{performanceMatrix.incorrectSlow}</span>
+                          </div>
+                        </motion.button>
                       </div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+
+                    {/* Two-column layout for Status and Difficulty filters */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Status Filter */}
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Status</label>
+                        <select
+                          value={statusFilter}
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="All">All</option>
+                          <option value="Correct">Correct</option>
+                          <option value="Incorrect">Incorrect</option>
+                          <option value="Skipped">Skipped</option>
+                        </select>
+                      </div>
+
+                      {/* Difficulty Filter */}
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Filter by Difficulty</label>
+                        <select
+                          value={difficultyFilter}
+                          onChange={(e) => setDifficultyFilter(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="All">All</option>
+                          <option value="Easy">Easy</option>
+                          <option value="Medium">Medium</option>
+                          <option value="Hard">Hard</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Bookmarks Only Toggle */}
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Bookmarks only</label>
+                      <button
+                        onClick={() => setBookmarksOnly(!bookmarksOnly)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          bookmarksOnly ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-600'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            bookmarksOnly ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
 
           {/* Section 3: Premium Question Grid */}
