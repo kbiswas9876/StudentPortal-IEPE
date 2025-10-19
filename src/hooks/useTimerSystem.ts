@@ -49,8 +49,13 @@ export function useTimerSystem({
   const timeUpCalledRef = useRef<boolean>(false)
 
   // === UTILITY: Format time for display ===
-  const formatTime = useCallback((milliseconds: number): string => {
-    const totalSeconds = Math.floor(Math.abs(milliseconds) / 1000)
+  const formatTime = useCallback((milliseconds: number, isCountdown: boolean = false): string => {
+    // For countdown, use ceiling so the first second shows the full duration
+    // For count-up, use floor as normal
+    const totalSeconds = isCountdown 
+      ? Math.ceil(Math.abs(milliseconds) / 1000)
+      : Math.floor(Math.abs(milliseconds) / 1000)
+    
     const hours = Math.floor(totalSeconds / 3600)
     const minutes = Math.floor((totalSeconds % 3600) / 60)
     const seconds = totalSeconds % 60
@@ -108,7 +113,7 @@ export function useTimerSystem({
     // Update main timer based on mode
     if (testMode === 'practice') {
       // Count up from 00:00
-      setMainTimerDisplay(formatTime(sessionElapsed))
+      setMainTimerDisplay(formatTime(sessionElapsed, false))
     } else if (testMode === 'timed' && timeLimitInMinutes) {
       // Count down from time limit
       const timeLimitMs = timeLimitInMinutes * 60 * 1000
@@ -135,10 +140,11 @@ export function useTimerSystem({
         return
       }
       
-      setMainTimerDisplay(formatTime(remaining))
+      // Use ceiling for countdown to show full duration at start
+      setMainTimerDisplay(formatTime(remaining, true))
       
-      // Check if low time (< 60 seconds)
-      const remainingSeconds = Math.floor(remaining / 1000)
+      // Check if low time (< 60 seconds) - use ceiling for consistency
+      const remainingSeconds = Math.ceil(remaining / 1000)
       setIsLowTime(remainingSeconds < 60 && remainingSeconds >= 0)
     }
     
