@@ -35,15 +35,12 @@ interface QuestionDisplayWindowProps {
   onBookmark?: () => void
   onReportError?: () => void
   onExit?: () => void
-  sessionStartTime?: number
-  timeLimitInMinutes?: number
-  testMode?: 'practice' | 'timed'
-  currentQuestionStartTime?: number
-  cumulativeTime?: number
+  mainTimer?: string
+  isLowTime?: boolean
+  inQuestionTime?: number
   isPaused?: boolean
   showBookmark?: boolean
   onTogglePause?: () => void
-  onTimeUp?: () => void // NEW: Callback for when time reaches 0
   // CRITICAL: Add missing button functionality props
   onSaveAndNext?: () => void
   onMarkForReviewAndNext?: () => void
@@ -60,15 +57,12 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   onBookmark,
   onReportError,
   onExit,
-  sessionStartTime,
-  timeLimitInMinutes,
-  testMode,
-  currentQuestionStartTime,
-  cumulativeTime,
-  isPaused,
+  mainTimer = '00:00',
+  isLowTime = false,
+  inQuestionTime = 0,
+  isPaused = false,
   showBookmark,
   onTogglePause,
-  onTimeUp, // NEW: Add this parameter
   // CRITICAL: Add missing button functionality props
   onSaveAndNext,
   onMarkForReviewAndNext
@@ -134,27 +128,6 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
     }
   }
 
-  // Format timers
-  const formatTime = (milliseconds: number) => {
-    const totalSeconds = Math.floor(milliseconds / 1000)
-    const hours = Math.floor(totalSeconds / 3600)
-    const minutes = Math.floor((totalSeconds % 3600) / 60)
-    const seconds = totalSeconds % 60
-    
-    if (hours > 0) {
-      return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-    }
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-  }
-
-
-  const mainTimer = "00:00";
-  
-  const remainingSeconds = null;
-  
-  
-  const inQuestionTimer = 0;
-
   return (
     <div className="question-display-window">
       {/* The header is now a real component */}
@@ -162,16 +135,11 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
         currentQuestion={currentQuestionNumber}
         totalQuestions={currentTotalQuestions}
         mainTimer={mainTimer}
-        isLowTime={remainingSeconds !== null && remainingSeconds < 60} // NEW: Pass low time flag
+        isLowTime={isLowTime}
         onBack={handleBack}
         onReport={handleReport}
         isPaused={isPaused}
-        onTogglePause={() => {
-          // This will be connected to the parent component's pause logic
-          if (onTogglePause) {
-            onTogglePause()
-          }
-        }}
+        onTogglePause={onTogglePause}
       />
 
       {/* 
@@ -181,7 +149,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
       <main className={`main-content-area ${isLoaded ? 'loaded' : ''}`}>
         <QuestionCard 
           questionText={currentQuestion.question_text} 
-          inQuestionTimer={inQuestionTimer}
+          inQuestionTimer={inQuestionTime}
           isPaused={isPaused}
         />
         

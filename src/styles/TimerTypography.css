@@ -166,6 +166,26 @@
   }
 }
 
+/* Heartbeat animation for low time warning (synced with 1-second ticks) */
+.timer-heartbeat {
+  animation: timer-heartbeat 1s ease-in-out infinite;
+}
+
+@keyframes timer-heartbeat {
+  0% {
+    transform: scale(1);
+  }
+  5% {
+    transform: scale(1.08);
+  }
+  15% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .premium-timer.large {
@@ -201,6 +221,10 @@
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .premium-timer.pulse {
+    animation: none;
+  }
+  
+  .timer-heartbeat {
     animation: none;
   }
   

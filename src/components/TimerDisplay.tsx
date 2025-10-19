@@ -33,6 +33,19 @@ export default function TimerDisplay({
   showPauseButton = false
 }: TimerDisplayProps) {
   
+  // Helper function to format time
+  const formatTime = (ms: number): string => {
+    const totalSeconds = Math.floor(ms / 1000)
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    }
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  }
+
   // If milliseconds prop is provided, this is a per-question timer - render directly
   if (milliseconds !== undefined) {
     return (
@@ -41,7 +54,7 @@ export default function TimerDisplay({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <span className="premium-timer small primary">
-          00:00
+          {formatTime(milliseconds)}
         </span>
       </div>
     );

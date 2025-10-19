@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Database } from '@/types/database'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
+import { useTimerSystem } from '@/hooks/useTimerSystem'
 // Removed TimerDisplay - now using QuestionDisplayWindow
 import QuestionPalette from './QuestionPalette'
 import PremiumStatusPanel from './PremiumStatusPanel'
@@ -78,29 +79,52 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showPauseModal, setShowPauseModal] = useState(false)
   const [showSubmissionModal, setShowSubmissionModal] = useState(false)
   const [showAutoSubmissionOverlay, setShowAutoSubmissionOverlay] = useState(false)
-  const [isSessionPaused, setIsSessionPaused] = useState(false)
   
   // Memoize questionIds for stable dependency in bookmark checks
   const questionIds = useMemo(() => questions.map(q => q.question_id), [questions]);
   
+  const bookmarkInProgressRef = useRef(false); // Prevent concurrent bookmark requests (race condition fix)
+  
+  // Ref to store the auto-submission handler to avoid circular dependency
+  const handleAutoSubmissionRef = useRef<(() => void) | null>(null)
+  
+  // === TIMER SYSTEM ===
+  const {
+    mainTimerDisplay,
+    inQuestionTime,
+    isLowTime,
+    isPaused,
+    togglePause,
+    getTotalSessionTime,
+    getQuestionTimeMap
+  } = useTimerSystem({
+    testMode,
+    timeLimitInMinutes,
+    currentQuestionIndex: currentIndex,
+    totalQuestions: questions.length,
+    onTimeUp: () => handleAutoSubmissionRef.current?.(),
+    isSessionActive: isInitialized && !isSubmitting
+  })
+  
   // Pause functionality
   const handlePauseSession = () => {
-    setIsSessionPaused(true);
+    togglePause();
     setShowPauseModal(true);
   };
 
   const handleResumeSession = () => {
-    setIsSessionPaused(false);
+    togglePause();
     setShowPauseModal(false);
   };
 
   const handlePauseExit = () => {
     setShowPauseModal(false);
-    setIsSessionPaused(false); // Remove the pause overlay
+    // Resume if paused
+    if (isPaused) {
+      togglePause();
+    }
     setShowExitModal(true);
   };
-  
-  const bookmarkInProgressRef = useRef(false); // Prevent concurrent bookmark requests (race condition fix)
 
   
   // ===== CRITICAL FIX: State Persistence Functions =====
@@ -536,7 +560,7 @@ useEffect(() => {
     return {
       answered,
       total,
-      timeSpent: "00:00"
+      timeSpent: mainTimerDisplay
     }
   }
 
@@ -631,7 +655,7 @@ useEffect(() => {
         score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0
       }
       
-      const totalTime = 0 // Timer disabled
+      const totalTime = Math.floor(getTotalSessionTime() / 1000) // Total time in seconds
 
       console.log('Submitting practice session:', {
         user_id: userId,
@@ -642,6 +666,9 @@ useEffect(() => {
         score
       })
 
+      // Get per-question times from the timer system
+      const questionTimeMap = getQuestionTimeMap()
+      
       // Save test result
       const response = await fetch('/api/practice/submit', {
         method: 'POST',
@@ -650,14 +677,18 @@ useEffect(() => {
         },
         body: JSON.stringify({
           user_id: userId,
-          questions: questions.map((question, index) => ({
-            question_id: question.id, // Use numeric ID from questions table
-            user_answer: finalSessionStates[index].user_answer, // <-- USES CLEANED STATE
-            status: finalSessionStates[index].user_answer ? 
-              (finalSessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
-              'skipped',
-            time_taken: 0 // Timer disabled
-          })),
+          questions: questions.map((question, index) => {
+            // Get time for this specific question from the map
+            const questionTime = questionTimeMap.get(index) || 0
+            return {
+              question_id: question.id, // Use numeric ID from questions table
+              user_answer: finalSessionStates[index].user_answer, // <-- USES CLEANED STATE
+              status: finalSessionStates[index].user_answer ? 
+                (finalSessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
+                'skipped',
+              time_taken: Math.floor(questionTime / 1000) // Time in seconds
+            }
+          }),
           score,
           total_time: totalTime,
           total_questions: totalQuestions,
@@ -693,12 +724,15 @@ useEffect(() => {
     }
   }
 
-  const handleAutoSubmission = async () => {
+  const handleAutoSubmission = useCallback(async () => {
     if (isSubmitting) return
 
     setShowAutoSubmissionOverlay(true)
     await submitTest(sessionStates);
-  }
+  }, [isSubmitting, sessionStates])
+  
+  // Set the ref so the timer hook can call it
+  handleAutoSubmissionRef.current = handleAutoSubmission
 
   const handleQuestionNavigation = (index: number) => {
     // CRITICAL: Discard temporary selections when navigating away without saving
@@ -786,15 +820,12 @@ useEffect(() => {
           onBookmark={handleBookmark}
           onReportError={() => setShowReportModal(true)}
           onExit={() => setShowExitModal(true)}
-          sessionStartTime={0}
-          timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
-          testMode={testMode}
-          currentQuestionStartTime={0}
-          cumulativeTime={0}
-          isPaused={true}
+          mainTimer={mainTimerDisplay}
+          isLowTime={isLowTime}
+          inQuestionTime={inQuestionTime}
+          isPaused={isPaused}
           showBookmark={false} // Disable bookmarking in practice interface
           onTogglePause={handlePauseSession}
-          onTimeUp={handleAutoSubmission} // NEW: Pass auto-submission handler
           // CRITICAL: Pass the real button handlers from PracticeInterface
           onSaveAndNext={handleSaveAndNext}
           onMarkForReviewAndNext={handleMarkForReviewAndNext}
