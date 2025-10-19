@@ -317,7 +317,7 @@ export default function DashboardPage() {
               sessionLoading={sessionLoading}
             />
           ) : (
-            <div className="w-full">
+            <div className="w-full max-h-[calc(100vh-12rem)] overflow-y-auto">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
                   Saved Practice Sessions
