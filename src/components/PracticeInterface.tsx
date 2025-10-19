@@ -777,6 +777,34 @@ useEffect(() => {
   const handleConfirmSubmission = async () => {
     if (isSubmitting) return
 
+    // --- FIX: START ---
+    // Before submitting, perform a final check on the CURRENT question's state
+    // to discard any un-saved answers. This is the same logic used in handleQuestionNavigation.
+    const currentState = sessionStates[currentIndex];
+    if (currentState && currentState.user_answer && currentState.status !== 'answered' && currentState.status !== 'marked_for_review') {
+      
+      console.log("FIX APPLIED: Clearing un-saved answer on the final question before submission.");
+      
+      // Create a new, cleaned version of sessionStates
+      const cleanedSessionStates = [...sessionStates];
+      cleanedSessionStates[currentIndex] = {
+        ...cleanedSessionStates[currentIndex],
+        user_answer: null,
+        status: 'unanswered' // Mark it as seen but unanswered
+      };
+      
+      // This is the state that will be used for submission
+      // We pass this cleaned state directly to the submission logic
+      await submitTest(cleanedSessionStates);
+
+    } else {
+      // If no cleanup is needed, proceed with the existing state
+      await submitTest(sessionStates);
+    }
+  }
+
+  // We will refactor the existing submission logic into a new helper function
+  const submitTest = async (finalSessionStates: SessionState[]) => {
     setIsSubmitting(true)
     setShowSubmissionModal(false)
 
@@ -794,19 +822,19 @@ useEffect(() => {
       // Questions that WILL BE COUNTED for evaluation:
       // 1. GREEN (answered) - status === 'answered'
       // 2. PURPLE WITH GREEN TICK (answered and marked for review) - status === 'marked_for_review' AND has user_answer
-      const evaluatedQuestions = sessionStates.filter((state, index) => {
+      const evaluatedQuestions = finalSessionStates.filter((state, index) => {
         return (state.status === 'answered') || 
                (state.status === 'marked_for_review' && state.user_answer)
       })
       
       const correctAnswers = evaluatedQuestions.filter((state, index) => {
-        const originalIndex = sessionStates.indexOf(state)
+        const originalIndex = finalSessionStates.indexOf(state)
         const question = questions[originalIndex]
         return state.user_answer === question.correct_option
       }).length
       
       const incorrectAnswers = evaluatedQuestions.filter((state, index) => {
-        const originalIndex = sessionStates.indexOf(state)
+        const originalIndex = finalSessionStates.indexOf(state)
         const question = questions[originalIndex]
         return state.user_answer && state.user_answer !== question.correct_option
       }).length
@@ -849,9 +877,9 @@ useEffect(() => {
           user_id: userId,
           questions: questions.map((question, index) => ({
             question_id: question.id, // Use numeric ID from questions table
-            user_answer: sessionStates[index].user_answer,
-            status: sessionStates[index].user_answer ? 
-              (sessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
+            user_answer: finalSessionStates[index].user_answer, // <-- USES CLEANED STATE
+            status: finalSessionStates[index].user_answer ? 
+              (finalSessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
               'skipped',
             time_taken: Math.round((cumulativeTimeRef.current[question.id.toString()] || 0) / 1000) // Use new per-question timing data
           })),
@@ -893,115 +921,31 @@ useEffect(() => {
   const handleAutoSubmission = async () => {
     if (isSubmitting) return
 
-    setIsSubmitting(true)
-    setShowAutoSubmissionOverlay(true)
-
-    try {
-      // Save current question time first
-      saveCurrentQuestionTime();
+    // --- FIX: START ---
+    // Before submitting, perform a final check on the CURRENT question's state
+    // to discard any un-saved answers. This is the same logic used in handleQuestionNavigation.
+    const currentState = sessionStates[currentIndex];
+    if (currentState && currentState.user_answer && currentState.status !== 'answered' && currentState.status !== 'marked_for_review') {
       
-      // Get final time data
-      const finalTimeData = { ...cumulativeTimeRef.current };
-
-      // Calculate final results based on the Ultimate Rule:
-      // Only count GREEN (answered) and PURPLE WITH GREEN TICK (answered and marked for review) questions
-      const totalQuestions = questions.length
+      console.log("FIX APPLIED: Clearing un-saved answer on the final question before auto-submission.");
       
-      // Questions that WILL BE COUNTED for evaluation:
-      // 1. GREEN (answered) - status === 'answered'
-      // 2. PURPLE WITH GREEN TICK (answered and marked for review) - status === 'marked_for_review' AND has user_answer
-      const evaluatedQuestions = sessionStates.filter((state, index) => {
-        return (state.status === 'answered') || 
-               (state.status === 'marked_for_review' && state.user_answer)
-      })
+      // Create a new, cleaned version of sessionStates
+      const cleanedSessionStates = [...sessionStates];
+      cleanedSessionStates[currentIndex] = {
+        ...cleanedSessionStates[currentIndex],
+        user_answer: null,
+        status: 'unanswered' // Mark it as seen but unanswered
+      };
       
-      const correctAnswers = evaluatedQuestions.filter((state, index) => {
-        const originalIndex = sessionStates.indexOf(state)
-        const question = questions[originalIndex]
-        return state.user_answer === question.correct_option
-      }).length
-      
-      const incorrectAnswers = evaluatedQuestions.filter((state, index) => {
-        const originalIndex = sessionStates.indexOf(state)
-        const question = questions[originalIndex]
-        return state.user_answer && state.user_answer !== question.correct_option
-      }).length
-      
-      // Questions that WILL NOT BE COUNTED:
-      // RED (unanswered), PURPLE (marked but not answered), GRAY (not visited)
-      const skippedAnswers = totalQuestions - evaluatedQuestions.length
+      // This is the state that will be used for submission
+      // We pass this cleaned state directly to the submission logic
+      setShowAutoSubmissionOverlay(true)
+      await submitTest(cleanedSessionStates);
 
-      // Calculate score based on mock test rules or default percentage
-      let score: number
-      if (mockTestData) {
-        // Mock test scoring: use actual marks
-        const totalMarks = (correctAnswers * mockTestData.test.marks_per_correct) + 
-                          (incorrectAnswers * mockTestData.test.marks_per_incorrect)
-        const maxMarks = totalQuestions * mockTestData.test.marks_per_correct
-        score = maxMarks > 0 ? Math.round((totalMarks / maxMarks) * 100) : 0
-      } else {
-        // Regular practice scoring: percentage based
-        score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0
-      }
-      
-      const totalTime = Math.round((Date.now() - effectiveSessionStartTime) / 1000) // Convert to seconds
-
-      console.log('Submitting practice session:', {
-        user_id: userId,
-        total_questions: totalQuestions,
-        correct_answers: correctAnswers,
-        incorrect_answers: incorrectAnswers,
-        skipped_answers: skippedAnswers,
-        score
-      })
-
-      // Save test result
-      const response = await fetch('/api/practice/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          questions: questions.map((question, index) => ({
-            question_id: question.id, // Use numeric ID from questions table
-            user_answer: sessionStates[index].user_answer,
-            status: sessionStates[index].user_answer ? 
-              (sessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
-              'skipped',
-            time_taken: Math.round((cumulativeTimeRef.current[question.id.toString()] || 0) / 1000) // Use new per-question timing data
-          })),
-          score,
-          total_time: totalTime,
-          total_questions: totalQuestions,
-          correct_answers: correctAnswers,
-          incorrect_answers: incorrectAnswers,
-          skipped_answers: skippedAnswers,
-          // Mock test specific fields
-          session_type: mockTestData ? 'mock_test' : 'practice',
-          mock_test_id: mockTestData ? mockTestData.test.id : null
-        })
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        console.log('Test submitted successfully:', result)
-        // Clear sessionStorage since session is complete
-        clearSessionStorage()
-        // Redirect to analysis report with source parameter if from revision
-        let redirectUrl = `/analysis/${result.test_id}`
-        if (source === 'revision') {
-          redirectUrl += `?source=revision`
-        }
-        router.push(redirectUrl)
-      } else {
-        const errorData = await response.json()
-        console.error('Test submission failed:', errorData)
-        throw new Error(errorData.error || 'Failed to submit test')
-      }
-    } catch (error) {
-      console.error('Error submitting test:', error)
-      setIsSubmitting(false)
+    } else {
+      // If no cleanup is needed, proceed with the existing state
+      setShowAutoSubmissionOverlay(true)
+      await submitTest(sessionStates);
     }
   }
 
