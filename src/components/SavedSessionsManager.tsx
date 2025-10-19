@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/lib/auth-context'
 import { formatTimeHumanReadable, formatTimeHHMMSS } from '@/lib/timeUtils'
 import DeleteSessionModal from './DeleteSessionModal'
+import StatusLegend from './StatusLegend'
 
 interface SavedSession {
   id: number
@@ -123,28 +124,36 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
   const getProgressSummary = (sessionState: any) => {
     if (!sessionState || !sessionState.questionStatuses) {
       return {
-        answered: 0,
-        notAnswered: 0,
-        markedForReview: 0,
-        notVisited: 0,
+        answeredCount: 0,
+        notAnsweredCount: 0,
+        markedCount: 0,
+        notVisitedCount: 0,
+        markedAndAnsweredCount: 0,
         total: 0
       }
     }
 
     // Parse the questionStatuses object to get detailed counts
     const questionStatuses = sessionState.questionStatuses
+    const userAnswers = sessionState.userAnswers || {}
     const total = Object.keys(questionStatuses).length
 
-    const answered = Object.values(questionStatuses).filter((status: any) => status === 'answered').length
-    const notAnswered = Object.values(questionStatuses).filter((status: any) => status === 'unanswered').length
-    const markedForReview = Object.values(questionStatuses).filter((status: any) => status === 'marked_for_review').length
-    const notVisited = Object.values(questionStatuses).filter((status: any) => status === 'not_visited').length
+    const answeredCount = Object.values(questionStatuses).filter((status: any) => status === 'answered').length
+    const notAnsweredCount = Object.values(questionStatuses).filter((status: any) => status === 'unanswered').length
+    const markedCount = Object.values(questionStatuses).filter((status: any) => status === 'marked_for_review').length
+    const notVisitedCount = Object.values(questionStatuses).filter((status: any) => status === 'not_visited').length
+
+    // Calculate marked and answered count - questions that are both marked and have answers
+    const markedAndAnsweredCount = Object.entries(questionStatuses).filter(([questionId, status]: [string, any]) => {
+      return status === 'marked_for_review' && userAnswers[questionId]
+    }).length
 
     return {
-      answered,
-      notAnswered,
-      markedForReview,
-      notVisited,
+      answeredCount,
+      notAnsweredCount,
+      markedCount,
+      notVisitedCount,
+      markedAndAnsweredCount,
       total
     }
   }
@@ -239,7 +248,7 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
 
   return (
     <div className="w-full">
-      <div className="flex flex-wrap gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <AnimatePresence>
           {savedSessions.map((session) => {
           const progress = getProgressSummary(session.session_state)
@@ -253,23 +262,28 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
-              className="flex-1 basis-[350px] min-w-[350px] max-w-[450px] bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden"
+              className="w-full bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col"
             >
               {/* Section 1: Header */}
-              <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700">
+              <div className="px-4 pt-4 pb-3 border-b border-slate-100 dark:border-slate-700">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 leading-tight mb-1">
+                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 leading-tight mb-1">
                       {session.session_name}
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Saved {formatDate(session.updated_at)}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Saved {formatDate(session.updated_at)}
+                      </p>
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        {progress.total} questions
+                      </span>
+                    </div>
                   </div>
                   <button
                     onClick={() => handleDeleteSession(session)}
                     disabled={isDeleting}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 ml-3 flex-shrink-0"
+                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 ml-2 flex-shrink-0"
                     title="Delete session"
                   >
                     {isDeleting ? (
@@ -285,80 +299,59 @@ export default function SavedSessionsManager({ onResumeSession }: SavedSessionsM
               </div>
 
               {/* Section 2: Mode & Time Status (CRITICAL) */}
-              <div className="px-6 py-4 bg-slate-50 dark:bg-slate-750 border-b border-slate-100 dark:border-slate-700">
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                    timeInfo.mode === 'Practice Mode'
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                  }`}>
-                    {timeInfo.mode}
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">
-                      {timeInfo.label}
-                    </span>
-                    <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {timeInfo.time}
+              <div className="px-4 py-3 bg-slate-50 dark:bg-slate-750 border-b border-slate-100 dark:border-slate-700 min-h-[80px] flex flex-col justify-center">
+                <div className="space-y-2">
+                  {/* Mode Badge */}
+                  <div className="flex justify-center">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                      timeInfo.mode === 'Practice Mode'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                    }`}>
+                      {timeInfo.mode}
                     </span>
                   </div>
-                  {timeInfo.showTotal && (
-                    <div className="text-xs text-slate-500 dark:text-slate-400 text-right">
-                      Total: {timeInfo.total}
+                  
+                  {/* Time Display */}
+                  <div className="text-center">
+                    <div className="flex items-center justify-center space-x-2">
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                        {timeInfo.label}
+                      </span>
+                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {timeInfo.time}
+                      </span>
                     </div>
-                  )}
+                    {timeInfo.showTotal && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Total: {timeInfo.total}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Section 3: Progress Summary */}
-              <div className="px-6 py-4">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">Answered:</span>
-                    <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                      {progress.answered}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">Not Answered:</span>
-                    <span className="text-sm font-medium text-orange-600 dark:text-orange-400">
-                      {progress.notAnswered}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">Marked:</span>
-                    <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                      {progress.markedForReview}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">Not Visited:</span>
-                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                      {progress.notVisited}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-4">
-                  <div
-                    className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${progress.total > 0 ? (progress.answered / progress.total) * 100 : 0}%` }}
-                  />
-                </div>
+              {/* Section 3: Exact Status Legend (same as exit session modal) */}
+              <div className="p-3 flex-1">
+                <StatusLegend
+                  answeredCount={progress.answeredCount}
+                  notAnsweredCount={progress.notAnsweredCount}
+                  notVisitedCount={progress.notVisitedCount}
+                  markedCount={progress.markedCount}
+                  markedAndAnsweredCount={progress.markedAndAnsweredCount}
+                  className="!bg-transparent !border-none !p-0"
+                />
               </div>
 
               {/* Section 4: Action Button */}
-              <div className="px-6 pb-6">
+              <div className="px-4 pb-4 mt-auto">
                 <motion.button
                   onClick={() => handleResumeSession(session)}
-                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-sm hover:shadow-md"
+                  className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 font-medium text-xs shadow-sm hover:shadow-md"
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <PlayIcon className="w-4 h-4" />
+                  <PlayIcon className="w-3.5 h-3.5" />
                   <span>Resume Session</span>
                 </motion.button>
               </div>
