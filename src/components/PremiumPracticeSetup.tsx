@@ -238,24 +238,9 @@ export default function PremiumPracticeSetup({
 
   return (
     <div className="w-full">
-      <div className="w-full px-0 py-0">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="text-center mb-6 sm:mb-12"
-        >
-          <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2 sm:mb-4">
-            Start a New Practice Session
-          </h1>
-          <p className="text-sm sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-            Select your books and chapters, then configure your practice session with our premium interface
-          </p>
-        </motion.div>
-
+      <div className="w-full px-0 py-0 max-h-[calc(100vh-8rem)] overflow-y-auto">
         {/* Mobile-First Layout */}
-        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-8 lg:min-h-[calc(100vh-16rem)] pb-24 sm:pb-20">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-8 lg:min-h-[calc(100vh-12rem)] pb-24 sm:pb-20">
           {/* Mobile: Books & Chapters First, Desktop: Left Column (wider - 75% of space) */}
           <div className="lg:col-span-9 flex flex-col">
             <motion.div
