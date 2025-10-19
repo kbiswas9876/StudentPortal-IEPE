@@ -147,79 +147,13 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
   }
 
-  // CRITICAL FIX: Implement conditional timer logic based on testMode
-  const [now, setNow] = useState(Date.now());
 
-  // This useEffect hook will update the 'now' state every 100ms,
-  // forcing the timer display to re-render and stay in sync.
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const newNow = Date.now();
-      setNow(newNow);
-    }, 100);
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-
-  const mainTimer = useMemo(() => {
-    if (!sessionStartTime) {
-      return "00:00";
-    }
-
-    if (testMode === 'timed' && timeLimitInMinutes) {
-      // --- COUNTDOWN LOGIC (with the fix) ---
-      const totalTimeMs = timeLimitInMinutes * 60 * 1000;
-      const elapsedMs = now - sessionStartTime;
-      const remainingMs = Math.max(0, totalTimeMs - elapsedMs);
-
-      // FIX: Use Math.ceil() on the seconds to ensure the initial display
-      // is rounded up to the full minute (e.g., 1799995ms -> 1800s -> 30:00).
-      // This effectively "snaps" the initial display to the correct starting value.
-      const remainingSeconds = Math.ceil(remainingMs / 1000);
-      
-      // Create a new formatting function to handle seconds directly
-      const formatSecondsToMMSS = (totalSeconds: number) => {
-          const minutes = Math.floor(totalSeconds / 60);
-          const seconds = totalSeconds % 60;
-          return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-      };
-
-      return formatSecondsToMMSS(remainingSeconds);
-    } else {
-      // --- COUNT-UP LOGIC (Existing Behavior - Unchanged) ---
-      const elapsedMs = now - sessionStartTime;
-      return formatTime(elapsedMs);
-    }
-  }, [now, sessionStartTime, testMode, timeLimitInMinutes]);
+  const mainTimer = "00:00";
   
-  // Calculate remaining seconds for visual cues
-  const remainingSeconds = useMemo(() => {
-    if (!sessionStartTime || testMode !== 'timed' || !timeLimitInMinutes) return null;
-    
-    const totalTimeMs = timeLimitInMinutes * 60 * 1000;
-    const elapsedMs = now - sessionStartTime;
-    const remainingMs = Math.max(0, totalTimeMs - elapsedMs);
-    return Math.ceil(remainingMs / 1000);
-  }, [now, sessionStartTime, testMode, timeLimitInMinutes]);
+  const remainingSeconds = null;
   
-  // FIX: Add this new useEffect to handle the side effect of auto-submission.
-  useEffect(() => {
-    // This effect runs after every render where remainingSeconds changes.
-    if (remainingSeconds !== null && remainingSeconds <= 0) {
-      if (onTimeUp) {
-        console.log("TIMER EXPIRED: Triggering auto-submission via useEffect.");
-        onTimeUp();
-      }
-    }
-  }, [remainingSeconds, onTimeUp]); // Dependency array ensures this runs only when needed.
   
-  // FIX: Use TimerDisplay component for in-question timer to properly handle pause state
-  // Pass the cumulative time in milliseconds and isPaused state to TimerDisplay
-  const inQuestionTimer = cumulativeTime || 0
-  
-  // The isPaused state is already properly managed in PracticeInterface
-  // TimerDisplay component will handle pause/resume correctly
+  const inQuestionTimer = 0;
 
   return (
     <div className="question-display-window">

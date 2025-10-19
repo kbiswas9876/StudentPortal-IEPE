@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import '@/styles/TimerTypography.css'
 
 interface TimerDisplayProps {
@@ -33,41 +32,7 @@ export default function TimerDisplay({
   onPause,
   showPauseButton = false
 }: TimerDisplayProps) {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  // Simple format function for per-question timer
-  const formatTime = (ms: number): string => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    }
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  };
-
-  // Original logic for main session timer - hooks must be called unconditionally
-  const [currentTime, setCurrentTime] = useState<number>(Date.now())
-  const [previousTime, setPreviousTime] = useState<string>('')
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    
-    // Only run the interval if not paused
-    if (!isPaused) {
-      interval = setInterval(() => {
-        setCurrentTime(Date.now())
-      }, 100) // Reduced to 10fps to minimize re-renders while maintaining smoothness
-    }
-
-    return () => {
-      if (interval) {
-        clearInterval(interval)
-      }
-    }
-  }, [isPaused])
-
+  
   // If milliseconds prop is provided, this is a per-question timer - render directly
   if (milliseconds !== undefined) {
     return (
@@ -76,78 +41,11 @@ export default function TimerDisplay({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <span className="premium-timer small primary">
-          {formatTime(milliseconds)}
+          00:00
         </span>
       </div>
     );
   }
-
-  const formatTimeComplex = (milliseconds: number) => {
-    const totalSeconds = Math.floor(milliseconds / 1000)
-    const hours = Math.floor(totalSeconds / 3600)
-    const minutes = Math.floor((totalSeconds % 3600) / 60)
-    const seconds = totalSeconds % 60
-
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-    }
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  }
-
-  const formatTimeWithTicks = (milliseconds: number) => {
-    const totalSeconds = Math.floor(milliseconds / 1000)
-    const hours = Math.floor(totalSeconds / 3600)
-    const minutes = Math.floor((totalSeconds % 3600) / 60)
-    const seconds = totalSeconds % 60
-
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-    }
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  }
-
-  const getDisplayTime = () => {
-    if (mode === 'countdown' && duration) {
-      const totalTimeMs = duration * 60 * 1000
-      // Use current timestamp directly to prevent glitch during resume
-      const now = isPaused ? currentTime : Date.now()
-      const elapsedMs = now - (startTime || Date.now())
-      const remainingMs = Math.max(0, totalTimeMs - elapsedMs)
-      
-      // Check if time is up
-      if (remainingMs === 0 && onTimeUp) {
-        onTimeUp()
-      }
-      
-      return {
-        time: formatTimeWithTicks(remainingMs),
-        isLowTime: remainingMs < 5 * 60 * 1000, // Less than 5 minutes
-        isCritical: remainingMs < 60 * 1000 // Less than 1 minute
-      }
-    } else {
-      // Stopwatch mode - use current timestamp directly to prevent glitch during resume
-      const now = isPaused ? currentTime : Date.now()
-      const currentSessionTime = now - (startTime || Date.now())
-      const totalTime = currentSessionTime + initialElapsedTime
-      
-      
-      return {
-        time: formatTimeWithTicks(totalTime),
-        isLowTime: false,
-        isCritical: false
-      }
-    }
-  }
-
-  const { time, isLowTime, isCritical } = getDisplayTime()
-
-  // Track time changes for smooth animations
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (time !== previousTime) {
-      setPreviousTime(time)
-    }
-  }, [time, previousTime])
 
   const getSizeClasses = () => {
     switch (size) {
@@ -163,13 +61,7 @@ export default function TimerDisplay({
   }
 
   const getColorClasses = () => {
-    if (isCritical) {
-      return 'text-red-600 dark:text-red-400'
-    } else if (isLowTime) {
-      return 'text-orange-600 dark:text-orange-400'
-    } else {
-      return 'text-slate-700 dark:text-slate-300'
-    }
+    return 'text-slate-700 dark:text-slate-300'
   }
 
   const getVariantClasses = () => {
@@ -234,11 +126,7 @@ export default function TimerDisplay({
         {/* Timer content */}
         <div className="relative z-10 flex items-center space-x-3">
           {/* Premium clock icon */}
-          <motion.div
-            className="flex items-center justify-center"
-            animate={isPaused ? {} : { rotate: 360 }}
-            transition={isPaused ? {} : { duration: 2, repeat: Infinity, ease: "linear" }}
-          >
+          <div className="flex items-center justify-center">
             <svg 
               className={`w-5 h-5 ${getColorClasses()}`} 
               fill="none" 
@@ -252,11 +140,11 @@ export default function TimerDisplay({
                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" 
               />
             </svg>
-          </motion.div>
+          </div>
           
-          {/* Timer display with modern premium typography - stable */}
+          {/* Timer display with modern premium typography - static */}
           <div className={`premium-timer ${getSizeClasses()} ${getColorClasses()}`}>
-            {time}
+            00:00
           </div>
 
           {/* Pause Button */}
@@ -278,18 +166,6 @@ export default function TimerDisplay({
             </motion.button>
           )}
         </div>
-
-        {/* Premium glow effect for critical time */}
-        {isCritical && (
-          <motion.div
-            className="absolute inset-0 rounded-2xl bg-red-500/10 shadow-red-500/20 shadow-lg"
-            animate={{ 
-              opacity: [0.2, 0.6, 0.2],
-              scale: [1, 1.02, 1]
-            }}
-            transition={{ duration: 1, repeat: Infinity }}
-          />
-        )}
       </motion.div>
     )
   }
@@ -312,13 +188,11 @@ export default function TimerDisplay({
         whileHover={{ scale: 1.02 }}
       >
         <div className="flex items-center space-x-2">
-          <motion.svg 
+          <svg 
             className={`w-4 h-4 ${getColorClasses()}`} 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
-            animate={isPaused ? {} : { rotate: 360 }}
-            transition={isPaused ? {} : { duration: 2, repeat: Infinity, ease: "linear" }}
           >
             <path 
               strokeLinecap="round" 
@@ -326,7 +200,7 @@ export default function TimerDisplay({
               strokeWidth={2} 
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" 
             />
-          </motion.svg>
+          </svg>
           <div 
             className={`font-bold tracking-wide ${getSizeClasses()} ${getColorClasses()} relative`}
             style={{
@@ -339,20 +213,7 @@ export default function TimerDisplay({
               textRendering: 'optimizeLegibility'
             }}
           >
-            {time}
-            {/* Subtle ticking dot */}
-            <motion.div
-              className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-current rounded-full opacity-50"
-              animate={isPaused ? {} : { 
-                scale: [0.5, 1, 0.5],
-                opacity: [0.2, 0.6, 0.2]
-              }}
-              transition={isPaused ? {} : { 
-                duration: 1,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
+            00:00
           </div>
         </div>
       </motion.div>
@@ -366,7 +227,7 @@ export default function TimerDisplay({
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
       <span className={`premium-timer ${getSizeClasses()} ${getColorClasses()}`}>
-        {time}
+        00:00
       </span>
     </div>
   )

@@ -68,7 +68,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   
   const [currentIndex, setCurrentIndex] = useState(0)
   const [sessionStates, setSessionStates] = useState<SessionState[]>([])
-  const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now())
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -81,26 +80,18 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showAutoSubmissionOverlay, setShowAutoSubmissionOverlay] = useState(false)
   const [isSessionPaused, setIsSessionPaused] = useState(false)
   
-  // Centralized Timer Architecture - Your Method Implementation
-  const [displayTime, setDisplayTime] = useState(0); // State for triggering re-renders of timer display
   // Memoize questionIds for stable dependency in bookmark checks
   const questionIds = useMemo(() => questions.map(q => q.question_id), [questions]);
-  
-  // Timer pause state management
-  const [isPaused, setIsPaused] = useState(false);
-  const [timeWhenPaused, setTimeWhenPaused] = useState(0);
   
   // Pause functionality
   const handlePauseSession = () => {
     setIsSessionPaused(true);
     setShowPauseModal(true);
-    // The existing pause logic will handle timer pausing
   };
 
   const handleResumeSession = () => {
     setIsSessionPaused(false);
     setShowPauseModal(false);
-    // The existing resume logic will handle timer resuming
   };
 
   const handlePauseExit = () => {
@@ -109,30 +100,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     setShowExitModal(true);
   };
   
-  // Refs for synchronous state management (prevents race conditions)
-  const cumulativeTimeRef = useRef<Record<string, number>>({}); // Stores cumulative time per question ID
-  const currentQuestionStartRef = useRef<number>(Date.now()); // Start time of current viewing session
-  const activeQuestionIdRef = useRef<string>(questions[0]?.id?.toString() || ''); // Current question ID
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const sessionStartTimeRef = useRef<number>(Date.now()); // Ref to store current session start time for immediate access
-  const persistenceTimerRef = useRef<NodeJS.Timeout | null>(null); // Timer for auto-save
   const bookmarkInProgressRef = useRef(false); // Prevent concurrent bookmark requests (race condition fix)
 
-  // Save time for current question (synchronous)
-  const saveCurrentQuestionTime = useCallback(() => {
-    const currentTime = Date.now();
-    const timeSpentThisSession = currentTime - currentQuestionStartRef.current;
-    const questionId = activeQuestionIdRef.current;
-    
-    // Add to cumulative time
-    const previousTime = cumulativeTimeRef.current[questionId] || 0;
-    cumulativeTimeRef.current[questionId] = previousTime + timeSpentThisSession;
-    
-    // CRITICAL FIX: Reset the start time ref so the next save only adds NEW time
-    // Without this, the same time period gets added multiple times, causing accelerated timer
-    currentQuestionStartRef.current = currentTime;
-    
-  }, []);
   
   // ===== CRITICAL FIX: State Persistence Functions =====
   // These functions save and restore ALL session state to sessionStorage
@@ -142,16 +111,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     if (typeof window === 'undefined' || !isInitialized) return;
     
     try {
-      // Save current question time before persisting
-      saveCurrentQuestionTime();
-      
       const persistedState = {
         currentIndex,
         sessionStates,
-        sessionStartTime: sessionStartTimeRef.current,
-        cumulativeTime: cumulativeTimeRef.current,
-        activeQuestionId: activeQuestionIdRef.current,
-        currentQuestionStartTime: currentQuestionStartRef.current,
         timestamp: Date.now(),
         testMode,
         timeLimitInMinutes,
@@ -162,7 +124,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     } catch (error) {
       console.error('Failed to persist state:', error);
     }
-  }, [currentIndex, sessionStates, isInitialized, sessionKey, saveCurrentQuestionTime, testMode, timeLimitInMinutes]);
+  }, [currentIndex, sessionStates, isInitialized, sessionKey, testMode, timeLimitInMinutes]);
   
   const restoreStateFromSessionStorage = useCallback(() => {
     if (typeof window === 'undefined') return null;
@@ -192,70 +154,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     }
   }, [sessionKey]);
   
-  // Timer interval with pause/resume functionality
-  useEffect(() => {
-    let timerId: NodeJS.Timeout | null = null;
 
-    if (!showExitModal && !isPaused && !isSessionPaused) {
-      // RESUMING - Start the interval for updating display
-      timerId = setInterval(() => {
-        const currentTime = Date.now();
-        const timeSpentThisSession = currentTime - currentQuestionStartRef.current;
-        const questionId = activeQuestionIdRef.current;
-        const previousTime = cumulativeTimeRef.current[questionId] || 0;
-        const totalTime = previousTime + timeSpentThisSession;
-        
-        setDisplayTime(totalTime);
-      }, 100); // Update every 100ms for smooth display
-      
-      intervalRef.current = timerId;
-    } else {
-      // PAUSING - Clear the interval to freeze timers
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
-
-    // Cleanup
-    return () => {
-      if (timerId) {
-        clearInterval(timerId);
-      }
-      // Note: We don't save time here as it's handled by the pause/resume logic
-    };
-  }, [showExitModal, isPaused, isSessionPaused, saveCurrentQuestionTime]); // Depend on modal state
-
-  // Handle timer pause/resume for both main session and per-question timers
-  useEffect(() => {
-    if ((showExitModal || isSessionPaused) && !isPaused) {
-      // PAUSING - Record when we paused and save current question time
-      setTimeWhenPaused(Date.now());
-      setIsPaused(true);
-      
-      // Save the current question time before pausing
-      saveCurrentQuestionTime();
-    } else if (!showExitModal && !isSessionPaused && isPaused) {
-      // RESUMING - Adjust main session timer and reset per-question timer
-      const pausedDuration = Date.now() - timeWhenPaused;
-      
-      // Adjust main session timer - update ref immediately to prevent glitch
-      const newStartTime = sessionStartTimeRef.current + pausedDuration;
-      sessionStartTimeRef.current = newStartTime;
-      setSessionStartTime(newStartTime);
-      
-      // CRITICAL FIX: Reset per-question timer start time to current time
-      // The cumulative time is already saved, so we just need to reset the current session
-      currentQuestionStartRef.current = Date.now();
-      
-      // Update display with the saved cumulative time for current question
-      const questionId = activeQuestionIdRef.current;
-      const savedTime = cumulativeTimeRef.current[questionId] || 0;
-      setDisplayTime(savedTime);
-      
-      setIsPaused(false);
-    }
-  }, [showExitModal, isSessionPaused, isPaused, timeWhenPaused, saveCurrentQuestionTime]);
 
   // Initialize session states - ENHANCED WITH SESSIONSTORAGE PERSISTENCE
   useEffect(() => {
@@ -274,20 +173,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           setSessionStates(persistedState.sessionStates);
           setCurrentIndex(persistedState.currentIndex);
           
-          // Restore timer state with adjusted start time
-          const elapsedTime = Date.now() - persistedState.timestamp;
-          const restoredStartTime = persistedState.sessionStartTime + elapsedTime;
-          setSessionStartTime(restoredStartTime);
-          sessionStartTimeRef.current = restoredStartTime;
-          
-          // Restore per-question timing data
-          cumulativeTimeRef.current = persistedState.cumulativeTime;
-          activeQuestionIdRef.current = persistedState.activeQuestionId;
-          currentQuestionStartRef.current = Date.now();
-          
-          // Set initial display time
-          const initialTime = cumulativeTimeRef.current[persistedState.activeQuestionId] || 0;
-          setDisplayTime(initialTime);
           
           // CRITICAL: Clear the session data after restoring to prevent re-loading on refresh
           clearSessionStorage();
@@ -309,38 +194,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           setSessionStates(restoredStates)
           setCurrentIndex(savedSessionState?.currentIndex || 0)
           
-          // --- The Core Fix: Main Session Timer State Persistence ---
-          // Instead of using the old startTime, we calculate a NEW adjusted startTime.
-          // This implements the "Adjusted Start Time" trick to pause/resume the main timer.
-          const savedMainTimerValue = savedSessionState?.mainTimerValue || 0; // This is in seconds
-          const savedMainTimerValueMs = savedMainTimerValue * 1000; // Convert to milliseconds
-          const databaseAdjustedStartTime = Date.now() - savedMainTimerValueMs;
-          
-          // Use this new adjusted start time to initialize the session
-          // The timer component will now calculate: Date.now() - databaseAdjustedStartTime = savedMainTimerValueMs
-          // This effectively "pauses" and "resumes" the timer across sessions
-          setSessionStartTime(databaseAdjustedStartTime);
-          sessionStartTimeRef.current = databaseAdjustedStartTime; // Keep ref in sync
-          
-          // Restore per-question timing data into ref
-          if (savedSessionState?.timePerQuestion) {
-            const restoredTimePerQuestion: Record<string, number> = {}
-            Object.entries(savedSessionState.timePerQuestion).forEach(([questionId, timeInSeconds]) => {
-              restoredTimePerQuestion[questionId] = (timeInSeconds as number) * 1000 // Convert back to milliseconds
-            })
-            cumulativeTimeRef.current = restoredTimePerQuestion
-          }
-          
-          // Set initial active question ID and start time
-          if (questions.length > 0) {
-            const initialQuestionId = questions[savedSessionState?.currentIndex || 0].id.toString()
-            activeQuestionIdRef.current = initialQuestionId
-            currentQuestionStartRef.current = Date.now()
-            
-            // Set initial display time
-            const initialTime = cumulativeTimeRef.current[initialQuestionId] || 0
-            setDisplayTime(initialTime)
-          }
           
           setIsInitialized(true)
           restored = true;
@@ -358,17 +211,6 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
           is_bookmarked: false
         }))
         setSessionStates(initialStates)
-        const initialStartTime = Date.now();
-        setSessionStartTime(initialStartTime);
-        sessionStartTimeRef.current = initialStartTime; // Keep ref in sync
-        
-        // Set initial active question ID and start time for new session
-        if (questions.length > 0) {
-          const initialQuestionId = questions[0].id.toString()
-          activeQuestionIdRef.current = initialQuestionId
-          currentQuestionStartRef.current = Date.now()
-          setDisplayTime(0) // Start from 0 for new session
-        }
         
         setIsInitialized(true)
       }
@@ -435,22 +277,6 @@ useEffect(() => {
     
     // Save state on every state change
     saveStateToSessionStorage();
-    
-    // Also set up periodic auto-save (every 2 seconds as a safety net)
-    if (persistenceTimerRef.current) {
-      clearInterval(persistenceTimerRef.current);
-    }
-    
-    persistenceTimerRef.current = setInterval(() => {
-      saveStateToSessionStorage();
-    }, 2000);
-    
-    return () => {
-      if (persistenceTimerRef.current) {
-        clearInterval(persistenceTimerRef.current);
-        persistenceTimerRef.current = null;
-      }
-    };
   }, [currentIndex, sessionStates, isInitialized, saveStateToSessionStorage]);
 
   // Keyboard shortcuts
@@ -512,21 +338,10 @@ useEffect(() => {
       })
     }
     
-    // Save time for current question before switching
-    saveCurrentQuestionTime();
-    
     // Update to new question
-    const newQuestionId = questions[newIndex].id.toString();
     setCurrentIndex(newIndex);
-    activeQuestionIdRef.current = newQuestionId;
-    const newStartTime = Date.now();
-    currentQuestionStartRef.current = newStartTime;
     
-    // Update display with previously saved time for this question
-    const previousTime = cumulativeTimeRef.current[newQuestionId] || 0;
-    setDisplayTime(previousTime);
-    
-  }, [currentIndex, questions, saveCurrentQuestionTime, sessionStates, updateSessionState]);
+  }, [currentIndex, questions, sessionStates, updateSessionState]);
   const currentState = sessionStates[currentIndex] || {
     status: 'not_visited' as QuestionStatus,
     user_answer: null,
@@ -646,9 +461,6 @@ useEffect(() => {
         questionSet: questions.map(q => q.id),
         currentIndex,
         
-        // Timer data
-        sessionStartTime: effectiveSessionStartTime,
-        mainTimerValue: Math.floor((Date.now() - effectiveSessionStartTime) / 1000), // Save in seconds for database efficiency
         
         // User progress data - capture ALL live state
         userAnswers: questions.reduce((acc, q, index) => {
@@ -665,13 +477,6 @@ useEffect(() => {
           return acc
         }, {} as Record<string, string>),
         
-        timePerQuestion: questions.reduce((acc, q, index) => {
-          const questionTime = cumulativeTimeRef.current[q.id.toString()] || 0
-          if (questionTime > 0) {
-            acc[q.id] = Math.floor(questionTime / 1000) // Convert to seconds
-          }
-          return acc
-        }, {} as Record<string, number>),
         
         bookmarkedQuestions: questions.reduce((acc, q, index) => {
           const state = sessionStates[index]
@@ -728,13 +533,10 @@ useEffect(() => {
   const getCurrentProgress = () => {
     const answered = sessionStates.filter(state => state.user_answer !== null).length
     const total = questions.length
-    const timeSpent = Math.floor((Date.now() - effectiveSessionStartTime) / 1000)
-    const minutes = Math.floor(timeSpent / 60)
-    const seconds = timeSpent % 60
     return {
       answered,
       total,
-      timeSpent: `${minutes}:${seconds.toString().padStart(2, '0')}`
+      timeSpent: "00:00"
     }
   }
 
@@ -777,30 +579,7 @@ useEffect(() => {
   const handleConfirmSubmission = async () => {
     if (isSubmitting) return
 
-    // --- FIX: START ---
-    // Before submitting, perform a final check on the CURRENT question's state
-    // to discard any un-saved answers. This is the same logic used in handleQuestionNavigation.
-    const currentState = sessionStates[currentIndex];
-    if (currentState && currentState.user_answer && currentState.status !== 'answered' && currentState.status !== 'marked_for_review') {
-      
-      console.log("FIX APPLIED: Clearing un-saved answer on the final question before submission.");
-      
-      // Create a new, cleaned version of sessionStates
-      const cleanedSessionStates = [...sessionStates];
-      cleanedSessionStates[currentIndex] = {
-        ...cleanedSessionStates[currentIndex],
-        user_answer: null,
-        status: 'unanswered' // Mark it as seen but unanswered
-      };
-      
-      // This is the state that will be used for submission
-      // We pass this cleaned state directly to the submission logic
-      await submitTest(cleanedSessionStates);
-
-    } else {
-      // If no cleanup is needed, proceed with the existing state
-      await submitTest(sessionStates);
-    }
+    await submitTest(sessionStates);
   }
 
   // We will refactor the existing submission logic into a new helper function
@@ -809,11 +588,7 @@ useEffect(() => {
     setShowSubmissionModal(false)
 
     try {
-      // Save current question time first
-      saveCurrentQuestionTime();
       
-      // Get final time data
-      const finalTimeData = { ...cumulativeTimeRef.current };
 
       // Calculate final results based on the Ultimate Rule:
       // Only count GREEN (answered) and PURPLE WITH GREEN TICK (answered and marked for review) questions
@@ -856,7 +631,7 @@ useEffect(() => {
         score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0
       }
       
-      const totalTime = Math.round((Date.now() - effectiveSessionStartTime) / 1000) // Convert to seconds
+      const totalTime = 0 // Timer disabled
 
       console.log('Submitting practice session:', {
         user_id: userId,
@@ -881,7 +656,7 @@ useEffect(() => {
             status: finalSessionStates[index].user_answer ? 
               (finalSessionStates[index].user_answer === question.correct_option ? 'correct' : 'incorrect') : 
               'skipped',
-            time_taken: Math.round((cumulativeTimeRef.current[question.id.toString()] || 0) / 1000) // Use new per-question timing data
+            time_taken: 0 // Timer disabled
           })),
           score,
           total_time: totalTime,
@@ -921,32 +696,8 @@ useEffect(() => {
   const handleAutoSubmission = async () => {
     if (isSubmitting) return
 
-    // --- FIX: START ---
-    // Before submitting, perform a final check on the CURRENT question's state
-    // to discard any un-saved answers. This is the same logic used in handleQuestionNavigation.
-    const currentState = sessionStates[currentIndex];
-    if (currentState && currentState.user_answer && currentState.status !== 'answered' && currentState.status !== 'marked_for_review') {
-      
-      console.log("FIX APPLIED: Clearing un-saved answer on the final question before auto-submission.");
-      
-      // Create a new, cleaned version of sessionStates
-      const cleanedSessionStates = [...sessionStates];
-      cleanedSessionStates[currentIndex] = {
-        ...cleanedSessionStates[currentIndex],
-        user_answer: null,
-        status: 'unanswered' // Mark it as seen but unanswered
-      };
-      
-      // This is the state that will be used for submission
-      // We pass this cleaned state directly to the submission logic
-      setShowAutoSubmissionOverlay(true)
-      await submitTest(cleanedSessionStates);
-
-    } else {
-      // If no cleanup is needed, proceed with the existing state
-      setShowAutoSubmissionOverlay(true)
-      await submitTest(sessionStates);
-    }
+    setShowAutoSubmissionOverlay(true)
+    await submitTest(sessionStates);
   }
 
   const handleQuestionNavigation = (index: number) => {
@@ -972,11 +723,7 @@ useEffect(() => {
     setShowMobileSidebar(false) // Close mobile sidebar
   }
 
-  // Calculate display time for current question - this runs on every tick
   const currentQuestion = questions[currentIndex];
-
-  // Compute the effective session start time - use ref for immediate updates during pause/resume
-  const effectiveSessionStartTime = sessionStartTimeRef.current;
 
   if (!currentQuestion) {
     return (
@@ -1003,8 +750,6 @@ useEffect(() => {
   // Calculate answered questions for progress bar
   const answeredQuestions = sessionStates.filter(state => state.user_answer !== null).length
 
-  // Display time is now managed by the centralized timer interval
-  // No need to calculate here - it's updated every 100ms by the interval
 
   return (
     <div className="practice-page-wrapper">
@@ -1024,7 +769,6 @@ useEffect(() => {
               <div className="text-sm font-medium text-slate-600 dark:text-slate-300">
                 {mockTestData ? mockTestData.test.name : 'Practice Session'} - Question {currentIndex + 1} of {questions.length}
               </div>
-              {/* Timer removed - now handled by QuestionDisplayWindow */}
             </div>
           </div>
         </div>
@@ -1042,12 +786,12 @@ useEffect(() => {
           onBookmark={handleBookmark}
           onReportError={() => setShowReportModal(true)}
           onExit={() => setShowExitModal(true)}
-          sessionStartTime={effectiveSessionStartTime}
+          sessionStartTime={0}
           timeLimitInMinutes={testMode === 'timed' ? timeLimitInMinutes : undefined}
           testMode={testMode}
-          currentQuestionStartTime={currentQuestionStartRef.current}
-          cumulativeTime={displayTime}
-          isPaused={isPaused}
+          currentQuestionStartTime={0}
+          cumulativeTime={0}
+          isPaused={true}
           showBookmark={false} // Disable bookmarking in practice interface
           onTogglePause={handlePauseSession}
           onTimeUp={handleAutoSubmission} // NEW: Pass auto-submission handler
@@ -1067,7 +811,7 @@ useEffect(() => {
           onSubmitTest={handleSubmitTest}
           isSubmitting={isSubmitting}
           mockTestData={mockTestData}
-          timePerQuestion={cumulativeTimeRef.current}
+          timePerQuestion={{}}
         />
       </div>
 
@@ -1089,7 +833,7 @@ useEffect(() => {
               className="w-80 h-full flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Mobile Header with Timer */}
+              {/* Mobile Header */}
               <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-700/50 dark:to-slate-800/50">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Question Navigation</h3>
@@ -1103,7 +847,6 @@ useEffect(() => {
                   </button>
                 </div>
                 <div className="flex items-center justify-between mt-4">
-                  {/* Timers removed - now handled by QuestionDisplayWindow */}
                 </div>
               </div>
               
@@ -1170,7 +913,7 @@ useEffect(() => {
         onCancel={() => setShowSubmissionModal(false)}
         onSubmit={handleConfirmSubmission}
         timeRemaining={testMode === 'timed' && timeLimitInMinutes ? 
-          `${Math.floor((timeLimitInMinutes * 60 - (Date.now() - effectiveSessionStartTime) / 1000) / 60)}m ${Math.floor(((timeLimitInMinutes * 60 - (Date.now() - effectiveSessionStartTime) / 1000) % 60))}s` : 
+          '00m 00s' : 
           undefined
         }
         statusCounts={getStatusCounts()}
