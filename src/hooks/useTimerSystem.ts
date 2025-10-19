@@ -7,6 +7,9 @@ interface UseTimerSystemProps {
   totalQuestions: number
   onTimeUp?: () => void
   isSessionActive: boolean // Controls whether timers should run
+  // Optional: Initial state for session restoration
+  initialSessionElapsedMs?: number
+  initialQuestionTimeMap?: Map<number, number>
 }
 
 interface TimerState {
@@ -22,7 +25,9 @@ export function useTimerSystem({
   currentQuestionIndex,
   totalQuestions,
   onTimeUp,
-  isSessionActive
+  isSessionActive,
+  initialSessionElapsedMs,
+  initialQuestionTimeMap
 }: UseTimerSystemProps) {
   // === STATE (minimal - only for display updates) ===
   const [mainTimerDisplay, setMainTimerDisplay] = useState<string>('00:00')
@@ -159,15 +164,31 @@ export function useTimerSystem({
 
     // Initialize session start time if not set
     if (!sessionStartTimeRef.current) {
-      sessionStartTimeRef.current = Date.now()
-      console.log('🕐 Session timer initialized')
+      const now = Date.now()
+      // If restoring a session, adjust start time to account for elapsed time
+      if (initialSessionElapsedMs && initialSessionElapsedMs > 0) {
+        sessionStartTimeRef.current = now - initialSessionElapsedMs
+        console.log(`🔄 Session timer restored with ${Math.floor(initialSessionElapsedMs / 1000)}s elapsed`)
+      } else {
+        sessionStartTimeRef.current = now
+        console.log('🕐 Session timer initialized')
+      }
     }
 
     // Initialize question start time if not set
     if (!questionStartTimeRef.current) {
       questionStartTimeRef.current = Date.now()
       previousQuestionIndexRef.current = currentQuestionIndex
-      console.log(`🕐 Question ${currentQuestionIndex + 1} timer started`)
+      
+      // If restoring, load the question time map
+      if (initialQuestionTimeMap && initialQuestionTimeMap.size > 0) {
+        questionTimeMapRef.current = new Map(initialQuestionTimeMap)
+        const currentQuestionTime = initialQuestionTimeMap.get(currentQuestionIndex) || 0
+        setInQuestionTime(currentQuestionTime)
+        console.log(`🔄 Question ${currentQuestionIndex + 1} timer restored with ${Math.floor(currentQuestionTime / 1000)}s accumulated`)
+      } else {
+        console.log(`🕐 Question ${currentQuestionIndex + 1} timer started`)
+      }
     }
 
     // Start display update interval (updates every 100ms for smooth countdown)

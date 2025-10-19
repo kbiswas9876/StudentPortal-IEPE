@@ -59,6 +59,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   // Check if this is a fresh start
   const isFreshStart = searchParams.get('fresh') === 'true'
   
+  // B-2: Use saved session config when restoring (override props)
+  const effectiveTestMode = savedSessionState?.sessionConfig?.testMode || testMode
+  const effectiveTimeLimitInMinutes = savedSessionState?.sessionConfig?.timeLimitInMinutes || timeLimitInMinutes
+  
   
   // Extract stable primitive values from auth context to prevent unnecessary effect re-runs
   const userId = user?.id
@@ -80,6 +84,11 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showSubmissionModal, setShowSubmissionModal] = useState(false)
   const [showAutoSubmissionOverlay, setShowAutoSubmissionOverlay] = useState(false)
   
+  // C-1: Track saved session ID for updates (not duplicates)
+  const [savedSessionId, setSavedSessionId] = useState<number | null>(
+    savedSessionState?.savedSessionId || null
+  )
+  
   // Memoize questionIds for stable dependency in bookmark checks
   const questionIds = useMemo(() => questions.map(q => q.question_id), [questions]);
   
@@ -87,6 +96,30 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   
   // Ref to store the auto-submission handler to avoid circular dependency
   const handleAutoSubmissionRef = useRef<(() => void) | null>(null)
+  
+  // FR-3.1: Extract timer restoration data from savedSessionState
+  const initialTimerState = useMemo(() => {
+    if (savedSessionState?.timerState) {
+      const { mainTimerElapsedMs, questionTimes } = savedSessionState.timerState
+      
+      // Convert questionTimes object to Map
+      const questionTimeMap = new Map<number, number>()
+      if (questionTimes) {
+        Object.entries(questionTimes).forEach(([index, time]) => {
+          questionTimeMap.set(Number(index), time as number)
+        })
+      }
+      
+      return {
+        initialSessionElapsedMs: mainTimerElapsedMs || 0,
+        initialQuestionTimeMap: questionTimeMap
+      }
+    }
+    return {
+      initialSessionElapsedMs: 0,
+      initialQuestionTimeMap: undefined
+    }
+  }, [savedSessionState])
   
   // === TIMER SYSTEM ===
   const {
@@ -98,12 +131,14 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     getTotalSessionTime,
     getQuestionTimeMap
   } = useTimerSystem({
-    testMode,
-    timeLimitInMinutes,
+    testMode: effectiveTestMode,
+    timeLimitInMinutes: effectiveTimeLimitInMinutes,
     currentQuestionIndex: currentIndex,
     totalQuestions: questions.length,
     onTimeUp: () => handleAutoSubmissionRef.current?.(),
-    isSessionActive: isInitialized && !isSubmitting
+    isSessionActive: isInitialized && !isSubmitting,
+    initialSessionElapsedMs: initialTimerState.initialSessionElapsedMs,
+    initialQuestionTimeMap: initialTimerState.initialQuestionTimeMap
   })
   
   // Pause functionality
@@ -126,6 +161,14 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     setShowExitModal(true);
   };
 
+  // FR-1.1: Open exit modal and instantly pause timers
+  const handleOpenExitModal = () => {
+    if (!isPaused) {
+      togglePause()
+    }
+    setShowExitModal(true)
+  }
+
   
   // ===== CRITICAL FIX: State Persistence Functions =====
   // These functions save and restore ALL session state to sessionStorage
@@ -139,8 +182,8 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         currentIndex,
         sessionStates,
         timestamp: Date.now(),
-        testMode,
-        timeLimitInMinutes,
+        testMode: effectiveTestMode,
+        timeLimitInMinutes: effectiveTimeLimitInMinutes,
       };
       
       sessionStorage.setItem(sessionKey, JSON.stringify(persistedState));
@@ -148,7 +191,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     } catch (error) {
       console.error('Failed to persist state:', error);
     }
-  }, [currentIndex, sessionStates, isInitialized, sessionKey, testMode, timeLimitInMinutes]);
+  }, [currentIndex, sessionStates, isInitialized, sessionKey, effectiveTestMode, effectiveTimeLimitInMinutes]);
   
   const restoreStateFromSessionStorage = useCallback(() => {
     if (typeof window === 'undefined') return null;
@@ -180,55 +223,61 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   
 
 
-  // Initialize session states - ENHANCED WITH SESSIONSTORAGE PERSISTENCE
+  // D-1: Initialize session states with STRICT ISOLATION
   useEffect(() => {
     if (questions.length > 0) {
       let restored = false;
 
-      // ONLY attempt to restore if this is NOT a fresh start
-      if (!isFreshStart) {
-        // STEP 1: Check sessionStorage first (highest priority - survives re-mounts)
+      // D-1: EXPLICIT RESUME - Only restore if savedSessionState is provided AND not a fresh start
+      if (!isFreshStart && savedSessionState && Object.keys(savedSessionState).length > 0) {
+        console.log('%c 🔄 RESTORATION: Applying state from explicitly resumed session.', 'color: blue; font-weight: bold;');
+        
+        // B-1: Perfect state restoration from saved session
+        const restoredStates: SessionState[] = questions.map((q, index) => {
+          const questionId = q.id
+          return {
+            status: (savedSessionState?.questionStatuses?.[questionId] as QuestionStatus) || 'not_visited',
+            user_answer: savedSessionState?.userAnswers?.[questionId] || null,
+            is_bookmarked: savedSessionState?.bookmarkedQuestions?.[questionId] || false
+          }
+        })
+        
+        // Restore all state
+        setSessionStates(restoredStates)
+        setCurrentIndex(savedSessionState?.currentIndex || 0)
+        
+        setIsInitialized(true)
+        restored = true;
+        
+        console.log('✅ Session restored:', {
+          currentIndex: savedSessionState?.currentIndex || 0,
+          answeredCount: restoredStates.filter(s => s.user_answer).length,
+          totalQuestions: questions.length
+        })
+      } 
+      // Tab switch recovery (only if NOT resuming a saved session)
+      else if (!isFreshStart && !savedSessionState) {
+        // Check sessionStorage for tab switch recovery
         const persistedState = restoreStateFromSessionStorage();
         
         if (persistedState) {
-          // RESTORE FROM SESSIONSTORAGE - This handles tab switches and re-mounts
-          console.log('%c RESTORATION: Applying state from sessionStorage.', 'color: green; font-weight: bold;');
+          console.log('%c 🔄 RESTORATION: Applying state from sessionStorage (tab switch recovery).', 'color: green; font-weight: bold;');
           
           setSessionStates(persistedState.sessionStates);
           setCurrentIndex(persistedState.currentIndex);
           
-          
-          // CRITICAL: Clear the session data after restoring to prevent re-loading on refresh
+          // Clear after restoring
           clearSessionStorage();
-          restored = true;
-          
-          // STEP 2: Restore from saved session (database restore)
-          console.log('%c RESTORATION: Applying state from database-saved session.', 'color: blue; font-weight: bold;');
-          
-          const restoredStates: SessionState[] = questions.map((q, index) => {
-            const questionId = q.id
-            return {
-              status: (savedSessionState?.questionStatuses?.[questionId] as QuestionStatus) || 'not_visited',
-              user_answer: savedSessionState?.userAnswers?.[questionId] || null,
-              is_bookmarked: savedSessionState?.bookmarkedQuestions?.[questionId] || false
-            }
-          })
-          
-          // RE-HYDRATE ALL STATE FROM SAVED SESSION
-          setSessionStates(restoredStates)
-          setCurrentIndex(savedSessionState?.currentIndex || 0)
-          
-          
           setIsInitialized(true)
           restored = true;
         }
       }
 
-      // If no state was restored (either because it's a fresh start or nothing was found)
+      // D-1: FRESH START - Start with clean slate
       if (!restored) {
-        console.log('%c INITIALIZATION: Starting a completely new session.', 'color: orange; font-weight: bold;');
+        console.log('%c 🆕 INITIALIZATION: Starting a completely new, fresh session.', 'color: orange; font-weight: bold;');
         
-        // First, initialize with default bookmark state (false)
+        // Initialize with default state
         const initialStates: SessionState[] = questions.map(() => ({
           status: 'not_visited',
           user_answer: null,
@@ -239,7 +288,7 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
         setIsInitialized(true)
       }
     }
-  }, [questions, savedSessionState, isFreshStart, restoreStateFromSessionStorage])
+  }, [questions, savedSessionState, isFreshStart, restoreStateFromSessionStorage, clearSessionStorage])
 
 // Effect: Fetch bookmark statuses ONCE on initialization
 // FIX: This should only run once when initialized, not on every session change
@@ -472,21 +521,36 @@ useEffect(() => {
     try {
       if (!userId) return
 
-      // Create comprehensive session state object with complete state serialization
+      // A-2: Capture complete timer state at moment of pause
+      const totalSessionElapsedMs = getTotalSessionTime()
+      const questionTimeMap = getQuestionTimeMap()
+      
+      // Convert Map to plain object for JSON serialization
+      const questionTimesObject: Record<number, number> = {}
+      questionTimeMap.forEach((time, index) => {
+        questionTimesObject[index] = time
+      })
+
+      // A-2: Create comprehensive session state object with complete state serialization
       const sessionState = {
         // Core session configuration
         sessionConfig: {
-          testMode,
-          timeLimitInMinutes,
-          questionOrder: 'sequential' // Default for now
+          testMode: effectiveTestMode,
+          timeLimitInMinutes: effectiveTimeLimitInMinutes,
+          questionOrder: 'sequential'
         },
         
         // Question set and current position
         questionSet: questions.map(q => q.id),
         currentIndex,
         
+        // A-2: Timer state for perfect restoration
+        timerState: {
+          mainTimerElapsedMs: totalSessionElapsedMs,
+          questionTimes: questionTimesObject
+        },
         
-        // User progress data - capture ALL live state
+        // A-2: User progress data - capture ALL live state
         userAnswers: questions.reduce((acc, q, index) => {
           const state = sessionStates[index]
           if (state?.user_answer) {
@@ -500,7 +564,6 @@ useEffect(() => {
           acc[q.id] = state?.status || 'not_visited'
           return acc
         }, {} as Record<string, string>),
-        
         
         bookmarkedQuestions: questions.reduce((acc, q, index) => {
           const state = sessionStates[index]
@@ -526,11 +589,26 @@ useEffect(() => {
         }))
       }
 
-      console.log('Saving comprehensive session state:', sessionState)
+      console.log('💾 Saving session state:', {
+        sessionId: savedSessionId,
+        testMode: effectiveTestMode,
+        timeLimitInMinutes: effectiveTimeLimitInMinutes,
+        currentIndex,
+        mainTimerElapsedMs: totalSessionElapsedMs,
+        questionCount: questions.length,
+        answeredCount: sessionStates.filter(s => s.user_answer).length
+      })
+
+      // C-1: Determine if UPDATE or CREATE based on savedSessionId
+      const isUpdate = savedSessionId !== null
+      const endpoint = isUpdate 
+        ? `/api/saved-sessions?sessionId=${savedSessionId}`
+        : '/api/saved-sessions'
+      const method = isUpdate ? 'PUT' : 'POST'
 
       // Save to database
-      const response = await fetch('/api/saved-sessions', {
-        method: 'POST',
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -544,6 +622,19 @@ useEffect(() => {
       if (!response.ok) {
         throw new Error('Failed to save session')
       }
+
+      const result = await response.json()
+      
+      // Store the session ID for future updates
+      if (!isUpdate && result.data?.id) {
+        setSavedSessionId(result.data.id)
+      }
+
+      showToast({ 
+        type: 'success', 
+        title: isUpdate ? 'Session Updated' : 'Session Saved', 
+        message: `Your progress has been ${isUpdate ? 'updated' : 'saved'} successfully.` 
+      })
 
       // Close modal and redirect
       setShowExitModal(false)
@@ -819,7 +910,7 @@ useEffect(() => {
           onAnswerChange={handleAnswerChange}
           onBookmark={handleBookmark}
           onReportError={() => setShowReportModal(true)}
-          onExit={() => setShowExitModal(true)}
+          onExit={handleOpenExitModal}
           mainTimer={mainTimerDisplay}
           isLowTime={isLowTime}
           inQuestionTime={inQuestionTime}
@@ -922,7 +1013,13 @@ useEffect(() => {
       {/* Exit Session Modal */}
       <ExitSessionModal
         isOpen={showExitModal}
-        onClose={() => setShowExitModal(false)}
+        onClose={() => {
+          // FR-1.3: Cancel - Resume timers if they were paused
+          if (isPaused) {
+            togglePause()
+          }
+          setShowExitModal(false)
+        }}
         onExitWithoutSaving={handleExitWithoutSaving}
         onSaveAndExit={handleSaveAndExit}
         currentProgress={getCurrentProgress()}

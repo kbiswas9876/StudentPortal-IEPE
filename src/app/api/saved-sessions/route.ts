@@ -79,6 +79,45 @@ export async function POST(request: Request) {
   }
 }
 
+// PUT - Update an existing saved session
+export async function PUT(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const sessionId = searchParams.get('sessionId')
+    
+    const body = await request.json()
+    const { userId, sessionName, sessionState } = body
+
+    if (!sessionId || !userId || !sessionName || !sessionState) {
+      return NextResponse.json({ 
+        error: 'Session ID, User ID, session name, and session state are required' 
+      }, { status: 400 })
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('saved_practice_sessions')
+      .update({
+        session_name: sessionName,
+        session_state: sessionState,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', sessionId)
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating session:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ data })
+  } catch (error) {
+    console.error('Unexpected error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
 // DELETE - Delete a saved session
 export async function DELETE(request: Request) {
   try {

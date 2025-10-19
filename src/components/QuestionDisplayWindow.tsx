@@ -116,9 +116,6 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   const handleBack = () => {
     if (onExit) {
       onExit()
-    } else {
-      // Fallback logic to go back to question list
-      console.log('Going back to question list')
     }
   }
 
