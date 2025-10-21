@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Star, Bookmark, Tag, FileText, Calendar } from 'lucide-react'
-import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
+import { X, Bookmark, Tag, FileText, Calendar } from 'lucide-react'
 import KatexRenderer from './ui/KatexRenderer'
+import StarRating from './ui/StarRating'
 
 interface BookmarkCreationModalProps {
   isOpen: boolean
@@ -36,6 +36,40 @@ export default function BookmarkCreationModal({
   // Custom Reminder state
   const [isCustomReminderActive, setIsCustomReminderActive] = useState(false)
   const [customNextReviewDate, setCustomNextReviewDate] = useState('')
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setDifficultyRating(1) // Always reset to 1 star
+      setCustomTags([])
+      setPersonalNote('')
+      setNewTag('')
+      setIsCustomReminderActive(false)
+      setCustomNextReviewDate('')
+    }
+  }, [isOpen])
+
+  const getRatingLabel = (rating: number) => {
+    const labels = {
+      1: 'Easy',
+      2: 'Easy-Moderate', 
+      3: 'Moderate',
+      4: 'Moderate-Hard',
+      5: 'Hard'
+    }
+    return labels[rating as keyof typeof labels] || ''
+  }
+
+  const getDifficultyColorClasses = (rating: number) => {
+    const colorSchemes = {
+      1: 'text-white bg-gradient-to-br from-emerald-500 to-green-600 shadow-emerald-500/50 border-emerald-400/30',
+      2: 'text-white bg-gradient-to-br from-lime-500 to-yellow-500 shadow-lime-500/50 border-lime-400/30',
+      3: 'text-white bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/50 border-amber-400/30',
+      4: 'text-white bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-500/50 border-orange-400/30',
+      5: 'text-white bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/50 border-red-400/30'
+    }
+    return colorSchemes[rating as keyof typeof colorSchemes] || 'text-slate-600 dark:text-slate-400'
+  }
   
   // Get minimum date (today) for the date picker
   const getMinDate = () => {
@@ -154,34 +188,49 @@ export default function BookmarkCreationModal({
               {/* Difficulty Rating - Mandatory */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-yellow-500" strokeWidth={2.5} />
                   <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
                     Difficulty Rating *
                   </h3>
                   <span className="text-xs text-slate-500 dark:text-slate-400">(Required)</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <motion.button
-                      key={rating}
-                      onClick={() => setDifficultyRating(rating)}
-                      className={`p-2 rounded-lg transition-all duration-200 ${
-                        rating <= difficultyRating
-                          ? 'text-yellow-500 hover:text-yellow-600'
-                          : 'text-slate-300 dark:text-slate-600 hover:text-slate-400 dark:hover:text-slate-500'
-                      }`}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <StarSolidIcon className="h-6 w-6" />
-                    </motion.button>
-                  ))}
-                  <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">
-                    {difficultyRating === 1 ? 'Easy' :
-                     difficultyRating === 2 ? 'Easy-Moderate' :
-                     difficultyRating === 3 ? 'Moderate' :
-                     difficultyRating === 4 ? 'Moderate-Hard' : 'Hard'}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <StarRating
+                      value={difficultyRating}
+                      onChange={setDifficultyRating}
+                      maxRating={5}
+                      size="md"
+                      disabled={false}
+                      readonly={false}
+                      showTooltip={true}
+                    />
+                  </div>
+                  
+                  {/* Modern Color-coded Difficulty Label */}
+                  <motion.span 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className={`group relative inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold border shadow-lg hover:shadow-xl transition-all duration-300 ${getDifficultyColorClasses(difficultyRating)}`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {/* Shine effect overlay */}
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                    
+                    {/* Subtle glow effect */}
+                    <div className={`absolute inset-0 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 ${
+                      difficultyRating === 1 ? 'bg-emerald-400/30' :
+                      difficultyRating === 2 ? 'bg-lime-400/30' :
+                      difficultyRating === 3 ? 'bg-amber-400/30' :
+                      difficultyRating === 4 ? 'bg-orange-400/30' :
+                      'bg-red-400/30'
+                    }`} />
+                    
+                    <span className="relative z-10 drop-shadow-sm">
+                      {getRatingLabel(difficultyRating)}
+                    </span>
+                  </motion.span>
                 </div>
               </div>
 
