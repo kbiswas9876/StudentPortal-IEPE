@@ -57,7 +57,8 @@ export async function GET(request: Request) {
       .from('bookmarked_questions')
       .select('id, question_id, is_custom_reminder_active, custom_next_review_date, next_review_date')
       .eq('user_id', userId)
-      .or(`and(is_custom_reminder_active.eq.true,custom_next_review_date.lte.${today}),and(is_custom_reminder_active.eq.false,next_review_date.lte.${today}),and(is_custom_reminder_active.eq.false,next_review_date.is.null)`);
+      .or(`and(is_custom_reminder_active.eq.true,custom_next_review_date.lte.${today}),and(is_custom_reminder_active.eq.false,next_review_date.lte.${today}),and(is_custom_reminder_active.eq.false,next_review_date.is.null)`)
+      .order('next_review_date', { ascending: true, nullsFirst: true });
 
     if (error) {
       console.error('❌ Error fetching due questions:', error);

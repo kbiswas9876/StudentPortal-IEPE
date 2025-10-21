@@ -517,8 +517,8 @@ const getCurrentQuestionBookmarkId = () => {
                   filteredTotal={filteredIndices.length}
                 />
                 
-                {/* SRS Feedback Controls - Only for SRS Daily Review */}
-                {source === 'srs-daily-review' && currentQuestion && bookmarkedMap[currentQuestion.question_id] && !srsFeedbackGiven.has(currentQuestion.question_id) && user && (
+                {/* SRS Feedback Controls - For ALL Bookmarked Question Reviews */}
+                {currentQuestion && bookmarkedMap[currentQuestion.question_id] && !srsFeedbackGiven.has(currentQuestion.question_id) && user && (
                   <div className="mt-6">
                     {srsFeedbackError && (
                       <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 rounded-lg">

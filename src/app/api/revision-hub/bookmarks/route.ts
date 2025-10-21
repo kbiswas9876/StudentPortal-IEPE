@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
 import { cookies } from 'next/headers'
+import { initializeSrsData } from '@/lib/srs/algorithm'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -240,6 +241,10 @@ export async function POST(request: Request) {
     if (customTags !== undefined) {
       bookmarkData.custom_tags = customTags || null
     }
+
+    // Initialize SRS data with next_review_date set to today
+    const initialSrsData = initializeSrsData()
+    Object.assign(bookmarkData, initialSrsData)
 
     console.log('📦 Creating new bookmark with data:', bookmarkData)
 

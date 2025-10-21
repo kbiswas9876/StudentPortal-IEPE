@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { RotateCcw, AlertTriangle, ThumbsUp, Sparkles } from 'lucide-react'
 import type { PerformanceRating } from '@/lib/srs/types'
 
@@ -72,6 +72,8 @@ export default function SrsFeedbackControls({
 }: SrsFeedbackControlsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedRating, setSelectedRating] = useState<PerformanceRating | null>(null)
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const [intervalMessage, setIntervalMessage] = useState('')
 
   const handleFeedback = async (rating: PerformanceRating) => {
     if (isSubmitting) return
@@ -98,10 +100,31 @@ export default function SrsFeedbackControls({
         throw new Error(result.error || 'Failed to log review')
       }
 
-      // Success! Navigate to next question after a brief delay
+      // Calculate interval message
+      const previousInterval = result.previousSrsData?.srs_interval || 0
+      const newInterval = result.updatedSrsData?.srs_interval || 0
+      
+      let message = ''
+      if (rating === 1) {
+        // Again - Reset
+        message = "Reset! This was a tough one. We'll show it to you again tomorrow."
+      } else if (newInterval > previousInterval) {
+        const diff = newInterval - previousInterval
+        message = `✅ Got it! Next review scheduled in ${newInterval} day${newInterval !== 1 ? 's' : ''} (increased by ${diff} day${diff !== 1 ? 's' : ''}).`
+      } else if (newInterval < previousInterval) {
+        message = `Next review in ${newInterval} day${newInterval !== 1 ? 's' : ''} (adjusted down for more practice).`
+      } else {
+        message = `Next review in ${newInterval} day${newInterval !== 1 ? 's' : ''}.`
+      }
+
+      setIntervalMessage(message)
+      setShowSuccessMessage(true)
+
+      // Navigate to next question after showing the message
       setTimeout(() => {
+        setShowSuccessMessage(false)
         onFeedbackComplete()
-      }, 300)
+      }, 3000)
     } catch (error) {
       console.error('Error logging review:', error)
       const errorMessage = error instanceof Error ? error.message : 'Could not save review. Please try again.'
@@ -189,11 +212,29 @@ export default function SrsFeedbackControls({
       </div>
 
       {/* Helper Text */}
-      <div className="mt-4 text-center">
-        <p className="text-xs text-slate-500 dark:text-slate-500">
-          💡 Be honest with yourself for the best learning results
-        </p>
-      </div>
+      {!showSuccessMessage && (
+        <div className="mt-4 text-center">
+          <p className="text-xs text-slate-500 dark:text-slate-500">
+            💡 Be honest with yourself for the best learning results
+          </p>
+        </div>
+      )}
+
+      {/* Success Message with Interval Information */}
+      <AnimatePresence>
+        {showSuccessMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-300 dark:border-green-700 rounded-xl"
+          >
+            <p className="text-center text-sm font-semibold text-green-800 dark:text-green-200">
+              {intervalMessage}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }

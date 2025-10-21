@@ -1,0 +1,193 @@
+'use client'
+
+import React, { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { ArrowLeft, Loader2 } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
+import ReviewStreakCard from '@/components/analytics/ReviewStreakCard'
+import RetentionRateChart from '@/components/analytics/RetentionRateChart'
+import DeckMasteryChart from '@/components/analytics/DeckMasteryChart'
+import UpcomingReviewsCalendar from '@/components/analytics/UpcomingReviewsCalendar'
+
+interface AnalyticsData {
+  overview: {
+    totalQuestions: number
+    currentStreak: number
+    retentionRate: number
+    averageEaseFactor: number
+  }
+  deckMastery: {
+    learning: { count: number; percentage: number }
+    maturing: { count: number; percentage: number }
+    mastered: { count: number; percentage: number }
+  }
+  upcomingReviews: Array<{
+    date: string
+    count: number
+  }>
+}
+
+export default function AnalyticsPage() {
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const dataFetchedRef = useRef(false)
+
+  useEffect(() => {
+    if (authLoading) return
+
+    if (!user) {
+      router.push('/login')
+      return
+    }
+
+    if (!dataFetchedRef.current) {
+      fetchAnalytics()
+      dataFetchedRef.current = true
+    }
+  }, [user, authLoading, router])
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const response = await fetch(`/api/revision-hub/analytics?userId=${user?.id}`)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch analytics')
+      }
+
+      setAnalyticsData(result.data)
+    } catch (err) {
+      console.error('Error fetching analytics:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load analytics')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+          <p className="text-slate-600 dark:text-slate-400">Loading analytics...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl p-8 text-center border border-slate-200 dark:border-slate-700">
+          <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+          <button
+            onClick={fetchAnalytics}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!analyticsData) {
+    return null
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      {/* Header */}
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push('/revision-hub')}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                  SRS Analytics
+                </h1>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  Track your learning progress and review patterns
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Review Streak Card */}
+          <ReviewStreakCard
+            currentStreak={analyticsData.overview.currentStreak}
+            totalQuestions={analyticsData.overview.totalQuestions}
+          />
+
+          {/* Retention Rate Chart */}
+          <RetentionRateChart
+            retentionRate={analyticsData.overview.retentionRate}
+            averageEaseFactor={analyticsData.overview.averageEaseFactor}
+          />
+
+          {/* Deck Mastery Chart */}
+          <DeckMasteryChart data={analyticsData.deckMastery} />
+
+          {/* Upcoming Reviews Calendar */}
+          <UpcomingReviewsCalendar forecast={analyticsData.upcomingReviews} />
+        </div>
+
+        {/* Note about streak tracking */}
+        {analyticsData.overview.currentStreak === 0 && analyticsData.overview.totalQuestions > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl"
+          >
+            <p className="text-sm text-blue-800 dark:text-blue-200 text-center">
+              📊 <strong>Note:</strong> Streak tracking requires a review history system. Complete your daily reviews to build your streak!
+            </p>
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {analyticsData.overview.totalQuestions === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 text-center p-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700"
+          >
+            <p className="text-lg text-slate-600 dark:text-slate-400 mb-4">
+              No bookmarked questions yet
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-500 mb-6">
+              Start bookmarking questions from your practice sessions to see analytics here.
+            </p>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg"
+            >
+              Start Practicing
+            </button>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  )
+}
+

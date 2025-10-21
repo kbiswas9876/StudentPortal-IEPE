@@ -185,7 +185,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'Review logged and SRS schedule updated',
-      srsData: updatedSrsData,
+      previousSrsData: currentSrsData,
+      updatedSrsData: updatedSrsData,
       customReminderActive: false,
     });
   } catch (error) {

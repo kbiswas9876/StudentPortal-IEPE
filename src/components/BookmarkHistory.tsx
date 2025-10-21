@@ -638,39 +638,95 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
           </div>
         </div>
 
-        {/* Right Column: Attempt History */}
-        <div>
-          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
-            <ClockIcon className="h-4 w-4 text-green-500" />
-            Attempt History
-          </h4>
-          {attemptHistory && attemptHistory.length > 0 ? (
-            <div className="space-y-3">
-              {attemptHistory.map((attempt, index) => (
-                <div
-                  key={index}
-                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg p-3"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      Attempt on {formatDate(attempt.created_at)}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(attempt.status)}
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(attempt.status)}`}>
-                        {attempt.status.charAt(0).toUpperCase() + attempt.status.slice(1)}
+        {/* Right Column: Attempt History & SRS State */}
+        <div className="space-y-6">
+          {/* Attempt History */}
+          <div>
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+              <ClockIcon className="h-4 w-4 text-green-500" />
+              Attempt History
+            </h4>
+            {attemptHistory && attemptHistory.length > 0 ? (
+              <div className="space-y-3">
+                {attemptHistory.map((attempt, index) => (
+                  <div
+                    key={index}
+                    className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg p-3"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Attempt on {formatDate(attempt.created_at)}
                       </span>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(attempt.status)}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(attempt.status)}`}>
+                          {attempt.status.charAt(0).toUpperCase() + attempt.status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                      <ClockIcon className="h-4 w-4" />
+                      <span>Time taken: {formatTime(attempt.time_taken)}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                    <ClockIcon className="h-4 w-4" />
-                    <span>Time taken: {formatTime(attempt.time_taken)}</span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-slate-500 dark:text-slate-400 text-sm italic">No attempt history found</p>
+            )}
+          </div>
+
+          {/* SRS State - NEW SECTION */}
+          {(bookmark as any).srs_interval !== undefined && (
+            <div>
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <svg className="h-4 w-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                SRS Status
+              </h4>
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Reviews</p>
+                    <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                      {(bookmark as any).srs_repetitions || 0}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Interval</p>
+                    <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                      {(bookmark as any).srs_interval || 0} days
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Ease Factor</p>
+                    <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                      {((bookmark as any).srs_ease_factor || 2.5).toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Next Review</p>
+                    <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                      {(bookmark as any).next_review_date 
+                        ? formatDate((bookmark as any).next_review_date + 'T00:00:00')
+                        : 'Today'}
+                    </p>
                   </div>
                 </div>
-              ))}
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-600">
+                  <p className="text-xs text-center text-slate-600 dark:text-slate-400">
+                    {(bookmark as any).srs_interval === 0 
+                      ? "🌱 New question - Complete your first review!"
+                      : (bookmark as any).srs_interval < 7
+                      ? "📚 Learning stage - Building familiarity"
+                      : (bookmark as any).srs_interval < 30
+                      ? "📈 Maturing - Making great progress!"
+                      : "🎓 Mastered - Long-term retention achieved!"}
+                  </p>
+                </div>
+              </div>
             </div>
-          ) : (
-            <p className="text-slate-500 dark:text-slate-400 text-sm italic">No attempt history found</p>
           )}
         </div>
       </div>
