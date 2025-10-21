@@ -47,50 +47,40 @@ export default function DueQuestionsCard({
         animate={{ opacity: 1, y: 0 }}
         className="group relative mb-6"
       >
-        {/* Minimalist Premium Card with Gradient Border */}
-        <div className="relative bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-xl p-[1px] shadow-lg hover:shadow-xl transition-all duration-300">
-          {/* Inner content with glass morphism effect */}
-          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl px-5 py-3">
-            <div className="flex items-center justify-between gap-6">
-              {/* Left: Minimal Icon + Content */}
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                {/* Minimal Gradient Icon */}
-                <div className="relative flex-shrink-0">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-200/50 dark:border-blue-700/50">
-                    <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" strokeWidth={2} />
-                  </div>
-                </div>
-                
-                {/* Minimal Text Content */}
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      Daily Review
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                      <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                        {dueCount}
-                      </span>
-                      {' '}question{dueCount !== 1 ? 's' : ''} ready
-                    </p>
-                  </div>
-                </div>
+        {/* Borderless Premium Card with Subtle Gradient Background */}
+        <div className="relative bg-gradient-to-r from-blue-50/80 via-indigo-50/80 to-purple-50/80 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 backdrop-blur-sm rounded-2xl px-6 py-3.5 hover:from-blue-50 hover:via-indigo-50 hover:to-purple-50 dark:hover:from-blue-950/30 dark:hover:via-indigo-950/30 dark:hover:to-purple-950/30 transition-all duration-300">
+          <div className="flex items-center justify-between gap-8">
+            {/* Left: Badge-style count with icon */}
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              {/* Floating Badge */}
+              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-500/25">
+                <Sparkles className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
+                <span className="text-xs font-bold text-white tabular-nums">
+                  {dueCount}
+                </span>
               </div>
-
-              {/* Right: Premium Minimal CTA Button */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onStartReview}
-                className="group/btn relative flex-shrink-0 px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-xs rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg"
-              >
-                {/* Subtle shine effect */}
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                
-                <PlayCircle className="h-3.5 w-3.5 relative z-10" strokeWidth={2} />
-                <span className="relative z-10">Start</span>
-              </motion.button>
+              
+              {/* Text Content - Side by side layout */}
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                  Daily Review
+                </h3>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  • {dueCount === 1 ? '1 question' : `${dueCount} questions`} waiting
+                </span>
+              </div>
             </div>
+
+            {/* Right: Clean Action Button */}
+            <motion.button
+              whileHover={{ x: 2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onStartReview}
+              className="group/btn relative flex-shrink-0 px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-xs rounded-full transition-all duration-200 flex items-center gap-2 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-purple-500/30"
+            >
+              <span className="relative z-10">Start Now</span>
+              <Zap className="h-3.5 w-3.5 relative z-10 group-hover/btn:rotate-12 transition-transform duration-200" strokeWidth={2.5} />
+            </motion.button>
           </div>
         </div>
       </motion.div>
