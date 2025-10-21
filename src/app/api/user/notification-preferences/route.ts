@@ -144,6 +144,7 @@ export async function PUT(request: Request) {
 
     console.log('💾 Updating notification preferences for user:', userId);
 
+    // Note: We don't manually set updated_at as it's handled by a database trigger
     const { error: updateError } = await supabaseAdmin
       .from('user_notification_preferences')
       .update({
@@ -151,7 +152,6 @@ export async function PUT(request: Request) {
         enable_in_app_reminders,
         reminder_time,
         user_timezone,
-        updated_at: new Date().toISOString(),
       })
       .eq('user_id', userId);
 
