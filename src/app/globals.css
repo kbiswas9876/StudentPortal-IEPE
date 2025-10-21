@@ -36,6 +36,17 @@ html, body {
   overflow: hidden;
 }
 
+/* Solutions page specific - prevent full page scrolling */
+.solutions-page-wrapper {
+  overflow: hidden;
+}
+
+/* Solutions page container - allow toggle button to be visible */
+.solutions-page-container {
+  overflow-y: hidden;
+  overflow-x: visible;
+}
+
 /* Practice Page Wrapper - Edge-to-edge layout with content gutter */
 .practice-page-wrapper {
   display: flex;

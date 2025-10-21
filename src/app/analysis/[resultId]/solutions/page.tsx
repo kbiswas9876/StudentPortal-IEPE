@@ -464,7 +464,7 @@ const getCurrentQuestionBookmarkId = () => {
   const currentQuestion = sessionData?.questions[currentQuestionIndex]
 
   return (
-    <div className="h-screen flex gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 overflow-visible">
+    <div className="h-screen flex gap-6 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 solutions-page-container">
 
       {/* Mobile Floating Action Button for Status Panel */}
       <button
@@ -478,7 +478,7 @@ const getCurrentQuestionBookmarkId = () => {
         </svg>
       </button>
       {/* Left column: main content */}
-      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full lg:pr-0' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} h-full`}>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${isRightPanelCollapsed ? 'lg:w-full lg:pr-0' : 'lg:w-3/4 xl:w-3/4 2xl:w-3/4'} h-full relative`}>
 
 
         {/* Main question view */}
