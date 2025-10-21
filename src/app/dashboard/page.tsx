@@ -157,6 +157,11 @@ export default function DashboardPage() {
         queryParams.timeLimit = config.timeLimitInMinutes.toString()
       }
       
+      // Add hideMetadata setting
+      if (config.hideMetadata) {
+        queryParams.hideMetadata = 'true'
+      }
+      
       const queryString = new URLSearchParams(queryParams).toString()
       
       const totalTime = Date.now() - startTime

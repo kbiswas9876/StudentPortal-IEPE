@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     // Fetch all bookmarked questions for this user that match the provided question IDs
     const { data: bookmarks, error: bookmarksError } = await supabase
       .from('bookmarked_questions')
-      .select('question_id')
+      .select('question_id, user_difficulty_rating')
       .eq('user_id', user.id)
       .in('question_id', questionIds.map(String))
 
@@ -33,18 +33,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: bookmarksError.message }, { status: 500 })
     }
 
-    // Create a map of question_id -> boolean for quick lookup
-    const bookmarkedMap: Record<string, boolean> = {}
+    // Create a map of question_id -> bookmark data for quick lookup
+    const bookmarkedMap: Record<string, { isBookmarked: boolean; difficultyRating: number | null }> = {}
     questionIds.forEach((id: number | string) => {
-      bookmarkedMap[String(id)] = false
+      bookmarkedMap[String(id)] = { isBookmarked: false, difficultyRating: null }
     })
 
     // Normalize Supabase rows to a typed structure
-    const bookmarksRows = (bookmarks ?? []) as { question_id: string }[]
+    const bookmarksRows = (bookmarks ?? []) as { question_id: string; user_difficulty_rating: number | null }[]
 
-    // Mark bookmarked questions as true
+    // Mark bookmarked questions with their data
     bookmarksRows.forEach((bookmark) => {
-      bookmarkedMap[bookmark.question_id] = true
+      bookmarkedMap[bookmark.question_id] = {
+        isBookmarked: true,
+        difficultyRating: bookmark.user_difficulty_rating || 1 // Default to 1 star if null
+      }
     })
 
     return NextResponse.json({ bookmarks: bookmarkedMap })

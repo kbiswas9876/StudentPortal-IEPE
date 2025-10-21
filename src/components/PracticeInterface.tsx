@@ -48,9 +48,10 @@ interface PracticeInterfaceProps {
   }
   savedSessionState?: any
   source?: string | null
+  hideMetadata?: boolean
 }
 
-export default function PracticeInterface({ questions, testMode = 'practice', timeLimitInMinutes, mockTestData, savedSessionState, source }: PracticeInterfaceProps) {
+export default function PracticeInterface({ questions, testMode = 'practice', timeLimitInMinutes, mockTestData, savedSessionState, source, hideMetadata = false }: PracticeInterfaceProps) {
   const { user, session } = useAuth()
   const { showToast } = useToast()
   const router = useRouter()
@@ -324,10 +325,14 @@ useEffect(() => {
 
       if (data.bookmarks) {
         setSessionStates(prevStates =>
-          prevStates.map((state, index) => ({
-            ...state,
-            is_bookmarked: !!data.bookmarks[String(questions[index].question_id)],
-          }))
+          prevStates.map((state, index) => {
+            const bookmarkData = data.bookmarks[String(questions[index].question_id)]
+            return {
+              ...state,
+              is_bookmarked: !!bookmarkData?.isBookmarked,
+              bookmark_difficulty_rating: bookmarkData?.difficultyRating || null
+            }
+          })
         );
         // Mark as fetched to prevent re-running
         bookmarksFetchedRef.current = true;
@@ -920,6 +925,7 @@ useEffect(() => {
           // CRITICAL: Pass the real button handlers from PracticeInterface
           onSaveAndNext={handleSaveAndNext}
           onMarkForReviewAndNext={handleMarkForReviewAndNext}
+          hideMetadata={hideMetadata}
         />
       </div>
 

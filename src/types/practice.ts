@@ -16,6 +16,7 @@ export interface PracticeSessionConfig {
   questionOrder: 'shuffle' | 'interleaved' | 'sequential'
   testMode: 'practice' | 'timed'
   timeLimitInMinutes?: number
+  hideMetadata?: boolean
 }
 
 export interface QuestionSelection {

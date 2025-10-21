@@ -28,6 +28,7 @@ function PracticePageContent() {
   const isSavedSession = searchParams.get('savedSession') === 'true'
   const savedSessionData = searchParams.get('sessionData')
   const source = searchParams.get('source') // Track session origin
+  const hideMetadata = searchParams.get('hideMetadata') === 'true' // Get hideMetadata setting
 
   useEffect(() => {
     if (authLoading) return
@@ -279,6 +280,7 @@ function PracticePageContent() {
         mockTestData={mockTestData}
         savedSessionState={isSavedSession ? (window as any).__SAVED_SESSION_STATE__ : null}
         source={source}
+        hideMetadata={hideMetadata}
       />
     </div>
   )

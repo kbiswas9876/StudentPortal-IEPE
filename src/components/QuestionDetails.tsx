@@ -6,9 +6,15 @@ import '../styles/QuestionDetails.css'
 interface QuestionDetailsProps {
   source?: string
   tags?: string[]
+  hideMetadata?: boolean
 }
 
-const QuestionDetails: React.FC<QuestionDetailsProps> = ({ source, tags }) => {
+const QuestionDetails: React.FC<QuestionDetailsProps> = ({ source, tags, hideMetadata = false }) => {
+  // If hideMetadata is true, don't render anything
+  if (hideMetadata) {
+    return null
+  }
+  
   if (!source && (!tags || tags.length === 0)) {
     return null
   }
