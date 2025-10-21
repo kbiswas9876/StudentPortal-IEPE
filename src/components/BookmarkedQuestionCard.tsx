@@ -269,12 +269,23 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
   const getRatingLabel = (rating: number) => {
     const labels = {
       1: 'Easy',
-      2: 'Easy-to-Moderate', 
+      2: 'Easy-Moderate', 
       3: 'Moderate',
-      4: 'Moderate-to-Hard',
+      4: 'Moderate-Hard',
       5: 'Hard'
     }
     return labels[rating as keyof typeof labels] || ''
+  }
+
+  const getDifficultyColorClasses = (rating: number) => {
+    const colorSchemes = {
+      1: 'text-white bg-gradient-to-br from-emerald-500 to-green-600 shadow-emerald-500/50 border-emerald-400/30',
+      2: 'text-white bg-gradient-to-br from-lime-500 to-yellow-500 shadow-lime-500/50 border-lime-400/30',
+      3: 'text-white bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/50 border-amber-400/30',
+      4: 'text-white bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-500/50 border-orange-400/30',
+      5: 'text-white bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/50 border-red-400/30'
+    }
+    return colorSchemes[rating as keyof typeof colorSchemes] || 'text-slate-600 dark:text-slate-400'
   }
 
   const renderStars = () => {
@@ -294,11 +305,32 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
           />
         </div>
         
-        {/* Descriptive Text Label - Always Visible */}
+        {/* Modern Color-coded Difficulty Label - Always Visible */}
         {currentRating > 0 && (
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            {getRatingLabel(currentRating)}
-          </span>
+          <motion.span 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            className={`group relative inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold border shadow-lg hover:shadow-xl transition-all duration-300 ${getDifficultyColorClasses(currentRating)}`}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {/* Shine effect overlay */}
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+            
+            {/* Subtle glow effect */}
+            <div className={`absolute inset-0 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 ${
+              currentRating === 1 ? 'bg-emerald-400/30' :
+              currentRating === 2 ? 'bg-lime-400/30' :
+              currentRating === 3 ? 'bg-amber-400/30' :
+              currentRating === 4 ? 'bg-orange-400/30' :
+              'bg-red-400/30'
+            }`} />
+            
+            <span className="relative z-10 drop-shadow-sm">
+              {getRatingLabel(currentRating)}
+            </span>
+          </motion.span>
         )}
       </div>
     )
@@ -334,7 +366,28 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
           </motion.div>
         )}
 
-        <div className="flex items-center justify-between gap-3">
+        {/* Top Right Corner - Collapse/Expand Button */}
+        <motion.button
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsExpanded(!isExpanded)
+            setShowAnswer(false)
+          }}
+          className="absolute top-3 right-3 z-10 p-2 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 hover:from-slate-200 hover:to-slate-300 dark:hover:from-slate-600 dark:hover:to-slate-700 transition-all duration-200 shadow-lg hover:shadow-xl border border-slate-200 dark:border-slate-600"
+          aria-label="Expand/collapse"
+          title="Expand/collapse"
+          whileHover={{ scale: 1.05, rotate: 2 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <motion.div 
+            animate={{ rotate: isExpanded ? 180 : 0 }} 
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <ChevronDownIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+          </motion.div>
+        </motion.button>
+
+        <div className="flex items-center justify-between gap-3 pr-12">
           {/* Left Side - Main Content */}
           <div className="flex-1 min-w-0 pl-6">
             {/* Book & Question ID + Metadata Header */}
@@ -368,7 +421,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                 )}
               </div>
               
-              {/* Rating and Success Rate on the same line */}
+              {/* Star Rating Section */}
               <div className="flex items-center gap-3 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                 {/* Star Rating with Edit */}
                 <div className="flex items-center gap-2 relative overflow-visible">
@@ -422,20 +475,6 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                     </>
                   )}
                 </div>
-
-                {/* Success Rate */}
-                {question.performance.total_attempts > 0 && (
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(question.performance.last_attempt_status)}
-                    <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                      question.performance.success_rate >= 80 ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700' :
-                      question.performance.success_rate >= 60 ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700' :
-                      'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700'
-                    }`}>
-                      {question.performance.success_rate}%
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -449,40 +488,6 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
           </div>
 
-          {/* Right Side - Actions */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            {onRemove && (
-              <motion.button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onRemove(question.question_id)
-                }}
-                className="p-2 rounded-lg bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 hover:from-red-100 hover:to-orange-100 dark:hover:from-red-900/30 dark:hover:to-orange-900/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-200 shadow-sm hover:shadow-md"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Remove bookmark"
-                title="Remove from Revision Hub"
-              >
-                <BookmarkMinus className="h-4 w-4" strokeWidth={2.5} />
-              </motion.button>
-            )}
-            <motion.button
-              onClick={(e) => {
-                e.stopPropagation()
-                setIsExpanded(!isExpanded)
-                setShowAnswer(false)
-              }}
-              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-              aria-label="Expand/collapse"
-              title="Expand/collapse"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                <ChevronDownIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-              </motion.div>
-            </motion.button>
-          </div>
         </div>
       </div>
 

@@ -956,24 +956,33 @@ export default function RevisionHubPage() {
                           </div>
                           <div className="flex items-center gap-3">
                             <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
+                              whileHover={{ scale: 1.05, rotate: 1 }}
+                              whileTap={{ scale: 0.95 }}
                               onClick={() => {
                                 setSelectedQuestions(new Set())
                                 setShowBulkActions(false)
                               }}
-                              className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
+                              className="group relative px-6 py-3 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-all duration-300 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 hover:from-slate-200 hover:to-slate-300 dark:hover:from-slate-600 dark:hover:to-slate-700 border border-slate-300 dark:border-slate-600 rounded-xl shadow-lg hover:shadow-xl"
                             >
-                              Cancel
+                              {/* Shine effect overlay */}
+                              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                              
+                              <span className="relative z-10">Cancel</span>
                             </motion.button>
                             <motion.button
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
+                              whileHover={{ scale: 1.05, rotate: -1 }}
+                              whileTap={{ scale: 0.95 }}
                               onClick={handleBulkRemoveBookmarks}
-                              className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold text-sm rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                              className="group relative px-6 py-3 bg-gradient-to-br from-red-500 via-rose-500 to-pink-500 hover:from-red-600 hover:via-rose-600 hover:to-pink-600 text-white font-bold text-sm rounded-xl transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center gap-3 border border-red-400/30"
                             >
-                              <Archive className="h-4 w-4" strokeWidth={2.5} />
-                              Remove Selected
+                              {/* Shine effect overlay */}
+                              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                              
+                              {/* Subtle glow effect */}
+                              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-red-400/30 to-pink-400/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+                              
+                              <Archive className="h-5 w-5 drop-shadow-sm relative z-10" strokeWidth={2.5} />
+                              <span className="relative z-10 drop-shadow-sm">Remove Selected</span>
                             </motion.button>
                           </div>
                         </div>
