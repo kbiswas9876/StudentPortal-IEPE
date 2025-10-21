@@ -354,7 +354,7 @@ export default function AnalysisReportPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8 pb-16">
 
         {/* Post-Revision Feedback Loop: Revision Performance Insights */}
         {source === 'revision' && analysisData && (

@@ -28,8 +28,12 @@
 
 /* CRITICAL: Prevent global page scrolling for fixed layout architecture */
 html, body {
-  overflow: hidden; /* CRITICAL: Prevents the main page scrollbar */
   height: 100%;
+}
+
+/* Only apply overflow hidden to practice pages */
+.practice-page-wrapper {
+  overflow: hidden;
 }
 
 /* Practice Page Wrapper - Edge-to-edge layout with content gutter */
