@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
+import { StarRatingDisplay } from './ui/StarRating'
 
 interface BookmarkedQuestion {
   id: string
@@ -30,6 +30,15 @@ interface DifficultyBreakdownProps {
   className?: string
   onRatingClick?: (rating: number) => void
   selectedRating?: number | null
+}
+
+// Difficulty level mappings
+const difficultyLabels = {
+  1: 'Easy',
+  2: 'Easy-Moderate', 
+  3: 'Moderate',
+  4: 'Moderate-Hard',
+  5: 'Hard'
 }
 
 export default function DifficultyBreakdown({ 
@@ -86,20 +95,16 @@ export default function DifficultyBreakdown({
                 }
                 ${onRatingClick ? 'cursor-pointer hover:scale-105' : ''}
               `}
-              title={`${count} question${count !== 1 ? 's' : ''} rated ${rating} star${rating !== 1 ? 's' : ''}${percentage > 0 ? ` (${percentage}% of rated)` : ''}${onRatingClick ? ' - Click to filter' : ''}`}
+              title={`${difficultyLabels[rating as keyof typeof difficultyLabels]} - ${count} question${count !== 1 ? 's' : ''}${percentage > 0 ? ` (${percentage}% of rated)` : ''}${onRatingClick ? ' - Click to filter' : ''}`}
             >
               {/* Star Rating Display */}
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: rating }, (_, i) => (
-                  <StarSolidIcon 
-                    key={i} 
-                    className={`h-3.5 w-3.5 ${
-                      count > 0 
-                        ? 'text-yellow-500 drop-shadow-sm' 
-                        : 'text-slate-300 dark:text-slate-600'
-                    }`} 
-                  />
-                ))}
+              <div className="flex items-center">
+                <StarRatingDisplay 
+                  value={rating} 
+                  maxRating={rating}
+                  size="sm"
+                  className={count > 0 ? '' : 'opacity-50'}
+                />
               </div>
               
               {/* Count */}

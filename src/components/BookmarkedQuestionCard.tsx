@@ -3,11 +3,10 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  StarIcon, 
   ChevronDownIcon,
   BookOpenIcon
 } from '@heroicons/react/24/outline'
-import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
+import StarRating from './ui/StarRating'
 import {
   Edit3,
   Check,
@@ -68,7 +67,6 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
   const [tempTags, setTempTags] = useState<string[]>(question.custom_tags || [])
   const [tagInput, setTagInput] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-  const [hoveredRating, setHoveredRating] = useState(0)
   const [showAnswer, setShowAnswer] = useState(false) // New state for answer visibility
 
   const formatTime = (seconds: number | null) => {
@@ -118,7 +116,6 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
       // Update the local state
       question.user_difficulty_rating = tempRating || null
-      setHoveredRating(0)
       setIsEditingRating(false)
       
       // Notify parent to refresh if needed
@@ -204,7 +201,6 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
   const handleCancelRating = () => {
     setTempRating(question.user_difficulty_rating || 0)
-    setHoveredRating(0)
     setIsEditingRating(false)
   }
 
@@ -283,70 +279,27 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
   const renderStars = () => {
     const currentRating = isEditingRating ? tempRating : (question.user_difficulty_rating || 0)
-    const displayRating = isEditingRating && hoveredRating > 0 ? hoveredRating : currentRating
     
     return (
-      <div className="relative flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <motion.button
-            key={star}
-            whileHover={isEditingRating ? { scale: 1.2 } : {}}
-            whileTap={isEditingRating ? { scale: 0.9 } : {}}
-            onClick={(e) => {
-              e.stopPropagation()
-              if (isEditingRating) {
-                setTempRating(star)
-              }
-            }}
-            onMouseEnter={() => {
-              if (isEditingRating) {
-                setHoveredRating(star)
-              }
-            }}
-            onMouseLeave={() => {
-              if (isEditingRating) {
-                setHoveredRating(0)
-              }
-            }}
-            disabled={!isEditingRating}
-            className={`transition-all ${isEditingRating ? 'cursor-pointer' : 'cursor-default'}`}
-          >
-            {star <= displayRating ? (
-              <StarSolidIcon className="h-5 w-5 text-yellow-500 drop-shadow-md" />
-            ) : (
-              <StarIcon className="h-5 w-5 text-slate-300 dark:text-slate-600" />
-            )}
-          </motion.button>
-        ))}
+      <div className="flex items-center gap-2">
+        <div onClick={(e) => e.stopPropagation()}>
+          <StarRating
+            value={currentRating}
+            onChange={isEditingRating ? setTempRating : undefined}
+            maxRating={5}
+            size="md"
+            disabled={false}
+            readonly={!isEditingRating}
+            showTooltip={true}
+          />
+        </div>
         
-            {/* Descriptive Text Label - Always Visible */}
-            {currentRating > 0 && (
-              <span className="ml-2 text-xs font-medium text-slate-600 dark:text-slate-400">
-                {getRatingLabel(currentRating)}
-              </span>
-            )}
-            
-            {/* Tooltip positioned relative to the stars */}
-            <AnimatePresence>
-              {isEditingRating && hoveredRating > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.9 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute -top-12 bg-slate-900 dark:bg-slate-700 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap max-z-tooltip"
-                  style={{
-                    left: `${(hoveredRating - 1) * 24}px`,
-                    transform: 'translateX(-50%)'
-                  }}
-                >
-                  {getRatingLabel(hoveredRating)}
-                  <div 
-                    className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900 dark:border-t-slate-700"
-                  ></div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {/* Descriptive Text Label - Always Visible */}
+        {currentRating > 0 && (
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            {getRatingLabel(currentRating)}
+          </span>
+        )}
       </div>
     )
   }
@@ -418,10 +371,12 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
               {/* Rating and Success Rate on the same line */}
               <div className="flex items-center gap-3 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                 {/* Star Rating with Edit */}
-                <div className="flex items-center gap-2 relative">
-                  <div className="flex items-center gap-1.5 relative">
+                <div className="flex items-center gap-2 relative overflow-visible">
+                  <div className="flex items-center gap-1.5 relative overflow-visible">
                     <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">My Rating:</span>
-                    {renderStars()}
+                    <div className="relative overflow-visible">
+                      {renderStars()}
+                    </div>
                   </div>
                   
                   {isExpanded && (
@@ -434,7 +389,6 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                             e.stopPropagation()
                             setIsEditingRating(true)
                             setTempRating(question.user_difficulty_rating || 0)
-                            setHoveredRating(0)
                           }}
                           className="p-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
                           title="Edit rating"
