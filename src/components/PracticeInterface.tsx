@@ -802,11 +802,14 @@ useEffect(() => {
         console.log('Test submitted successfully:', result)
         // Clear sessionStorage since session is complete
         clearSessionStorage()
-        // Redirect to analysis report with source parameter if from revision
+        // Redirect to analysis report with source parameter
         let redirectUrl = `/analysis/${result.test_id}`
         if (source === 'revision') {
           redirectUrl += `?source=revision`
+        } else if (source === 'srs-daily-review') {
+          redirectUrl += `?source=srs-daily-review`
         }
+        console.log('📍 [Practice] Redirecting to analysis with source:', source, '→', redirectUrl)
         router.push(redirectUrl)
       } else {
         const errorData = await response.json()

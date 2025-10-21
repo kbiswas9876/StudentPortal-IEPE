@@ -119,6 +119,8 @@ export default function DetailedSolutionReviewPage() {
       if (!sessionData || !user) return
       try {
         const questionIds = sessionData.questions.map((q) => q.question_id)
+        console.log('🔍 [Solutions] Fetching bookmarks for questions:', questionIds)
+        
         const response = await fetch('/api/practice/check-bookmarks', {
           method: 'POST',
           headers: {
@@ -128,11 +130,19 @@ export default function DetailedSolutionReviewPage() {
           body: JSON.stringify({ questionIds }),
         })
         const result = await response.json()
+        console.log('📚 [Solutions] Bookmark API response:', result)
+        
         if (response.ok && result.bookmarks) {
-          setBookmarkedMap(result.bookmarks as Record<string, boolean>)
+          // Convert the complex object structure to simple boolean map
+          const simpleMap: Record<string, boolean> = {}
+          Object.keys(result.bookmarks).forEach(qid => {
+            simpleMap[qid] = result.bookmarks[qid]?.isBookmarked || false
+          })
+          console.log('✅ [Solutions] Setting bookmarkedMap:', simpleMap)
+          setBookmarkedMap(simpleMap)
         }
       } catch (e) {
-        console.error('Failed to fetch bookmarks:', e)
+        console.error('❌ [Solutions] Failed to fetch bookmarks:', e)
       }
     }
     fetchBookmarks()
@@ -311,7 +321,14 @@ const handleSrsFeedbackComplete = () => {
   // Mark feedback as given for current question
   if (currentQuestion) {
     setSrsFeedbackGiven(prev => new Set(prev).add(currentQuestion.question_id))
+    console.log('✅ [Solutions] SRS feedback completed for question:', currentQuestion.question_id)
   }
+  
+  // Emit custom event to trigger due count refresh
+  const event = new CustomEvent('srs-review-complete')
+  window.dispatchEvent(event)
+  console.log('📡 [Solutions] Dispatched srs-review-complete event')
+  
   // Automatically proceed to next question
   handleNext()
 }
@@ -518,21 +535,33 @@ const getCurrentQuestionBookmarkId = () => {
                 />
                 
                 {/* SRS Feedback Controls - For ALL Bookmarked Question Reviews */}
-                {currentQuestion && bookmarkedMap[currentQuestion.question_id] && !srsFeedbackGiven.has(currentQuestion.question_id) && user && (
-                  <div className="mt-6">
-                    {srsFeedbackError && (
-                      <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 rounded-lg">
-                        {srsFeedbackError}
-                      </div>
-                    )}
-                    <DynamicSrsFeedbackControls
-                      bookmarkId={currentQuestion.question_id} // Using question_id as a proxy - API will handle the lookup
-                      userId={user.id}
-                      onFeedbackComplete={handleSrsFeedbackComplete}
-                      onError={handleSrsFeedbackError}
-                    />
-                  </div>
-                )}
+                {(() => {
+                  const shouldShow = currentQuestion && bookmarkedMap[currentQuestion.question_id] && !srsFeedbackGiven.has(currentQuestion.question_id) && user
+                  console.log('🎯 [Solutions] SRS Buttons Check:', {
+                    currentQuestion: currentQuestion?.question_id,
+                    isBookmarked: currentQuestion ? bookmarkedMap[currentQuestion.question_id] : 'no question',
+                    feedbackGiven: currentQuestion ? srsFeedbackGiven.has(currentQuestion.question_id) : 'no question',
+                    hasUser: !!user,
+                    shouldShow,
+                    bookmarkedMap,
+                    source
+                  })
+                  return shouldShow ? (
+                    <div className="mt-6">
+                      {srsFeedbackError && (
+                        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 rounded-lg">
+                          {srsFeedbackError}
+                        </div>
+                      )}
+                      <DynamicSrsFeedbackControls
+                        bookmarkId={currentQuestion.question_id} // Using question_id as a proxy - API will handle the lookup
+                        userId={user.id}
+                        onFeedbackComplete={handleSrsFeedbackComplete}
+                        onError={handleSrsFeedbackError}
+                      />
+                    </div>
+                  ) : null
+                })()}
                 
                 {/* Post-Revision Feedback Loop: Bookmark History Component */}
                 {source === 'revision' && currentQuestion && (

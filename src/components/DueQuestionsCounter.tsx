@@ -16,14 +16,16 @@ export default function DueQuestionsCounter({ userId }: DueQuestionsCounterProps
 
   const fetchDueCount = async () => {
     try {
+      console.log('🔄 [DueCounter] Fetching due count for user:', userId)
       const response = await fetch(`/api/revision-hub/due-count?userId=${userId}`)
       const result = await response.json()
 
       if (response.ok) {
+        console.log('📊 [DueCounter] Due count:', result.count)
         setDueCount(result.count || 0)
       }
     } catch (error) {
-      console.error('Error fetching due count:', error)
+      console.error('❌ [DueCounter] Error fetching due count:', error)
     } finally {
       setIsLoading(false)
     }
@@ -33,8 +35,8 @@ export default function DueQuestionsCounter({ userId }: DueQuestionsCounterProps
     if (userId) {
       fetchDueCount()
       
-      // Poll every 5 minutes (300000ms)
-      const interval = setInterval(fetchDueCount, 300000)
+      // Poll every 2 minutes (120000ms) - more frequent for better UX
+      const interval = setInterval(fetchDueCount, 120000)
       return () => clearInterval(interval)
     }
   }, [userId])
@@ -42,9 +44,21 @@ export default function DueQuestionsCounter({ userId }: DueQuestionsCounterProps
   // Refetch when route changes (e.g., after completing a review)
   useEffect(() => {
     if (userId && !isLoading) {
+      console.log('🔄 [DueCounter] Route changed to:', pathname, '- refreshing count')
       fetchDueCount()
     }
   }, [pathname])
+
+  // Listen for custom SRS review completion events
+  useEffect(() => {
+    const handleSrsReviewComplete = () => {
+      console.log('✅ [DueCounter] SRS review completed event - refreshing count')
+      fetchDueCount()
+    }
+
+    window.addEventListener('srs-review-complete', handleSrsReviewComplete)
+    return () => window.removeEventListener('srs-review-complete', handleSrsReviewComplete)
+  }, [userId])
 
   // Don't show anything if count is 0 or still loading
   if (isLoading || dueCount === 0) {

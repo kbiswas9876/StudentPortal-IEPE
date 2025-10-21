@@ -81,6 +81,7 @@ export async function POST(request: Request) {
     let fetchError;
     
     // First attempt: Try as bookmark ID (UUID)
+    console.log('🔍 Attempting to find bookmark by ID:', bookmarkId);
     const resultById = await supabaseAdmin
       .from('bookmarked_questions')
       .select('*')
@@ -89,9 +90,11 @@ export async function POST(request: Request) {
       .maybeSingle();
     
     if (resultById.data) {
+      console.log('✅ Found bookmark by ID:', resultById.data.id);
       bookmark = resultById.data;
     } else {
       // Second attempt: Try as question_id (string)
+      console.log('🔍 Attempting to find bookmark by question_id:', bookmarkId);
       const resultByQuestionId = await supabaseAdmin
         .from('bookmarked_questions')
         .select('*')
@@ -99,12 +102,18 @@ export async function POST(request: Request) {
         .eq('user_id', userId)
         .maybeSingle();
       
+      if (resultByQuestionId.data) {
+        console.log('✅ Found bookmark by question_id:', resultByQuestionId.data.id);
+      } else {
+        console.log('❌ Bookmark not found by question_id');
+      }
       bookmark = resultByQuestionId.data;
       fetchError = resultByQuestionId.error;
     }
 
     if (fetchError || !bookmark) {
       console.error('❌ Error fetching bookmark:', fetchError);
+      console.error('❌ Bookmark lookup failed for:', { bookmarkId, userId });
       return NextResponse.json(
         {
           error: fetchError?.message || 'Bookmark not found',
@@ -112,6 +121,13 @@ export async function POST(request: Request) {
         { status: fetchError ? 500 : 404 }
       );
     }
+
+    console.log('📝 Bookmark found successfully:', {
+      id: bookmark.id,
+      question_id: bookmark.question_id,
+      current_interval: bookmark.srs_interval,
+      current_ease: bookmark.srs_ease_factor
+    });
 
     // ============================================================================
     // STEP 3: Check the Custom Reminder Switch
@@ -157,6 +173,7 @@ export async function POST(request: Request) {
     // STEP 5: Update the Database
     // ============================================================================
 
+    console.log('💾 Updating bookmark in database with ID:', bookmark.id);
     const { error: updateError } = await supabaseAdmin
       .from('bookmarked_questions')
       .update({
@@ -166,15 +183,19 @@ export async function POST(request: Request) {
         next_review_date: updatedSrsData.next_review_date,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', bookmarkId);
+      .eq('id', bookmark.id);
 
     if (updateError) {
       console.error('❌ Error updating bookmark:', updateError);
+      console.error('❌ Update failed for bookmark ID:', bookmark.id);
       return NextResponse.json(
         { error: updateError.message },
         { status: 500 }
       );
     }
+
+    console.log('✅ Database updated successfully!');
+    console.log('📅 New next_review_date:', updatedSrsData.next_review_date);
 
     // ============================================================================
     // STEP 6: Return Success Response

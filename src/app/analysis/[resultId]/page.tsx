@@ -443,7 +443,10 @@ export default function AnalysisReportPage() {
                   let url = `/analysis/${resultId}/solutions`
                   if (source === 'revision') {
                     url += `?source=revision`
+                  } else if (source === 'srs-daily-review') {
+                    url += `?source=srs-daily-review`
                   }
+                  console.log('📍 [Analysis] Navigating to solutions with source:', source, '→', url)
                   router.push(url)
                 }}
               />
