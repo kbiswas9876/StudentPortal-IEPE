@@ -67,8 +67,8 @@ export default function RevisionChapterNav({
   const isAnySelected = selectedChapters.length > 0
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4">
+    <div className="flex flex-col force-scrollbar" style={{ height: '100%' }}>
+      <div className="p-4" style={{ minHeight: '500px' }}>
         {/* Start Revision Session Button */}
         <motion.button
           initial={{ opacity: 0, y: -10 }}

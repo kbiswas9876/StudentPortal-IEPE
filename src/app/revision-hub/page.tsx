@@ -676,42 +676,48 @@ export default function RevisionHubPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6"
-        >
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            My Revision Hub
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Review and master your bookmarked questions, organized by chapter
-          </p>
-        </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 overflow-y-auto">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 force-scrollbar" style={{ minHeight: '100vh' }}>
+        {/* Compact notification for users with no due questions */}
+        {dueQuestions.length === 0 && !loadingDueQuestions && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6 flex justify-end"
+          >
+            <DueQuestionsCard
+              dueCount={dueQuestions.length}
+              totalBookmarks={bookmarkedQuestions.length}
+              isLoading={loadingDueQuestions}
+              onStartReview={handleStartDailyReview}
+              onBrowseLibrary={() => setShowLibrary(true)}
+              compact={true}
+            />
+          </motion.div>
+        )}
 
-        {/* Due Questions Card */}
-        <DueQuestionsCard
-          dueCount={dueQuestions.length}
-          totalBookmarks={bookmarkedQuestions.length}
-          isLoading={loadingDueQuestions}
-          onStartReview={handleStartDailyReview}
-          onBrowseLibrary={() => setShowLibrary(true)}
-        />
+        {/* Due Questions Card - Full version only for users with due questions */}
+        {dueQuestions.length > 0 && (
+          <DueQuestionsCard
+            dueCount={dueQuestions.length}
+            totalBookmarks={bookmarkedQuestions.length}
+            isLoading={loadingDueQuestions}
+            onStartReview={handleStartDailyReview}
+            onBrowseLibrary={() => setShowLibrary(true)}
+          />
+        )}
 
         {/* Two-Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-200px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" style={{ height: 'calc(100vh - 280px)', maxHeight: 'none', minHeight: '650px' }}>
           {/* Left Column - Chapter Navigation */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="lg:col-span-3"
+            className="lg:col-span-3 flex flex-col h-full"
           >
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 h-full overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 h-full flex flex-col overflow-hidden">
               <RevisionChapterNav
                 chapters={chapters}
                 selectedChapter={selectedChapter}
@@ -731,11 +737,11 @@ export default function RevisionHubPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-9"
+            className="lg:col-span-9 flex flex-col h-full"
           >
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 h-full overflow-hidden flex flex-col">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 h-full flex flex-col overflow-hidden backdrop-blur-sm">
               {/* Header */}
-              <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 flex-shrink-0">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-gradient-to-r from-slate-50/50 to-blue-50/30 dark:from-slate-900/50 dark:to-slate-800/30 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     {selectedChapter ? (
@@ -894,7 +900,8 @@ export default function RevisionHubPage() {
               </div>
 
               {/* Content Area */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto px-6 py-4 force-scrollbar" style={{ height: '0px' }}>
+                <div className="space-y-4" style={{ paddingBottom: '30px' }}>
                 {loadingQuestions ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
@@ -1020,10 +1027,14 @@ export default function RevisionHubPage() {
                     )}
                   </div>
                 )}
+                </div>
               </div>
             </div>
           </motion.div>
         </div>
+        
+        {/* Bottom spacing to ensure page scrollbar functionality */}
+        <div className="h-20"></div>
       </div>
 
       {/* Revision Session Modal */}
