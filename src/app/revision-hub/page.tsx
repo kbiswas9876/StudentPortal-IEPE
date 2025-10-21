@@ -676,8 +676,8 @@ export default function RevisionHubPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 overflow-y-auto">
-      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 force-scrollbar" style={{ minHeight: '100vh' }}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: '100vh' }}>
         {/* Compact notification for users with no due questions */}
         {dueQuestions.length === 0 && !loadingDueQuestions && (
           <motion.div

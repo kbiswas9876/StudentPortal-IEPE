@@ -43,45 +43,54 @@ export default function DueQuestionsCard({
   if (dueCount > 0) {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-xl p-6 mb-6 shadow-lg hover:shadow-xl transition-shadow"
+        className="group relative mb-6"
       >
-        <div className="flex items-center justify-between gap-6">
-          {/* Icon and Content */}
-          <div className="flex items-start gap-4 flex-1">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
-              <Calendar className="h-7 w-7 text-white" strokeWidth={2.5} />
-            </div>
-            
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                Your Daily Review
-              </h2>
-              <p className="text-slate-700 dark:text-slate-300 text-lg">
-                You have{' '}
-                <span className="font-bold text-blue-700 dark:text-blue-400">
-                  {dueCount}
-                </span>{' '}
-                question{dueCount !== 1 ? 's' : ''} ready for review today.
-              </p>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">
-                Keep the momentum going! Regular reviews strengthen your memory.
-              </p>
-            </div>
-          </div>
+        {/* Minimalist Premium Card with Gradient Border */}
+        <div className="relative bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-xl p-[1px] shadow-lg hover:shadow-xl transition-all duration-300">
+          {/* Inner content with glass morphism effect */}
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl px-5 py-3">
+            <div className="flex items-center justify-between gap-6">
+              {/* Left: Minimal Icon + Content */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {/* Minimal Gradient Icon */}
+                <div className="relative flex-shrink-0">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-200/50 dark:border-blue-700/50">
+                    <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" strokeWidth={2} />
+                  </div>
+                </div>
+                
+                {/* Minimal Text Content */}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      Daily Review
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+                        {dueCount}
+                      </span>
+                      {' '}question{dueCount !== 1 ? 's' : ''} ready
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-          {/* CTA Button */}
-          <div className="flex flex-col gap-3">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onStartReview}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-2xl transition-all duration-200 flex items-center gap-3 text-lg"
-            >
-              <PlayCircle className="h-6 w-6" strokeWidth={2.5} />
-              Start Daily Review
-            </motion.button>
+              {/* Right: Premium Minimal CTA Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onStartReview}
+                className="group/btn relative flex-shrink-0 px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-xs rounded-lg transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg"
+              >
+                {/* Subtle shine effect */}
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                
+                <PlayCircle className="h-3.5 w-3.5 relative z-10" strokeWidth={2} />
+                <span className="relative z-10">Start</span>
+              </motion.button>
+            </div>
           </div>
         </div>
       </motion.div>
