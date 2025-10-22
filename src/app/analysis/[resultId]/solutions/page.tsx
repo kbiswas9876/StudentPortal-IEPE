@@ -81,11 +81,9 @@ export default function DetailedSolutionReviewPage() {
   // Bookmark map keyed by questions.question_id (string)
   const [bookmarkedMap, setBookmarkedMap] = useState<Record<string, boolean>>({})
   
-  // SRS Feedback state - Enhanced to track rating and timestamp per question
-  const [srsFeedbackGiven, setSrsFeedbackGiven] = useState<Map<string, {
-    rating: number // PerformanceRating (1-4)
-    timestamp: Date
-  }>>(new Map())
+  // SRS Feedback state - Database-backed session persistence
+  const [srsFeedbackLog, setSrsFeedbackLog] = useState<Record<string, any>>({})
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(true)
   const [srsFeedbackError, setSrsFeedbackError] = useState<string | null>(null)
 
   // Prevent duplicate fetches during re-renders
@@ -150,6 +148,40 @@ export default function DetailedSolutionReviewPage() {
     }
     fetchBookmarks()
   }, [sessionData, user, session])
+
+  // Fetch SRS feedback log from database for session persistence
+  useEffect(() => {
+    const fetchFeedbackLog = async () => {
+      if (!resultId || !session) return
+      
+      try {
+        setIsLoadingFeedback(true)
+        console.log('🔍 [Solutions] Fetching SRS feedback log for result:', resultId)
+        
+        const response = await fetch(`/api/srs-feedback/${resultId}`, {
+          headers: {
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+        })
+        
+        const result = await response.json()
+        console.log('📚 [Solutions] Feedback log API response:', result)
+        
+        if (response.ok) {
+          setSrsFeedbackLog(result.feedbackLog || {})
+          console.log('✅ [Solutions] Feedback log loaded:', result.feedbackLog)
+        } else {
+          console.error('❌ [Solutions] Failed to fetch feedback log:', result.error)
+        }
+      } catch (e) {
+        console.error('❌ [Solutions] Error fetching feedback log:', e)
+      } finally {
+        setIsLoadingFeedback(false)
+      }
+    }
+
+    fetchFeedbackLog()
+  }, [resultId, session])
 
   // Basic timeout safeguard to avoid indefinite loading states
   useEffect(() => {
@@ -319,15 +351,12 @@ const handleNext = () => {
   }
 }
 
-// SRS Feedback handlers
-const handleSrsFeedbackComplete = (questionId: string, rating: number) => {
-  // Mark feedback as given for this question with rating and timestamp
-  setSrsFeedbackGiven(prev => {
-    const newMap = new Map(prev)
-    newMap.set(questionId, { rating, timestamp: new Date() })
-    return newMap
-  })
-  console.log('✅ [Solutions] SRS feedback completed for question:', questionId, 'Rating:', rating)
+// SRS Feedback handlers - Updated to work with database-backed feedback log
+const handleSrsFeedbackComplete = (questionId: string, newFeedbackLog: Record<string, any>) => {
+  // Update the feedback log with the new state from the API
+  setSrsFeedbackLog(newFeedbackLog)
+  console.log('✅ [Solutions] SRS feedback updated for question:', questionId)
+  console.log('📊 [Solutions] New feedback log:', newFeedbackLog)
   
   // Emit custom event to trigger due count refresh
   const event = new CustomEvent('srs-review-complete')
@@ -525,12 +554,16 @@ const handleSrsFeedbackError = (error: string) => {
                 >
                   {/* SRS Feedback Controls - For ALL Bookmarked Question Reviews */}
                   {(() => {
-                    const questionIdStr = currentQuestion ? String(currentQuestion.question_id) : null
-                    const hasGivenFeedback = currentQuestion && srsFeedbackGiven.has(currentQuestion.question_id)
-                    const shouldShow = currentQuestion && bookmarkedMap[questionIdStr!] && user
-                    const previousRating = currentQuestion ? srsFeedbackGiven.get(currentQuestion.question_id)?.rating : undefined
+                    if (!currentQuestion || !user || isLoadingFeedback) return null
+                    
+                    const questionIdStr = String(currentQuestion.question_id)
+                    const isBookmarked = bookmarkedMap[questionIdStr]
+                    const existingFeedback = srsFeedbackLog[questionIdStr]
 
-                    return shouldShow ? (
+                    // Show controls for all bookmarked questions
+                    if (!isBookmarked) return null
+
+                    return (
                       <div className="mt-6">
                         {srsFeedbackError && (
                           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 rounded-lg">
@@ -538,15 +571,15 @@ const handleSrsFeedbackError = (error: string) => {
                           </div>
                         )}
                         <DynamicSrsFeedbackControls
-                          bookmarkId={currentQuestion.question_id}
+                          questionId={questionIdStr}
                           userId={user.id}
-                          onFeedbackComplete={handleSrsFeedbackComplete}
+                          resultId={String(resultId)}
+                          existingFeedback={existingFeedback || null}
+                          onFeedbackUpdated={handleSrsFeedbackComplete}
                           onError={handleSrsFeedbackError}
-                          isLocked={hasGivenFeedback}
-                          previousRating={previousRating}
                         />
                       </div>
-                    ) : null
+                    )
                   })()}
                   
                   {/* Bookmark History Component - Shows for all bookmarked questions */}

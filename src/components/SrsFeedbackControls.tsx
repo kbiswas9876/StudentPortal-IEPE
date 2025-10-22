@@ -1,26 +1,24 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RotateCcw, AlertTriangle, ThumbsUp, Sparkles } from 'lucide-react'
-import type { PerformanceRating } from '@/lib/srs/types'
 
 interface SrsFeedbackControlsProps {
-  bookmarkId: string
+  questionId: string
   userId: string
-  onFeedbackComplete: (questionId: string, rating: PerformanceRating) => void
+  resultId: string
+  existingFeedback: { rating: number; timestamp: string } | null
+  onFeedbackUpdated: (questionId: string, newFeedbackLog: Record<string, any>) => void
   onError?: (error: string) => void
-  isLocked?: boolean // Indicates if feedback was already given in this session
-  previousRating?: PerformanceRating // The rating that was previously given
 }
 
 const feedbackOptions: Array<{
-  rating: PerformanceRating
+  rating: 1 | 2 | 3 | 4
   label: string
   description: string
   icon: React.ComponentType<any>
   color: string
-  hoverColor: string
   bgColor: string
   borderColor: string
 }> = [
@@ -30,7 +28,6 @@ const feedbackOptions: Array<{
     description: 'Incorrect / Forgot',
     icon: RotateCcw,
     color: 'text-red-700 dark:text-red-400',
-    hoverColor: 'hover:from-red-600 hover:to-red-700',
     bgColor: 'from-red-500 to-red-600',
     borderColor: 'border-red-300 dark:border-red-700',
   },
@@ -40,7 +37,6 @@ const feedbackOptions: Array<{
     description: 'Correct but difficult',
     icon: AlertTriangle,
     color: 'text-orange-700 dark:text-orange-400',
-    hoverColor: 'hover:from-orange-600 hover:to-orange-700',
     bgColor: 'from-orange-500 to-orange-600',
     borderColor: 'border-orange-300 dark:border-orange-700',
   },
@@ -50,7 +46,6 @@ const feedbackOptions: Array<{
     description: 'Correct with some effort',
     icon: ThumbsUp,
     color: 'text-blue-700 dark:text-blue-400',
-    hoverColor: 'hover:from-blue-600 hover:to-blue-700',
     bgColor: 'from-blue-500 to-blue-600',
     borderColor: 'border-blue-300 dark:border-blue-700',
   },
@@ -60,44 +55,49 @@ const feedbackOptions: Array<{
     description: 'Instant recall',
     icon: Sparkles,
     color: 'text-green-700 dark:text-green-400',
-    hoverColor: 'hover:from-green-600 hover:to-green-700',
     bgColor: 'from-green-500 to-green-600',
     borderColor: 'border-green-300 dark:border-green-700',
   },
 ]
 
 export default function SrsFeedbackControls({
-  bookmarkId,
+  questionId,
   userId,
-  onFeedbackComplete,
+  resultId,
+  existingFeedback,
+  onFeedbackUpdated,
   onError,
-  isLocked = false,
-  previousRating = null,
 }: SrsFeedbackControlsProps) {
+  // Local state - completely isolated per question
+  const [localRating, setLocalRating] = useState<1 | 2 | 3 | 4 | null>(
+    existingFeedback?.rating as (1 | 2 | 3 | 4) || null
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [feedbackLocked, setFeedbackLocked] = useState(isLocked)
-  const [selectedRating, setSelectedRating] = useState<PerformanceRating | null>(previousRating)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [intervalMessage, setIntervalMessage] = useState('')
-  const [showRescheduleModal, setShowRescheduleModal] = useState(false)
-  const [customDate, setCustomDate] = useState('')
-  const [isRescheduling, setIsRescheduling] = useState(false)
 
-  const handleFeedback = async (rating: PerformanceRating) => {
-    if (isSubmitting || feedbackLocked) return
+  // Update local state when existingFeedback changes (e.g., after undo)
+  useEffect(() => {
+    setLocalRating(existingFeedback?.rating as (1 | 2 | 3 | 4) || null)
+  }, [existingFeedback])
 
-    setSelectedRating(rating)
+  const handleFeedback = async (rating: 1 | 2 | 3 | 4) => {
+    if (isSubmitting) return
+
+    setLocalRating(rating)
     setIsSubmitting(true)
 
     try {
-      const response = await fetch('/api/revision-hub/log-review', {
+      console.log('📝 [SrsFeedback] Submitting feedback:', { questionId, rating, resultId })
+
+      const response = await fetch(`/api/srs-feedback/${resultId}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          bookmarkId,
-          performanceRating: rating,
+          questionId,
+          rating,
           userId,
         }),
       })
@@ -105,102 +105,99 @@ export default function SrsFeedbackControls({
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to log review')
+        throw new Error(result.error || 'Failed to submit feedback')
       }
 
-      // Lock feedback immediately after successful submission
-      setFeedbackLocked(true)
+      console.log('✅ [SrsFeedback] Feedback submitted successfully:', result)
 
-      // Notify parent component IMMEDIATELY
-      onFeedbackComplete(bookmarkId, rating)
+      // Update parent's feedback log immediately
+      onFeedbackUpdated(questionId, result.feedbackLog)
 
       // Calculate interval message
-      const previousInterval = result.previousSrsData?.srs_interval || 0
       const newInterval = result.updatedSrsData?.srs_interval || 0
       
       let message = ''
       if (rating === 1) {
-        // Again - Reset
         message = "Reset! This was a tough one. We'll show it to you again tomorrow."
-      } else if (newInterval > previousInterval) {
-        const diff = newInterval - previousInterval
-        message = `✅ Got it! Next review scheduled in ${newInterval} day${newInterval !== 1 ? 's' : ''} (increased by ${diff} day${diff !== 1 ? 's' : ''}).`
-      } else if (newInterval < previousInterval) {
-        message = `Next review in ${newInterval} day${newInterval !== 1 ? 's' : ''} (adjusted down for more practice).`
+      } else if (rating === 2) {
+        message = `Next review in ${newInterval} day${newInterval !== 1 ? 's' : ''} (needs more practice).`
+      } else if (rating === 3) {
+        message = `Good! Next review in ${newInterval} day${newInterval !== 1 ? 's' : ''}.`
       } else {
-        message = `Next review in ${newInterval} day${newInterval !== 1 ? 's' : ''}.`
+        message = `Easy! Next review in ${newInterval} day${newInterval !== 1 ? 's' : ''}.`
       }
 
       setIntervalMessage(message)
       setShowSuccessMessage(true)
+
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false)
+      }, 3000)
+
     } catch (error) {
-      console.error('Error logging review:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Could not save review. Please try again.'
+      console.error('❌ [SrsFeedback] Error submitting feedback:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Could not save feedback. Please try again.'
       
       if (onError) {
         onError(errorMessage)
       }
       
-      // Re-enable buttons on error
-      setSelectedRating(null)
+      // Reset local state on error
+      setLocalRating(existingFeedback?.rating as (1 | 2 | 3 | 4) || null)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const handleUndo = () => {
-    setFeedbackLocked(false)
-    setSelectedRating(null)
-    setShowSuccessMessage(false)
-    setIntervalMessage('')
-  }
+  const handleUndo = async () => {
+    if (isSubmitting) return
 
-  const handleReschedule = async () => {
-    if (!customDate || isRescheduling) return
+    setIsSubmitting(true)
 
-    setIsRescheduling(true)
     try {
-      const response = await fetch(`/api/revision-hub/bookmarks/${bookmarkId}`, {
-        method: 'PUT',
+      console.log('🔄 [SrsFeedback] Undoing feedback:', { questionId, resultId })
+
+      const response = await fetch(`/api/srs-feedback/${resultId}/undo`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          questionId,
           userId,
-          is_custom_reminder_active: true,
-          custom_next_review_date: customDate,
         }),
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        const result = await response.json()
-        throw new Error(result.error || 'Failed to reschedule')
+        throw new Error(result.error || 'Failed to undo feedback')
       }
 
-      setIntervalMessage(`📅 Rescheduled to ${new Date(customDate).toLocaleDateString()}`)
-      setShowSuccessMessage(true)
-      setShowRescheduleModal(false)
+      console.log('✅ [SrsFeedback] Feedback undone successfully:', result)
 
-      setTimeout(() => {
-        setShowSuccessMessage(false)
-        onFeedbackComplete()
-      }, 2000)
+      // Update parent's feedback log
+      onFeedbackUpdated(questionId, result.feedbackLog)
+
+      // Reset local state
+      setLocalRating(null)
+      setShowSuccessMessage(false)
+      setIntervalMessage('')
+
     } catch (error) {
-      console.error('Error rescheduling:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to reschedule. Please try again.'
+      console.error('❌ [SrsFeedback] Error undoing feedback:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Could not undo feedback. Please try again.'
+      
       if (onError) {
         onError(errorMessage)
       }
     } finally {
-      setIsRescheduling(false)
+      setIsSubmitting(false)
     }
   }
 
-  // Get minimum date (today)
-  const getMinDate = () => {
-    const today = new Date()
-    return today.toISOString().split('T')[0]
-  }
+  const isLocked = localRating !== null && !isSubmitting
 
   return (
     <motion.div
@@ -223,27 +220,24 @@ export default function SrsFeedbackControls({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {feedbackOptions.map((option) => {
           const Icon = option.icon
-          const isSelected = selectedRating === option.rating
-          const isDisabled = (isSubmitting || feedbackLocked) && !isSelected
+          const isSelected = localRating === option.rating
+          const isDisabled = isSubmitting || (isLocked && !isSelected)
 
           return (
             <motion.button
               key={option.rating}
-              whileHover={isSubmitting || feedbackLocked ? {} : { scale: 1.02 }}
-              whileTap={isSubmitting || feedbackLocked ? {} : { scale: 0.98 }}
+              whileHover={isDisabled ? {} : { scale: 1.02 }}
+              whileTap={isDisabled ? {} : { scale: 0.98 }}
               onClick={() => handleFeedback(option.rating)}
-              disabled={isSubmitting || feedbackLocked}
+              disabled={isDisabled}
               className={`
                 relative p-4 rounded-xl border-2 transition-all duration-150 ease-out
-                ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
+                ${isDisabled && !isSelected ? 'opacity-50 cursor-not-allowed' : ''}
                 ${isSelected 
-                  ? `bg-gradient-to-br ${option.bgColor} text-white border-transparent shadow-xl ${feedbackLocked ? 'ring-4 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-800' : ''}` 
-                  : `bg-white dark:bg-slate-800 ${option.borderColor}`
+                  ? `bg-gradient-to-br ${option.bgColor} text-white border-transparent shadow-xl ${isLocked ? 'ring-4 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-800' : ''}` 
+                  : `bg-white dark:bg-slate-800 ${option.borderColor} hover:border-opacity-70`
                 }
               `}
-              style={{
-                transition: 'transform 150ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out'
-              }}
             >
               {/* Loading Spinner (only on selected button) */}
               {isSelected && isSubmitting && (
@@ -275,7 +269,7 @@ export default function SrsFeedbackControls({
       </div>
 
       {/* Undo Button - Only show when feedback is locked */}
-      {feedbackLocked && !showSuccessMessage && (
+      {isLocked && !showSuccessMessage && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -283,7 +277,8 @@ export default function SrsFeedbackControls({
         >
           <button
             onClick={handleUndo}
-            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center gap-2"
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RotateCcw className="h-4 w-4" />
             Undo
@@ -292,19 +287,11 @@ export default function SrsFeedbackControls({
       )}
 
       {/* Helper Text */}
-      {!showSuccessMessage && !isSubmitting && !feedbackLocked && (
+      {!showSuccessMessage && !isSubmitting && !isLocked && (
         <div className="mt-4 text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-500 mb-3">
+          <p className="text-xs text-slate-500 dark:text-slate-500">
             💡 Be honest with yourself for the best learning results
           </p>
-          
-          {/* Manual Reschedule Button */}
-          <button
-            onClick={() => setShowRescheduleModal(true)}
-            className="text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 underline transition-colors"
-          >
-            📅 Reschedule manually
-          </button>
         </div>
       )}
 
@@ -312,85 +299,34 @@ export default function SrsFeedbackControls({
       <AnimatePresence>
         {showSuccessMessage && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-300 dark:border-green-700 rounded-xl"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-4 overflow-hidden"
           >
-            <p className="text-center text-sm font-semibold text-green-800 dark:text-green-200">
-              {intervalMessage}
-            </p>
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-green-900 dark:text-green-100 mb-1">
+                    Feedback Saved!
+                  </h4>
+                  <p className="text-sm text-green-800 dark:text-green-200">
+                    {intervalMessage}
+                  </p>
+                </div>
+              </div>
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Manual Reschedule Modal */}
-      <AnimatePresence>
-        {showRescheduleModal && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowRescheduleModal(false)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-            />
-            
-            {/* Modal */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border-2 border-slate-200 dark:border-slate-700 p-6 max-w-md w-full z-50"
-            >
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                Reschedule Review
-              </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                Choose a custom date for your next review of this question
-              </p>
-              
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Next Review Date
-                </label>
-                <input
-                  type="date"
-                  value={customDate}
-                  onChange={(e) => setCustomDate(e.target.value)}
-                  min={getMinDate()}
-                  className="w-full px-4 py-3 border-2 border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
-              </div>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowRescheduleModal(false)}
-                  className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleReschedule}
-                  disabled={!customDate || isRescheduling}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isRescheduling ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    'Reschedule'
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </>
         )}
       </AnimatePresence>
     </motion.div>
   )
 }
-

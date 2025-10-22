@@ -1,3 +1,17 @@
+// SRS Feedback Log Types
+export interface SrsFeedbackEntry {
+  rating: 1 | 2 | 3 | 4
+  timestamp: string
+  originalSrsState: {
+    srs_repetitions: number
+    srs_ease_factor: number
+    srs_interval: number
+    next_review_date: string | null
+  }
+}
+
+export type SrsFeedbackLog = Record<string, SrsFeedbackEntry>
+
 export interface Database {
   public: {
     Tables: {
@@ -84,6 +98,7 @@ export interface Database {
           total_incorrect: number | null
           total_skipped: number | null
           session_type: string
+          srs_feedback_log: SrsFeedbackLog | null
         }
         Insert: {
           id?: number
@@ -100,6 +115,7 @@ export interface Database {
           total_incorrect?: number | null
           total_skipped?: number | null
           session_type?: string
+          srs_feedback_log?: SrsFeedbackLog | null
         }
         Update: {
           id?: number
@@ -116,6 +132,7 @@ export interface Database {
           total_incorrect?: number | null
           total_skipped?: number | null
           session_type?: string
+          srs_feedback_log?: SrsFeedbackLog | null
         }
       }
       answer_log: {
