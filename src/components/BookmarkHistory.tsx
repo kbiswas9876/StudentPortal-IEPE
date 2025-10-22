@@ -77,13 +77,16 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
   // Attempt history display state
   const [showAllAttempts, setShowAllAttempts] = useState(false)
 
-  // Prevent refetch on tab switch - track if we've already fetched data
-  const hasFetchedRef = useRef(false)
+  // Track which question we've fetched to prevent unnecessary refetches
+  // CRITICAL: This must be question-specific, not global!
+  const lastFetchedQuestionRef = useRef<string | null>(null)
 
   const fetchHistoryData = async () => {
     try {
       setIsLoading(true)
       setError(null)
+      
+      console.log('🔄 [BookmarkHistory] Fetching data for question:', questionId)
       
       const response = await fetch(`/api/revision-hub/history?questionId=${questionId}`, {
         headers: {
@@ -97,7 +100,7 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
       }
 
       setHistoryData(result.data)
-      hasFetchedRef.current = true // Mark as fetched
+      lastFetchedQuestionRef.current = questionId // Mark THIS question as fetched
       console.log('✅ [BookmarkHistory] Data fetched/refreshed for:', questionId)
     } catch (err) {
       console.error('Error fetching bookmark history:', err)
@@ -107,12 +110,16 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
     }
   }
 
-  // Initial fetch
+  // Initial fetch - CRITICAL: Must refetch when questionId changes!
   useEffect(() => {
-    // If already fetched, don't refetch
-    if (hasFetchedRef.current) return
+    // Only skip fetch if we've already fetched THIS SPECIFIC question
+    if (lastFetchedQuestionRef.current === questionId) {
+      console.log('⏭️ [BookmarkHistory] Already have data for:', questionId, '- skipping fetch')
+      return
+    }
 
     if (questionId && session) {
+      console.log('🆕 [BookmarkHistory] New question detected, fetching:', questionId)
       fetchHistoryData()
     }
   }, [questionId, !!session]) // Use stable dependency - just check if session exists
@@ -127,8 +134,9 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
       
       // Only refresh if this is the question that was updated
       if (updatedQuestionId === questionId) {
-        console.log('🔄 [BookmarkHistory] Refreshing data for:', questionId)
-        hasFetchedRef.current = false // Allow refetch
+        console.log('🔄 [BookmarkHistory] Force-refreshing data for:', questionId)
+        // Force refetch by clearing the cache for this question
+        lastFetchedQuestionRef.current = null
         fetchHistoryData()
       }
     }
