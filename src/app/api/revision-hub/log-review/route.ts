@@ -172,6 +172,9 @@ export async function POST(request: Request) {
     // ============================================================================
     // STEP 5: Update the Database
     // ============================================================================
+    // IMPORTANT: user_difficulty_rating is NEVER updated by SRS feedback.
+    // It is a static user preference that can only be changed via explicit edit.
+    // SRS feedback only updates: srs_repetitions, srs_ease_factor, srs_interval, next_review_date
 
     console.log('💾 Updating bookmark in database with ID:', bookmark.id);
     const { error: updateError } = await supabaseAdmin

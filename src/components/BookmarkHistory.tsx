@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline'
@@ -70,7 +70,13 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
   const [isSavingTags, setIsSavingTags] = useState(false)
   const [isSavingNote, setIsSavingNote] = useState(false)
 
+  // Prevent refetch on tab switch - track if we've already fetched data
+  const hasFetchedRef = useRef(false)
+
   useEffect(() => {
+    // If already fetched, don't refetch
+    if (hasFetchedRef.current) return
+
     const fetchHistoryData = async () => {
       try {
         setIsLoading(true)
@@ -82,12 +88,13 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
           },
         })
         const result = await response.json()
-        
+
         if (!response.ok) {
           throw new Error(result.error || 'Failed to fetch bookmark history')
         }
-        
+
         setHistoryData(result.data)
+        hasFetchedRef.current = true // Mark as fetched
       } catch (err) {
         console.error('Error fetching bookmark history:', err)
         setError(err instanceof Error ? err.message : 'Failed to fetch bookmark history')
@@ -99,7 +106,7 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
     if (questionId && session) {
       fetchHistoryData()
     }
-  }, [questionId, session])
+  }, [questionId, !!session]) // Use stable dependency - just check if session exists
 
   // API call functions for updating bookmark data
   const updateBookmarkField = async (field: string, value: any) => {

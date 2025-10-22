@@ -80,16 +80,27 @@ export function updateSrsData(
   let i = currentSrsData.srs_interval;
 
   // ============================================================================
-  // STEP 1: Handle Performance - Lapse vs Success
+  // STEP 1: Handle Performance - Differentiate Between Rating Levels
   // ============================================================================
+  // Modified SM-2 for Mathematics: Longer intervals for successful recalls
+  // Rationale: Procedural knowledge (math problem-solving) has different
+  // retention characteristics than declarative knowledge (vocabulary).
   
   if (performanceRating < 3) {
-    // --- User is struggling (Again or Hard) ---
+    // --- User is struggling (Again=1 or Hard=2) ---
     n = 0; // Reset consecutive success counter
-    ef = Math.max(MIN_EASE_FACTOR, ef - 0.20); // Decrease ease factor (harder)
-    i = 1; // Schedule for review tomorrow
+    
+    if (performanceRating === 1) {
+      // Again (1): Complete reset - user forgot or got it wrong
+      ef = Math.max(MIN_EASE_FACTOR, ef - 0.20); // Significant ease factor penalty
+      i = 1; // Review tomorrow
+    } else {
+      // Hard (2): Correct but difficult - needs reinforcement sooner than Good
+      ef = Math.max(MIN_EASE_FACTOR, ef - 0.15); // Moderate ease factor penalty
+      i = 3; // Review in 3 days (mathematics-appropriate short interval)
+    }
   } else {
-    // --- Successful recall (Good or Easy) ---
+    // --- Successful recall (Good=3 or Easy=4) ---
     n = n + 1; // Increment success counter
     
     // Update Ease Factor using SM-2 formula
@@ -103,18 +114,31 @@ export function updateSrsData(
     }
     
     // ============================================================================
-    // STEP 2: Calculate New Interval
+    // STEP 2: Calculate New Interval (Mathematics-Optimized)
     // ============================================================================
+    // Mathematics problems require longer intervals than vocabulary cards
+    // Easy problems should be reviewed much less frequently
     
-    if (n === 1) {
-      // First successful recall -> review tomorrow
-      i = 1;
-    } else if (n === 2) {
-      // Second successful recall -> review in 6 days
-      i = 6;
+    if (performanceRating === 4) {
+      // Easy (4): Instant recall - long intervals appropriate
+      if (n === 1) {
+        i = 12; // First Easy review: 12 days (was 1)
+      } else if (n === 2) {
+        i = 20; // Second Easy review: 20 days (was 6)
+      } else {
+        // Subsequent Easy reviews: exponential growth with boost
+        i = Math.ceil(i * ef * 1.2); // 20% boost for truly easy problems
+      }
     } else {
-      // Subsequent recalls -> exponential growth
-      i = Math.ceil(i * ef);
+      // Good (3): Correct with some effort - medium intervals
+      if (n === 1) {
+        i = 6; // First Good review: 6 days (was 1)
+      } else if (n === 2) {
+        i = 12; // Second Good review: 12 days (was 6)
+      } else {
+        // Subsequent Good reviews: standard exponential growth
+        i = Math.ceil(i * ef);
+      }
     }
   }
 

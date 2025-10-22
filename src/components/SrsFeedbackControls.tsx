@@ -8,8 +8,10 @@ import type { PerformanceRating } from '@/lib/srs/types'
 interface SrsFeedbackControlsProps {
   bookmarkId: string
   userId: string
-  onFeedbackComplete: () => void
+  onFeedbackComplete: (questionId: string, rating: PerformanceRating) => void
   onError?: (error: string) => void
+  isLocked?: boolean // Indicates if feedback was already given in this session
+  previousRating?: PerformanceRating // The rating that was previously given
 }
 
 const feedbackOptions: Array<{
@@ -69,9 +71,12 @@ export default function SrsFeedbackControls({
   userId,
   onFeedbackComplete,
   onError,
+  isLocked = false,
+  previousRating = null,
 }: SrsFeedbackControlsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedRating, setSelectedRating] = useState<PerformanceRating | null>(null)
+  const [feedbackLocked, setFeedbackLocked] = useState(isLocked)
+  const [selectedRating, setSelectedRating] = useState<PerformanceRating | null>(previousRating)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [intervalMessage, setIntervalMessage] = useState('')
   const [showRescheduleModal, setShowRescheduleModal] = useState(false)
@@ -79,7 +84,7 @@ export default function SrsFeedbackControls({
   const [isRescheduling, setIsRescheduling] = useState(false)
 
   const handleFeedback = async (rating: PerformanceRating) => {
-    if (isSubmitting) return
+    if (isSubmitting || feedbackLocked) return
 
     setSelectedRating(rating)
     setIsSubmitting(true)
@@ -103,6 +108,12 @@ export default function SrsFeedbackControls({
         throw new Error(result.error || 'Failed to log review')
       }
 
+      // Lock feedback immediately after successful submission
+      setFeedbackLocked(true)
+
+      // Notify parent component IMMEDIATELY
+      onFeedbackComplete(bookmarkId, rating)
+
       // Calculate interval message
       const previousInterval = result.previousSrsData?.srs_interval || 0
       const newInterval = result.updatedSrsData?.srs_interval || 0
@@ -122,12 +133,6 @@ export default function SrsFeedbackControls({
 
       setIntervalMessage(message)
       setShowSuccessMessage(true)
-
-      // Navigate to next question after showing the message
-      setTimeout(() => {
-        setShowSuccessMessage(false)
-        onFeedbackComplete()
-      }, 3000)
     } catch (error) {
       console.error('Error logging review:', error)
       const errorMessage = error instanceof Error ? error.message : 'Could not save review. Please try again.'
@@ -137,9 +142,17 @@ export default function SrsFeedbackControls({
       }
       
       // Re-enable buttons on error
-      setIsSubmitting(false)
       setSelectedRating(null)
+    } finally {
+      setIsSubmitting(false)
     }
+  }
+
+  const handleUndo = () => {
+    setFeedbackLocked(false)
+    setSelectedRating(null)
+    setShowSuccessMessage(false)
+    setIntervalMessage('')
   }
 
   const handleReschedule = async () => {
@@ -194,14 +207,14 @@ export default function SrsFeedbackControls({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-700 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-6 shadow-lg"
+      className="bg-white dark:bg-slate-800 rounded-xl shadow-md border-2 border-slate-200 dark:border-slate-700 p-5"
     >
       {/* Prompt */}
-      <div className="text-center mb-6">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+      <div className="text-center mb-4">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">
           How well did you remember this?
         </h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Your feedback helps optimize your review schedule
         </p>
       </div>
@@ -211,20 +224,20 @@ export default function SrsFeedbackControls({
         {feedbackOptions.map((option) => {
           const Icon = option.icon
           const isSelected = selectedRating === option.rating
-          const isDisabled = isSubmitting && !isSelected
+          const isDisabled = (isSubmitting || feedbackLocked) && !isSelected
 
           return (
             <motion.button
               key={option.rating}
-              whileHover={isSubmitting ? {} : { scale: 1.02 }}
-              whileTap={isSubmitting ? {} : { scale: 0.98 }}
+              whileHover={isSubmitting || feedbackLocked ? {} : { scale: 1.02 }}
+              whileTap={isSubmitting || feedbackLocked ? {} : { scale: 0.98 }}
               onClick={() => handleFeedback(option.rating)}
-              disabled={isSubmitting}
+              disabled={isSubmitting || feedbackLocked}
               className={`
                 relative p-4 rounded-xl border-2 transition-all duration-150 ease-out
                 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
                 ${isSelected 
-                  ? `bg-gradient-to-br ${option.bgColor} text-white border-transparent shadow-xl` 
+                  ? `bg-gradient-to-br ${option.bgColor} text-white border-transparent shadow-xl ${feedbackLocked ? 'ring-4 ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-800' : ''}` 
                   : `bg-white dark:bg-slate-800 ${option.borderColor}`
                 }
               `}
@@ -261,8 +274,25 @@ export default function SrsFeedbackControls({
         })}
       </div>
 
+      {/* Undo Button - Only show when feedback is locked */}
+      {feedbackLocked && !showSuccessMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 flex justify-center"
+        >
+          <button
+            onClick={handleUndo}
+            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors flex items-center gap-2"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Undo
+          </button>
+        </motion.div>
+      )}
+
       {/* Helper Text */}
-      {!showSuccessMessage && !isSubmitting && (
+      {!showSuccessMessage && !isSubmitting && !feedbackLocked && (
         <div className="mt-4 text-center">
           <p className="text-xs text-slate-500 dark:text-slate-500 mb-3">
             💡 Be honest with yourself for the best learning results

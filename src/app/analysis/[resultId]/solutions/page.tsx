@@ -81,8 +81,11 @@ export default function DetailedSolutionReviewPage() {
   // Bookmark map keyed by questions.question_id (string)
   const [bookmarkedMap, setBookmarkedMap] = useState<Record<string, boolean>>({})
   
-  // SRS Feedback state
-  const [srsFeedbackGiven, setSrsFeedbackGiven] = useState<Set<string>>(new Set())
+  // SRS Feedback state - Enhanced to track rating and timestamp per question
+  const [srsFeedbackGiven, setSrsFeedbackGiven] = useState<Map<string, {
+    rating: number // PerformanceRating (1-4)
+    timestamp: Date
+  }>>(new Map())
   const [srsFeedbackError, setSrsFeedbackError] = useState<string | null>(null)
 
   // Prevent duplicate fetches during re-renders
@@ -317,20 +320,19 @@ const handleNext = () => {
 }
 
 // SRS Feedback handlers
-const handleSrsFeedbackComplete = () => {
-  // Mark feedback as given for current question
-  if (currentQuestion) {
-    setSrsFeedbackGiven(prev => new Set(prev).add(currentQuestion.question_id))
-    console.log('✅ [Solutions] SRS feedback completed for question:', currentQuestion.question_id)
-  }
+const handleSrsFeedbackComplete = (questionId: string, rating: number) => {
+  // Mark feedback as given for this question with rating and timestamp
+  setSrsFeedbackGiven(prev => {
+    const newMap = new Map(prev)
+    newMap.set(questionId, { rating, timestamp: new Date() })
+    return newMap
+  })
+  console.log('✅ [Solutions] SRS feedback completed for question:', questionId, 'Rating:', rating)
   
   // Emit custom event to trigger due count refresh
   const event = new CustomEvent('srs-review-complete')
   window.dispatchEvent(event)
   console.log('📡 [Solutions] Dispatched srs-review-complete event')
-  
-  // Automatically proceed to next question
-  handleNext()
 }
 
 const handleSrsFeedbackError = (error: string) => {
@@ -524,31 +526,24 @@ const handleSrsFeedbackError = (error: string) => {
                   {/* SRS Feedback Controls - For ALL Bookmarked Question Reviews */}
                   {(() => {
                     const questionIdStr = currentQuestion ? String(currentQuestion.question_id) : null
-                    const shouldShow = currentQuestion && bookmarkedMap[questionIdStr!] && !srsFeedbackGiven.has(currentQuestion.question_id) && user
-                    console.log('🎯 [Solutions] SRS Buttons Check:', {
-                      currentQuestionId: currentQuestion?.question_id,
-                      currentQuestionIdType: typeof currentQuestion?.question_id,
-                      questionIdStr,
-                      isBookmarked: questionIdStr ? bookmarkedMap[questionIdStr] : 'no question',
-                      bookmarkedMapKeys: Object.keys(bookmarkedMap).slice(0, 3), // Show first 3 keys
-                      feedbackGiven: currentQuestion ? srsFeedbackGiven.has(currentQuestion.question_id) : 'no question',
-                      hasUser: !!user,
-                      shouldShow,
-                      source
-                    })
+                    const hasGivenFeedback = currentQuestion && srsFeedbackGiven.has(currentQuestion.question_id)
+                    const shouldShow = currentQuestion && bookmarkedMap[questionIdStr!] && user
+                    const previousRating = currentQuestion ? srsFeedbackGiven.get(currentQuestion.question_id)?.rating : undefined
+
                     return shouldShow ? (
-                      <div className="mt-6 p-6 bg-yellow-100 dark:bg-yellow-900 border-4 border-yellow-500">
-                        <h2 className="text-2xl font-bold text-red-600 mb-4">⚠️ SRS CONTROLS SHOULD APPEAR HERE ⚠️</h2>
+                      <div className="mt-6">
                         {srsFeedbackError && (
                           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 rounded-lg">
                             {srsFeedbackError}
                           </div>
                         )}
                         <DynamicSrsFeedbackControls
-                          bookmarkId={currentQuestion.question_id} // Using question_id as a proxy - API will handle the lookup
+                          bookmarkId={currentQuestion.question_id}
                           userId={user.id}
                           onFeedbackComplete={handleSrsFeedbackComplete}
                           onError={handleSrsFeedbackError}
+                          isLocked={hasGivenFeedback}
+                          previousRating={previousRating}
                         />
                       </div>
                     ) : null
