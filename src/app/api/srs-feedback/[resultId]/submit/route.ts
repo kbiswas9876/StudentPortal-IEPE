@@ -63,12 +63,28 @@ export async function POST(
     // STEP 2: Verify User Owns This Test Result
     // ============================================================================
 
-    const { data: testResult, error: testError } = await supabaseAdmin
+    // Try to fetch with srs_feedback_log column
+    const resultWithLog = await supabaseAdmin
       .from('test_results')
       .select('id, user_id, srs_feedback_log')
       .eq('id', resultId)
       .eq('user_id', userId)
       .single()
+    
+    let testResult
+    let testError
+    
+    // If column doesn't exist yet, fetch without it
+    if (resultWithLog.error && resultWithLog.error.message?.includes('column')) {
+      console.log('⚠️ srs_feedback_log column not found, migration required')
+      return NextResponse.json(
+        { error: 'Database migration required. Please run: supabase/migrations/add_srs_feedback_log.sql' },
+        { status: 503 }
+      )
+    } else {
+      testResult = resultWithLog.data
+      testError = resultWithLog.error
+    }
 
     if (testError || !testResult) {
       console.error('❌ Test result not found:', testError)

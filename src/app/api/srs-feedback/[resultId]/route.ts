@@ -37,13 +37,34 @@ export async function GET(
       )
     }
 
-    // Fetch test result with feedback log
-    const { data: testResult, error: testError } = await supabase
+    // Fetch test result - try with srs_feedback_log first
+    let testResult
+    let testError
+    
+    // Try to fetch with srs_feedback_log column
+    const resultWithLog = await supabase
       .from('test_results')
       .select('id, user_id, srs_feedback_log')
       .eq('id', resultId)
       .eq('user_id', user.id)
       .single()
+    
+    // If column doesn't exist yet (migration not run), fetch without it
+    if (resultWithLog.error && resultWithLog.error.message?.includes('column')) {
+      console.log('⚠️ srs_feedback_log column not found, returning empty feedback log')
+      const resultWithoutLog = await supabase
+        .from('test_results')
+        .select('id, user_id')
+        .eq('id', resultId)
+        .eq('user_id', user.id)
+        .single()
+      
+      testResult = resultWithoutLog.data
+      testError = resultWithoutLog.error
+    } else {
+      testResult = resultWithLog.data
+      testError = resultWithLog.error
+    }
 
     if (testError || !testResult) {
       console.error('Error fetching test result:', testError)
@@ -53,9 +74,10 @@ export async function GET(
       )
     }
 
+    // Return feedback log (empty object if column doesn't exist yet)
     return NextResponse.json({
       success: true,
-      feedbackLog: testResult.srs_feedback_log || {}
+      feedbackLog: (testResult as any).srs_feedback_log || {}
     })
 
   } catch (error) {
