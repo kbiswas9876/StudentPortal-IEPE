@@ -200,9 +200,12 @@ export default function RadialPacingControl({ value, onChange, disabled = false 
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.25 }}
           >
-            <div className="text-base font-semibold text-slate-900 dark:text-slate-100 drop-shadow-sm">
+            <div className="text-base font-semibold text-slate-900 dark:text-slate-100 drop-shadow-sm text-center">
               {getPacingLabel(value)}
             </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 text-center">
+              {Math.round(((value + 1) / 2) * 100)}% Intensity
+            </p>
           </motion.div>
         </div>
       </div>
