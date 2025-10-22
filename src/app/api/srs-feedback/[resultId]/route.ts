@@ -23,10 +23,10 @@ const supabaseAdmin = createClient(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { resultId: string } }
+  { params }: { params: Promise<{ resultId: string }> }
 ) {
   try {
-    const { resultId } = params
+    const { resultId } = await params
 
     console.log('🔍 [SRS Feedback GET] Request for resultId:', resultId)
 

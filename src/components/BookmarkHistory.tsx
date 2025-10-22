@@ -73,40 +73,62 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
   // Prevent refetch on tab switch - track if we've already fetched data
   const hasFetchedRef = useRef(false)
 
+  const fetchHistoryData = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const response = await fetch(`/api/revision-hub/history?questionId=${questionId}`, {
+        headers: {
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+      })
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch bookmark history')
+      }
+
+      setHistoryData(result.data)
+      hasFetchedRef.current = true // Mark as fetched
+      console.log('✅ [BookmarkHistory] Data fetched/refreshed for:', questionId)
+    } catch (err) {
+      console.error('Error fetching bookmark history:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch bookmark history')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Initial fetch
   useEffect(() => {
     // If already fetched, don't refetch
     if (hasFetchedRef.current) return
-
-    const fetchHistoryData = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
-        
-        const response = await fetch(`/api/revision-hub/history?questionId=${questionId}`, {
-          headers: {
-            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-          },
-        })
-        const result = await response.json()
-
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to fetch bookmark history')
-        }
-
-        setHistoryData(result.data)
-        hasFetchedRef.current = true // Mark as fetched
-      } catch (err) {
-        console.error('Error fetching bookmark history:', err)
-        setError(err instanceof Error ? err.message : 'Failed to fetch bookmark history')
-      } finally {
-        setIsLoading(false)
-      }
-    }
 
     if (questionId && session) {
       fetchHistoryData()
     }
   }, [questionId, !!session]) // Use stable dependency - just check if session exists
+
+  // Listen for bookmark updates (triggered by SRS feedback)
+  useEffect(() => {
+    const handleBookmarkUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{ questionId: string }>
+      const updatedQuestionId = customEvent.detail?.questionId
+      
+      console.log('📡 [BookmarkHistory] Received bookmark-updated event for:', updatedQuestionId, 'current:', questionId)
+      
+      // Only refresh if this is the question that was updated
+      if (updatedQuestionId === questionId) {
+        console.log('🔄 [BookmarkHistory] Refreshing data for:', questionId)
+        hasFetchedRef.current = false // Allow refetch
+        fetchHistoryData()
+      }
+    }
+
+    window.addEventListener('bookmark-updated', handleBookmarkUpdate)
+    return () => window.removeEventListener('bookmark-updated', handleBookmarkUpdate)
+  }, [questionId, session])
 
   // API call functions for updating bookmark data
   const updateBookmarkField = async (field: string, value: any) => {

@@ -30,10 +30,10 @@ const supabaseAdmin = createClient(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { resultId: string } }
+  { params }: { params: Promise<{ resultId: string }> }
 ) {
   try {
-    const { resultId } = params
+    const { resultId } = await params
     const body = await request.json()
     const { questionId, userId } = body
 

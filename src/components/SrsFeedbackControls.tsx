@@ -10,6 +10,7 @@ interface SrsFeedbackControlsProps {
   resultId: string
   existingFeedback: { rating: number; timestamp: string } | null
   onFeedbackUpdated: (questionId: string, newFeedbackLog: Record<string, any>) => void
+  onBookmarkUpdated?: (questionId: string) => void
   onError?: (error: string) => void
 }
 
@@ -66,6 +67,7 @@ export default function SrsFeedbackControls({
   resultId,
   existingFeedback,
   onFeedbackUpdated,
+  onBookmarkUpdated,
   onError,
 }: SrsFeedbackControlsProps) {
   // Local state - completely isolated per question
@@ -112,6 +114,9 @@ export default function SrsFeedbackControls({
 
       // Update parent's feedback log immediately
       onFeedbackUpdated(questionId, result.feedbackLog)
+
+      // Trigger bookmark refresh to update SRS Status section
+      onBookmarkUpdated?.(questionId)
 
       // Calculate interval message
       const newInterval = result.updatedSrsData?.srs_interval || 0

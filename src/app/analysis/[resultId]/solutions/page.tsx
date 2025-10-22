@@ -364,6 +364,13 @@ const handleSrsFeedbackComplete = (questionId: string, newFeedbackLog: Record<st
   console.log('📡 [Solutions] Dispatched srs-review-complete event')
 }
 
+const handleBookmarkUpdate = (questionId: string) => {
+  // Dispatch custom event for BookmarkHistory component to refresh
+  const event = new CustomEvent('bookmark-updated', { detail: { questionId } })
+  window.dispatchEvent(event)
+  console.log('📡 [Solutions] Dispatched bookmark-updated event for:', questionId)
+}
+
 const handleSrsFeedbackError = (error: string) => {
   setSrsFeedbackError(error)
   // Clear error after 5 seconds
@@ -576,6 +583,7 @@ const handleSrsFeedbackError = (error: string) => {
                           resultId={String(resultId)}
                           existingFeedback={existingFeedback || null}
                           onFeedbackUpdated={handleSrsFeedbackComplete}
+                          onBookmarkUpdated={handleBookmarkUpdate}
                           onError={handleSrsFeedbackError}
                         />
                       </div>
