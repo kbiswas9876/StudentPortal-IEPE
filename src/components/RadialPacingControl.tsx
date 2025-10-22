@@ -171,10 +171,32 @@ export default function RadialPacingControl({ value, onChange, disabled = false 
               <stop offset="0%" stopColor="#93c5fd" stopOpacity="0.5" />
               <stop offset="100%" stopColor="#2563eb" stopOpacity="0.7" />
             </linearGradient>
-            <radialGradient id="handleGradient">
+            {/* Brushed Metal Texture */}
+            <radialGradient id="metalRadial" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="100%" stopColor="#dbeafe" />
+              <stop offset="40%" stopColor="#d9d9d9" />
+              <stop offset="100%" stopColor="#a6a6a6" />
             </radialGradient>
+
+            {/* Conical highlight effect to simulate brushed metal */}
+            <linearGradient id="metalSweep" gradientTransform="rotate(45)">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+              <stop offset="25%" stopColor="#bcbcbc" stopOpacity="0.4" />
+              <stop offset="50%" stopColor="#707070" stopOpacity="0.6" />
+              <stop offset="75%" stopColor="#bcbcbc" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0.9" />
+            </linearGradient>
+
+            {/* Rim gradient for edge lighting */}
+            <radialGradient id="metalEdge" cx="50%" cy="50%" r="50%">
+              <stop offset="80%" stopColor="transparent" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0.25" />
+            </radialGradient>
+
+            {/* Soft shadow filter */}
+            <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="#000" floodOpacity="0.25" />
+            </filter>
           </defs>
 
           {/* Background track */}
@@ -202,28 +224,55 @@ export default function RadialPacingControl({ value, onChange, disabled = false 
             className="drop-shadow-md"
           />
 
-          {/* Handle */}
-          <motion.circle
-            cx={handlePos.x}
-            cy={handlePos.y}
-            r={isDragging ? 14 : 12}
-            fill="url(#handleGradient)"
-            stroke="#2563eb"
-            strokeWidth={isDragging ? 3 : 2}
-            animate={{
-              scale: isDragging ? 1.18 : 1,
-              boxShadow: isDragging
-                ? '0 0 18px rgba(96,165,250,0.6)'
-                : '0 0 8px rgba(96,165,250,0.4)',
-            }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            style={{
-              cursor: isDragging ? 'grabbing' : 'grab',
-              filter: isDragging
-                ? 'drop-shadow(0 5px 12px rgba(59,130,246,0.5))'
-                : 'drop-shadow(0 3px 6px rgba(59,130,246,0.3))',
-            }}
-          />
+          {/* Brushed Metal Button */}
+          <g filter="url(#softShadow)">
+            <motion.circle
+              cx={handlePos.x}
+              cy={handlePos.y}
+              r={isDragging ? 15 : 13}
+              fill="url(#metalRadial)"
+              animate={{
+                scale: isDragging ? 1.15 : 1,
+              }}
+              transition={{ 
+                type: 'tween', 
+                duration: 0.4, 
+                ease: 'easeInOut' 
+              }}
+              style={{
+                cursor: isDragging ? 'grabbing' : 'grab',
+              }}
+            />
+            <motion.circle
+              cx={handlePos.x}
+              cy={handlePos.y}
+              r={isDragging ? 15 : 13}
+              fill="url(#metalSweep)"
+              style={{ mixBlendMode: "overlay" }}
+              animate={{
+                scale: isDragging ? 1.15 : 1,
+              }}
+              transition={{ 
+                type: 'tween', 
+                duration: 0.4, 
+                ease: 'easeInOut' 
+              }}
+            />
+            <motion.circle
+              cx={handlePos.x}
+              cy={handlePos.y}
+              r={isDragging ? 15 : 13}
+              fill="url(#metalEdge)"
+              animate={{
+                scale: isDragging ? 1.15 : 1,
+              }}
+              transition={{ 
+                type: 'tween', 
+                duration: 0.4, 
+                ease: 'easeInOut' 
+              }}
+            />
+          </g>
         </svg>
 
         {/* Center Label */}
