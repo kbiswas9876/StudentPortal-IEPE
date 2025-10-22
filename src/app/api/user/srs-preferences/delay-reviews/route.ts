@@ -20,8 +20,10 @@ const supabaseAdmin = createClient(
 /**
  * POST /api/user/srs-preferences/delay-reviews
  * 
- * Delays all existing bookmarks by a specified number of days.
+ * Shifts all existing bookmarks by a specified number of days.
+ * Positive numbers delay, negative numbers advance.
  * Applies to both next_review_date and custom_next_review_date.
+ * Reviews that would be scheduled in the past are set to today.
  */
 export async function POST(request: Request) {
   try {
@@ -32,13 +34,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
     
-    if (delayDays < 1 || delayDays > 365) {
+    // Allow negative numbers (advance) and positive numbers (delay)
+    if (delayDays === 0) {
       return NextResponse.json({ 
-        error: 'Delay days must be between 1 and 365' 
+        error: 'Shift value cannot be zero' 
       }, { status: 400 })
     }
     
-    console.log(`⏰ Delaying all reviews by ${delayDays} days for user ${userId}`)
+    if (delayDays < -365 || delayDays > 365) {
+      return NextResponse.json({ 
+        error: 'Shift days must be between -365 and 365' 
+      }, { status: 400 })
+    }
+    
+    const action = delayDays < 0 ? 'Advancing' : 'Delaying'
+    console.log(`⏰ ${action} all reviews by ${Math.abs(delayDays)} days for user ${userId}`)
     
     // Fetch all bookmarks
     const { data: bookmarks, error: fetchError } = await supabaseAdmin
@@ -52,29 +62,52 @@ export async function POST(request: Request) {
     }
     
     if (!bookmarks || bookmarks.length === 0) {
-      console.log('⚠️ No bookmarks to delay')
+      console.log('⚠️ No bookmarks to shift')
       return NextResponse.json({ 
         success: true, 
-        message: 'No bookmarks to delay',
-        updatedCount: 0 
+        message: 'No bookmarks to shift',
+        updatedCount: 0,
+        nowDueCount: 0
       })
     }
     
-    console.log(`🔄 Delaying ${bookmarks.length} bookmarks`)
+    console.log(`🔄 Shifting ${bookmarks.length} bookmarks`)
     
-    // Calculate new dates
+    // Get today's date (start of day in UTC)
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+    const todayStr = today.toISOString().split('T')[0]
+    
+    // Track how many reviews become due today
+    let nowDueCount = 0
+    
+    // Calculate new dates with past-due logic
     const updates = bookmarks.map(bookmark => {
-      const addDays = (dateStr: string | null, days: number): string | null => {
+      const shiftDate = (dateStr: string | null, days: number): string | null => {
         if (!dateStr) return null
+        
         const date = new Date(dateStr)
+        date.setUTCHours(0, 0, 0, 0) // Normalize to start of day
         date.setDate(date.getDate() + days)
+        
+        // CRITICAL LOGIC: If the new date is in the past or is today, set to today
+        if (date <= today) {
+          // Only count if it wasn't already due today
+          const originalDate = new Date(dateStr)
+          originalDate.setUTCHours(0, 0, 0, 0)
+          if (originalDate > today) {
+            nowDueCount++
+          }
+          return todayStr
+        }
+        
         return date.toISOString().split('T')[0]
       }
       
       return {
         id: bookmark.id,
-        next_review_date: addDays(bookmark.next_review_date, delayDays),
-        custom_next_review_date: addDays(bookmark.custom_next_review_date, delayDays)
+        next_review_date: shiftDate(bookmark.next_review_date, delayDays),
+        custom_next_review_date: shiftDate(bookmark.custom_next_review_date, delayDays)
       }
     })
     
@@ -100,12 +133,16 @@ export async function POST(request: Request) {
       console.log(`✅ Updated batch ${i / batchSize + 1} (${batch.length} cards)`)
     }
     
-    console.log(`✅ Delayed ${updatedCount} bookmarks by ${delayDays} days`)
+    console.log(`✅ ${action === 'Advancing' ? 'Advanced' : 'Delayed'} ${updatedCount} bookmarks by ${Math.abs(delayDays)} days`)
+    if (nowDueCount > 0) {
+      console.log(`📅 ${nowDueCount} reviews are now due today`)
+    }
     
     return NextResponse.json({
       success: true,
-      message: `Delayed ${updatedCount} reviews by ${delayDays} days`,
-      updatedCount
+      message: `${action === 'Advancing' ? 'Advanced' : 'Delayed'} ${updatedCount} reviews by ${Math.abs(delayDays)} days`,
+      updatedCount,
+      nowDueCount
     })
     
   } catch (error) {

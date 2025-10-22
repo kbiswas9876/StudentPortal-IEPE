@@ -13,6 +13,7 @@ import DifficultyBreakdown from '@/components/DifficultyBreakdown'
 import BookmarkRemovalModal from '@/components/BookmarkRemovalModal'
 import DueQuestionsCard from '@/components/DueQuestionsCard'
 import SrsSettingsModal from '@/components/SrsSettingsModal'
+import RevisionHubSkeletonLoader from '@/components/RevisionHubSkeletonLoader'
 import { FunnelIcon, BookmarkIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import { Archive, Play, Settings } from 'lucide-react'
@@ -540,19 +541,7 @@ export default function RevisionHubPage() {
 
   // Loading state
   if (authLoading || loadingChapters) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 dark:border-slate-700 border-t-blue-600 mx-auto mb-4"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-8 w-8 bg-blue-600 rounded-full opacity-20 animate-pulse"></div>
-            </div>
-          </div>
-          <p className="text-slate-600 dark:text-slate-300 font-medium">Loading your revision hub...</p>
-        </div>
-      </div>
-    )
+    return <RevisionHubSkeletonLoader />
   }
 
   // Error state

@@ -20,7 +20,7 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
   const [pacingMessage, setPacingMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   // State for delay control (section 2)
-  const [delayDays, setDelayDays] = useState<number>(3)
+  const [delayDays, setDelayDays] = useState<number | ''>('') // Allow empty state
   const [isDelaying, setIsDelaying] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [delayMessage, setDelayMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -96,6 +96,8 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
   }
 
   const handleDelayReviews = async () => {
+    if (delayDays === '' || delayDays === 0) return // Safety check
+
     setIsDelaying(true)
     setDelayMessage(null)
     setShowConfirmModal(false)
@@ -104,26 +106,50 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
       const response = await fetch('/api/user/srs-preferences/delay-reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, delayDays })
+        body: JSON.stringify({ userId, delayDays: Number(delayDays) })
       })
 
       const result = await response.json()
 
       if (response.ok) {
+        const action = delayDays < 0 ? 'advanced' : 'delayed'
+        const absDays = Math.abs(delayDays)
         setDelayMessage({
           type: 'success',
-          text: `Success! ${result.updatedCount} reviews delayed by ${delayDays} days.`
+          text: `Success! ${result.updatedCount} reviews ${action} by ${absDays} day${absDays !== 1 ? 's' : ''}. ${result.nowDueCount > 0 ? `${result.nowDueCount} now due today.` : ''}`
         })
         
         // Trigger due count refresh
         window.dispatchEvent(new CustomEvent('srs-review-complete'))
       } else {
-        setDelayMessage({ type: 'error', text: result.error || 'Failed to delay reviews' })
+        setDelayMessage({ type: 'error', text: result.error || 'Failed to update reviews' })
       }
     } catch (error) {
       setDelayMessage({ type: 'error', text: 'Network error. Please try again.' })
     } finally {
       setIsDelaying(false)
+    }
+  }
+
+  // Handle input change with validation
+  const handleDelayInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    
+    // Allow empty string
+    if (value === '') {
+      setDelayDays('')
+      return
+    }
+    
+    // Parse as integer
+    const numValue = parseInt(value, 10)
+    
+    // Check if valid number
+    if (!isNaN(numValue)) {
+      // Allow any integer between -365 and 365 (excluding 0)
+      if (numValue >= -365 && numValue <= 365 && numValue !== 0) {
+        setDelayDays(numValue)
+      }
     }
   }
 
@@ -282,7 +308,7 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
                 )}
               </div>
 
-              {/* Card 2: Delay All Reviews */}
+              {/* Card 2: Schedule Shift */}
               <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
                 <div className="flex items-center gap-2.5 mb-3">
                   <div className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600">
@@ -290,28 +316,27 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
                   </div>
                   <div>
                     <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                      Delay All Reviews
+                      Schedule Shift
                     </h3>
                     <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Postpone your entire review schedule (vacation mode)
+                      Advance (negative) or delay (positive) your entire review schedule
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  {/* Delay Input & Button */}
+                  {/* Shift Input & Button */}
                   <div className="flex flex-col sm:flex-row gap-2 items-end">
                     <div className="flex-1 sm:flex-initial">
                       <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                        Delay by how many days?
+                        Shift by how many days?
                       </label>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
-                          min="1"
-                          max="365"
                           value={delayDays}
-                          onChange={(e) => setDelayDays(parseInt(e.target.value) || 1)}
+                          onChange={handleDelayInputChange}
+                          placeholder="0"
                           className="w-20 px-2.5 py-1.5 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                         />
                         <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">days</span>
@@ -319,29 +344,31 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
                     </div>
                     <button
                       onClick={() => setShowConfirmModal(true)}
-                      disabled={isDelaying || delayDays < 1}
+                      disabled={isDelaying || delayDays === '' || delayDays === 0}
                       className="w-full sm:w-auto px-4 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-blue-600 hover:text-white text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                     >
                       {isDelaying ? (
                         <>
                           <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-current border-t-transparent"></div>
-                          Delaying...
+                          Processing...
                         </>
                       ) : (
                         <>
                           <Calendar className="h-3.5 w-3.5" />
-                          Delay Reviews
+                          {delayDays === '' || delayDays === 0 ? 'Shift Schedule' : (delayDays < 0 ? 'Advance' : 'Delay')}
                         </>
                       )}
                     </button>
                   </div>
 
                   {/* Example */}
-                  <div className="p-2.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg">
-                    <p className="text-xs text-blue-800 dark:text-blue-200">
-                      <strong>Example:</strong> A question due tomorrow will be moved to {new Date(Date.now() + (delayDays + 1) * 24 * 60 * 60 * 1000).toLocaleDateString()}.
-                    </p>
-                  </div>
+                  {delayDays !== '' && delayDays !== 0 && (
+                    <div className="p-2.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg">
+                      <p className="text-xs text-blue-800 dark:text-blue-200">
+                        <strong>Example:</strong> A question due {Math.abs(delayDays)} day{Math.abs(delayDays) !== 1 ? 's' : ''} from now will be {delayDays < 0 ? 'advanced to' : 'moved to'} {new Date(Date.now() + (Math.abs(delayDays) + (delayDays < 0 ? -1 : 1)) * 24 * 60 * 60 * 1000).toLocaleDateString()}.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Message */}
                   {delayMessage && (
@@ -366,7 +393,7 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
                   {/* Info */}
                   <div className="p-2.5 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
                     <p className="text-xs text-slate-600 dark:text-slate-400">
-                      This delays all existing bookmarks (SRS and custom reminders). New bookmarks are not affected.
+                      Use negative numbers to advance (e.g., -3) or positive to delay (e.g., +5). Applies to all existing bookmarks.
                     </p>
                   </div>
                 </div>
@@ -375,9 +402,9 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
             </div>
           </motion.div>
 
-          {/* Confirmation Modal for Delay */}
+          {/* Confirmation Modal for Schedule Shift */}
           <AnimatePresence>
-            {showConfirmModal && (
+            {showConfirmModal && delayDays !== '' && delayDays !== 0 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -391,12 +418,12 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
                     <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                    Confirm Delay
+                    Confirm Schedule Shift
                   </h3>
                 </div>
 
                 <p className="text-slate-600 dark:text-slate-400 mb-4 text-xs">
-                  This will delay <strong>all your existing review schedules</strong> by <strong>{delayDays} day{delayDays !== 1 ? 's' : ''}</strong>. This action cannot be undone (but you can delay again if needed).
+                  This will {delayDays < 0 ? 'advance' : 'delay'} <strong>all your existing review schedules</strong> by <strong>{Math.abs(delayDays)} day{Math.abs(delayDays) !== 1 ? 's' : ''}</strong>. {delayDays < 0 && 'Reviews that would be scheduled in the past will become due today.'} This action cannot be undone (but you can shift again if needed).
                 </p>
 
                 <div className="flex gap-2">
