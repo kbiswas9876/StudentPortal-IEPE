@@ -33,13 +33,13 @@ interface TooltipPosition {
   placement: 'top' | 'bottom'
 }
 
-// Difficulty level mappings
+// Difficulty level mappings - Standardized 5-star rating system
 const difficultyLabels = {
-  1: 'Easy',
-  2: 'Easy-Moderate', 
+  1: 'Very Easy',
+  2: 'Easy', 
   3: 'Moderate',
-  4: 'Moderate-Hard',
-  5: 'Hard'
+  4: 'Hard',
+  5: 'Very Hard'
 }
 
 // Color schemes for each difficulty level

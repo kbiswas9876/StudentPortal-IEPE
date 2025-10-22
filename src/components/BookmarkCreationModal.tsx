@@ -51,11 +51,11 @@ export default function BookmarkCreationModal({
 
   const getRatingLabel = (rating: number) => {
     const labels = {
-      1: 'Easy',
-      2: 'Easy-Moderate', 
+      1: 'Very Easy',
+      2: 'Easy', 
       3: 'Moderate',
-      4: 'Moderate-Hard',
-      5: 'Hard'
+      4: 'Hard',
+      5: 'Very Hard'
     }
     return labels[rating as keyof typeof labels] || ''
   }

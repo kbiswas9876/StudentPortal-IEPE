@@ -65,7 +65,7 @@ export default function DetailedSolutionReviewPage() {
   const [selectedQuadrant, setSelectedQuadrant] = useState<QuadrantKey | 'all'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'correct' | 'incorrect' | 'skipped'>('all')
   const [difficultyFilter, setDifficultyFilter] = useState<
-    'all' | 'Easy' | 'Easy-Moderate' | 'Moderate' | 'Moderate-Hard' | 'Hard' | string
+    'all' | 'Very Easy' | 'Easy' | 'Moderate' | 'Hard' | 'Very Hard' | string
   >('all')
   const [bookmarkOnly, setBookmarkOnly] = useState(false)
 

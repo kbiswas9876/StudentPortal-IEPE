@@ -249,15 +249,15 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
   const getDifficultyColor = (difficulty: string | null) => {
     switch (difficulty) {
-      case 'Easy':
+      case 'Very Easy':
         return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-      case 'Easy-Moderate':
+      case 'Easy':
         return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
       case 'Moderate':
         return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
-      case 'Moderate-Hard':
-        return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
       case 'Hard':
+        return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+      case 'Very Hard':
         return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
       default:
         return 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
@@ -268,11 +268,11 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
   const getRatingLabel = (rating: number) => {
     const labels = {
-      1: 'Easy',
-      2: 'Easy-Moderate', 
+      1: 'Very Easy',
+      2: 'Easy', 
       3: 'Moderate',
-      4: 'Moderate-Hard',
-      5: 'Hard'
+      4: 'Hard',
+      5: 'Very Hard'
     }
     return labels[rating as keyof typeof labels] || ''
   }
