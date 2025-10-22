@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const numericQuestionId = questionData.id
+    const numericQuestionId = (questionData as any).id
 
     // Fetch bookmark details for the question
     const { data: bookmarkData, error: bookmarkError } = await supabase

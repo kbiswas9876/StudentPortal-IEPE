@@ -431,7 +431,7 @@ export function StarRating({
           return (
             <motion.button
               key={starValue}
-              ref={(el) => (starRefs.current[index] = el)}
+              ref={(el) => { starRefs.current[index] = el }}
               data-star-index={starValue}
               whileHover={!disabled ? { scale: 1.15, rotate: 5 } : {}}
               whileTap={!disabled && !readonly ? { scale: 0.9, rotate: -5 } : {}}

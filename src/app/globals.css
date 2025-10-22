@@ -299,53 +299,63 @@ a {
   position: absolute !important;
 }
 
-/* Custom slider styles for SRS Settings Modal */
-input[type="range"].slider {
-  -webkit-appearance: none;
-  appearance: none;
+/* Premium Card Components */
+.card-elevated {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s ease-in-out;
 }
 
-input[type="range"].slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
-  transition: all 0.15s ease;
+.card-elevated:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-input[type="range"].slider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.6);
+/* Radial Control Styles */
+.radial-control {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
-input[type="range"].slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
-  transition: all 0.15s ease;
+.radial-control:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 
-input[type="range"].slider::-moz-range-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.6);
+/* Smooth transitions for all interactive elements */
+.transition-smooth {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-input[type="range"].slider:focus {
-  outline: none;
+/* Button hover states */
+.btn-neutral {
+  @apply bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all duration-200;
 }
 
-input[type="range"].slider:focus::-webkit-slider-thumb {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 2px 8px rgba(99, 102, 241, 0.4);
+.btn-primary {
+  @apply bg-slate-100 dark:bg-slate-700 hover:bg-blue-600 hover:text-white text-slate-700 dark:text-slate-300 transition-all duration-200;
 }
 
-input[type="range"].slider:focus::-moz-range-thumb {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 2px 8px rgba(99, 102, 241, 0.4);
+/* Icon container styles */
+.icon-container {
+  @apply p-2 bg-slate-100 dark:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-600;
 }
+
+/* Message box styles */
+.message-success {
+  @apply bg-green-50 dark:bg-green-900/10 border-l-4 border-green-500 text-green-800 dark:text-green-200;
+}
+
+.message-error {
+  @apply bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 text-red-800 dark:text-red-200;
+}
+
+.message-warning {
+  @apply bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-500 text-amber-800 dark:text-amber-200;
+}
+
+.message-info {
+  @apply bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200;
+}
+
+/* Remove old slider styles - no longer needed */
