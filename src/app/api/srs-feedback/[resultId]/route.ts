@@ -14,6 +14,8 @@ export async function GET(
   try {
     const { resultId } = params
 
+    console.log('🔍 [SRS Feedback GET] Request for resultId:', resultId)
+
     if (!resultId) {
       return NextResponse.json(
         { error: 'Result ID is required' },
@@ -25,39 +27,53 @@ export async function GET(
     const authHeader = request.headers.get('authorization') ?? request.headers.get('Authorization')
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
 
+    console.log('🔐 [SRS Feedback GET] Has auth token:', !!token)
+
     const supabase = await createServerClient(token)
 
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (userError || !user) {
+      console.error('❌ [SRS Feedback GET] Auth failed:', userError)
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
+    console.log('✅ [SRS Feedback GET] User authenticated:', user.id)
+
     // Fetch test result - try with srs_feedback_log first
     let testResult
     let testError
     
     // Try to fetch with srs_feedback_log column
+    console.log('📊 [SRS Feedback GET] Querying test_results for id:', resultId, 'user:', user.id)
+    
     const resultWithLog = await supabase
       .from('test_results')
       .select('id, user_id, srs_feedback_log')
       .eq('id', resultId)
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle() // Use maybeSingle() instead of single() to handle 0 rows gracefully
+    
+    console.log('📊 [SRS Feedback GET] Query result:', { 
+      hasData: !!resultWithLog.data, 
+      hasError: !!resultWithLog.error,
+      errorMessage: resultWithLog.error?.message,
+      errorCode: resultWithLog.error?.code
+    })
     
     // If column doesn't exist yet (migration not run), fetch without it
     if (resultWithLog.error && resultWithLog.error.message?.includes('column')) {
-      console.log('⚠️ srs_feedback_log column not found, returning empty feedback log')
+      console.log('⚠️ [SRS Feedback GET] srs_feedback_log column not found, returning empty feedback log')
       const resultWithoutLog = await supabase
         .from('test_results')
         .select('id, user_id')
         .eq('id', resultId)
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle() // Use maybeSingle() to handle 0 rows
       
       testResult = resultWithoutLog.data
       testError = resultWithoutLog.error
@@ -65,14 +81,29 @@ export async function GET(
       testResult = resultWithLog.data
       testError = resultWithLog.error
     }
+    
+    // If no test result found at all, it might not exist or user doesn't have access
+    if (!testResult && !testError) {
+      console.error('❌ [SRS Feedback GET] Test result not found (0 rows returned)')
+      return NextResponse.json(
+        { error: 'Test result not found. You may need to complete a new practice session.' },
+        { status: 404 }
+      )
+    }
 
     if (testError || !testResult) {
-      console.error('Error fetching test result:', testError)
+      console.error('❌ [SRS Feedback GET] Error fetching test result:', {
+        error: testError,
+        resultId,
+        userId: user.id
+      })
       return NextResponse.json(
         { error: 'Test result not found or access denied' },
         { status: 404 }
       )
     }
+
+    console.log('✅ [SRS Feedback GET] Test result found:', testResult.id)
 
     // Return feedback log (empty object if column doesn't exist yet)
     return NextResponse.json({

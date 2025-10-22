@@ -60,7 +60,7 @@ export async function POST(
       .select('id, user_id, srs_feedback_log')
       .eq('id', resultId)
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
     
     let testResult
     let testError
@@ -75,6 +75,15 @@ export async function POST(
     } else {
       testResult = resultWithLog.data
       testError = resultWithLog.error
+    }
+
+    // Check if no result was found
+    if (!testResult && !testError) {
+      console.error('❌ Test result not found (0 rows returned)')
+      return NextResponse.json(
+        { error: 'Test result not found. You may need to complete a new practice session.' },
+        { status: 404 }
+      )
     }
 
     if (testError || !testResult) {
