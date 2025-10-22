@@ -6,6 +6,9 @@ import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline'
 import { ClockIcon, CheckCircleIcon, XCircleIcon, TagIcon, DocumentTextIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/lib/auth-context'
+import StarRatingDisplay from './StarRatingDisplay'
+import TagsEditor from './TagsEditor'
+import NoteEditor from './NoteEditor'
 
 interface BookmarkData {
   id: string
@@ -62,13 +65,17 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
   
   // Temporary edit values
   const [tempRating, setTempRating] = useState<number>(0)
-  const [tempTags, setTempTags] = useState<string>('')
+  const [tempTags, setTempTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState<string>('')
   const [tempNote, setTempNote] = useState<string>('')
   
   // Loading states for individual edits
   const [isSavingRating, setIsSavingRating] = useState(false)
   const [isSavingTags, setIsSavingTags] = useState(false)
   const [isSavingNote, setIsSavingNote] = useState(false)
+
+  // Attempt history display state
+  const [showAllAttempts, setShowAllAttempts] = useState(false)
 
   // Prevent refetch on tab switch - track if we've already fetched data
   const hasFetchedRef = useRef(false)
@@ -222,9 +229,22 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
 
   const handleStartEditTags = () => {
     if (historyData?.bookmark) {
-      setTempTags(historyData.bookmark.custom_tags?.join(', ') || '')
+      setTempTags(historyData.bookmark.custom_tags || [])
+      setTagInput('')
       setIsEditingTags(true)
     }
+  }
+
+  const handleAddTag = () => {
+    const trimmedTag = tagInput.trim()
+    if (trimmedTag && !tempTags.includes(trimmedTag)) {
+      setTempTags([...tempTags, trimmedTag])
+      setTagInput('')
+    }
+  }
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTempTags(tempTags.filter(tag => tag !== tagToRemove))
   }
 
   const handleSaveTags = async () => {
@@ -232,7 +252,6 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
 
     try {
       setIsSavingTags(true)
-      const tagsArray = tempTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
       
       // Optimistic update
       setHistoryData(prev => {
@@ -241,13 +260,14 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
           ...prev,
           bookmark: {
             ...prev.bookmark,
-            custom_tags: tagsArray
+            custom_tags: tempTags
           }
         }
       })
 
-      await updateBookmarkField('custom_tags', tagsArray)
+      await updateBookmarkField('custom_tags', tempTags)
       setIsEditingTags(false)
+      setTagInput('')
     } catch (error) {
       // Revert optimistic update
       setHistoryData(prev => {
@@ -268,7 +288,8 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
 
   const handleCancelTags = () => {
     setIsEditingTags(false)
-    setTempTags('')
+    setTempTags([])
+    setTagInput('')
   }
 
   const handleStartEditNote = () => {
@@ -445,233 +466,43 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
         {/* Left Column: Initial Assessment & Personalization */}
         <div className="space-y-6">
           {/* My Rating (Editable) */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <StarSolidIcon className="h-4 w-4 text-yellow-500" />
-                My Rating
-              </h4>
-              {!isEditingRating ? (
-                <button
-                  onClick={handleStartEditRating}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  title="Edit rating"
-                >
-                  <PencilIcon className="h-4 w-4 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200" />
-                </button>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={handleSaveRating}
-                    disabled={isSavingRating}
-                    className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors disabled:opacity-50"
-                    title="Save rating"
-                  >
-                    <CheckIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  </button>
-                  <button
-                    onClick={handleCancelRating}
-                    disabled={isSavingRating}
-                    className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
-                    title="Cancel editing"
-                  >
-                    <XMarkIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  </button>
-                </div>
-              )}
-            </div>
-            
-            {!isEditingRating ? (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <StarSolidIcon
-                      key={rating}
-                      className={`h-5 w-5 ${
-                        rating <= (bookmark.user_difficulty_rating || 0)
-                          ? 'text-yellow-500'
-                          : 'text-slate-300 dark:text-slate-600'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                  difficultyColors[bookmark.user_difficulty_rating as keyof typeof difficultyColors] || 'text-gray-600 bg-gray-50 border-gray-200'
-                }`}>
-                  {difficultyLabels[bookmark.user_difficulty_rating as keyof typeof difficultyLabels] || 'Not rated'}
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <button
-                      key={rating}
-                      onClick={() => setTempRating(rating)}
-                      disabled={isSavingRating}
-                      className="transition-colors disabled:opacity-50"
-                    >
-                      {rating <= tempRating ? (
-                        <StarSolidIcon className="h-6 w-6 text-yellow-500 hover:text-yellow-600" />
-                      ) : (
-                        <StarOutlineIcon className="h-6 w-6 text-slate-300 hover:text-yellow-400" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
-                  difficultyColors[tempRating as keyof typeof difficultyColors] || 'text-gray-600 bg-gray-50 border-gray-200'
-                }`}>
-                  {difficultyLabels[tempRating as keyof typeof difficultyLabels] || 'Not rated'}
-                </span>
-                {isSavingRating && (
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                )}
-              </div>
-            )}
-          </div>
+          <StarRatingDisplay
+            rating={bookmark.user_difficulty_rating || 0}
+            isEditing={isEditingRating}
+            onStartEdit={handleStartEditRating}
+            tempRating={tempRating}
+            onRatingChange={setTempRating}
+            onSave={handleSaveRating}
+            onCancel={handleCancelRating}
+            isSaving={isSavingRating}
+          />
 
           {/* Personal Tags (Editable) */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <TagIcon className="h-4 w-4 text-blue-500" />
-                My Tags
-              </h4>
-              {!isEditingTags ? (
-                <button
-                  onClick={handleStartEditTags}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  title="Edit tags"
-                >
-                  <PencilIcon className="h-4 w-4 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200" />
-                </button>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={handleSaveTags}
-                    disabled={isSavingTags}
-                    className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors disabled:opacity-50"
-                    title="Save tags"
-                  >
-                    <CheckIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  </button>
-                  <button
-                    onClick={handleCancelTags}
-                    disabled={isSavingTags}
-                    className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
-                    title="Cancel editing"
-                  >
-                    <XMarkIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  </button>
-                </div>
-              )}
-            </div>
-            
-            {!isEditingTags ? (
-              bookmark.custom_tags && bookmark.custom_tags.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {bookmark.custom_tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-sm rounded-full border border-blue-200 dark:border-blue-700"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-slate-500 dark:text-slate-400 text-sm italic">No tags added</p>
-              )
-            ) : (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={tempTags}
-                  onChange={(e) => setTempTags(e.target.value)}
-                  placeholder="Enter tags separated by commas (e.g., important, review, difficult)"
-                  disabled={isSavingTags}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-                />
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Separate multiple tags with commas
-                </p>
-                {isSavingTags && (
-                  <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                    Saving tags...
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <TagsEditor
+            tags={bookmark.custom_tags || []}
+            isEditing={isEditingTags}
+            onStartEdit={handleStartEditTags}
+            tempTags={tempTags}
+            tagInput={tagInput}
+            onTagInputChange={setTagInput}
+            onAddTag={handleAddTag}
+            onRemoveTag={handleRemoveTag}
+            onSave={handleSaveTags}
+            onCancel={handleCancelTags}
+            isSaving={isSavingTags}
+          />
 
           {/* Personal Note (Editable) */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <DocumentTextIcon className="h-4 w-4 text-purple-500" />
-                My Note
-              </h4>
-              {!isEditingNote ? (
-                <button
-                  onClick={handleStartEditNote}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                  title="Edit note"
-                >
-                  <PencilIcon className="h-4 w-4 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200" />
-                </button>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={handleSaveNote}
-                    disabled={isSavingNote}
-                    className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors disabled:opacity-50"
-                    title="Save note"
-                  >
-                    <CheckIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
-                  </button>
-                  <button
-                    onClick={handleCancelNote}
-                    disabled={isSavingNote}
-                    className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
-                    title="Cancel editing"
-                  >
-                    <XMarkIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  </button>
-                </div>
-              )}
-            </div>
-            
-            {!isEditingNote ? (
-              bookmark.personal_note ? (
-                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg p-3">
-                  <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
-                    {bookmark.personal_note}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-slate-500 dark:text-slate-400 text-sm italic">No note added</p>
-              )
-            ) : (
-              <div className="space-y-2">
-                <textarea
-                  value={tempNote}
-                  onChange={(e) => setTempNote(e.target.value)}
-                  placeholder="Add your personal notes about this question..."
-                  disabled={isSavingNote}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 resize-none"
-                />
-                {isSavingNote && (
-                  <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                    Saving note...
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <NoteEditor
+            note={bookmark.personal_note}
+            isEditing={isEditingNote}
+            onStartEdit={handleStartEditNote}
+            tempNote={tempNote}
+            onNoteChange={setTempNote}
+            onSave={handleSaveNote}
+            onCancel={handleCancelNote}
+            isSaving={isSavingNote}
+          />
         </div>
 
         {/* Right Column: Attempt History & SRS State */}
@@ -684,28 +515,45 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
             </h4>
             {attemptHistory && attemptHistory.length > 0 ? (
               <div className="space-y-3">
-                {attemptHistory.map((attempt, index) => (
-                  <div
-                    key={index}
-                    className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg p-3"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        Attempt on {formatDate(attempt.created_at)}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(attempt.status)}
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(attempt.status)}`}>
-                          {attempt.status.charAt(0).toUpperCase() + attempt.status.slice(1)}
+                <motion.div className="space-y-3">
+                  {(showAllAttempts ? attemptHistory : attemptHistory.slice(0, 2)).map((attempt, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.05 }}
+                      className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg p-3"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                          Attempt on {formatDate(attempt.created_at)}
                         </span>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(attempt.status)}
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(attempt.status)}`}>
+                            {attempt.status.charAt(0).toUpperCase() + attempt.status.slice(1)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                      <ClockIcon className="h-4 w-4" />
-                      <span>Time taken: {formatTime(attempt.time_taken)}</span>
-                    </div>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                        <ClockIcon className="h-4 w-4" />
+                        <span>Time taken: {formatTime(attempt.time_taken)}</span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+                {attemptHistory.length > 2 && (
+                  <button
+                    onClick={() => setShowAllAttempts(!showAllAttempts)}
+                    className="w-full mt-2 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg transition-colors"
+                  >
+                    {showAllAttempts ? (
+                      'Show Less'
+                    ) : (
+                      `Show All (${attemptHistory.length - 2} more)`
+                    )}
+                  </button>
+                )}
               </div>
             ) : (
               <p className="text-slate-500 dark:text-slate-400 text-sm italic">No attempt history found</p>
