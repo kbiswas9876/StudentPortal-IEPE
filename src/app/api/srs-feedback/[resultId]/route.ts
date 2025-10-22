@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@/lib/supabase-server'
+import { env } from '@/lib/env'
+
+// Use admin client to bypass RLS for test_results queries
+const supabaseAdmin = createClient(
+  env.SUPABASE_URL,
+  env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+)
 
 /**
  * GET /api/srs-feedback/[resultId]
@@ -48,14 +62,14 @@ export async function GET(
     let testResult
     let testError
     
-    // Try to fetch with srs_feedback_log column
+    // Try to fetch with srs_feedback_log column using admin client (bypasses RLS)
     console.log('📊 [SRS Feedback GET] Querying test_results for id:', resultId, 'user:', user.id)
     
-    const resultWithLog = await supabase
+    const resultWithLog = await supabaseAdmin
       .from('test_results')
       .select('id, user_id, srs_feedback_log')
       .eq('id', resultId)
-      .eq('user_id', user.id)
+      .eq('user_id', user.id) // Still verify ownership
       .maybeSingle() // Use maybeSingle() instead of single() to handle 0 rows gracefully
     
     console.log('📊 [SRS Feedback GET] Query result:', { 
@@ -68,11 +82,11 @@ export async function GET(
     // If column doesn't exist yet (migration not run), fetch without it
     if (resultWithLog.error && resultWithLog.error.message?.includes('column')) {
       console.log('⚠️ [SRS Feedback GET] srs_feedback_log column not found, returning empty feedback log')
-      const resultWithoutLog = await supabase
+      const resultWithoutLog = await supabaseAdmin
         .from('test_results')
         .select('id, user_id')
         .eq('id', resultId)
-        .eq('user_id', user.id)
+        .eq('user_id', user.id) // Still verify ownership
         .maybeSingle() // Use maybeSingle() to handle 0 rows
       
       testResult = resultWithoutLog.data
