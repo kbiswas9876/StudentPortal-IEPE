@@ -127,7 +127,20 @@ export async function POST(
     console.log('✅ Bookmark found:', bookmark.id)
 
     // ============================================================================
-    // STEP 4: Determine Original SRS State
+    // STEP 4: Fetch User's SRS Pacing Preference
+    // ============================================================================
+
+    const { data: prefs } = await supabaseAdmin
+      .from('user_notification_preferences')
+      .select('srs_pacing_mode')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    const pacingMode = prefs?.srs_pacing_mode ?? 0.00
+    console.log('⚙️ User pacing mode:', pacingMode)
+
+    // ============================================================================
+    // STEP 5: Determine Original SRS State
     // ============================================================================
     // If this is the first feedback for this question in this session,
     // store the ORIGINAL state. If re-selecting after undo, use the stored original.
@@ -145,11 +158,11 @@ export async function POST(
     console.log('📊 Original SRS state:', originalState)
 
     // ============================================================================
-    // STEP 5: Calculate New SRS Data from Original State
+    // STEP 6: Calculate New SRS Data from Original State (with pacing)
     // ============================================================================
     // CRITICAL: Always calculate from original state to ensure undo/reselect works correctly
 
-    const newSrsData = updateSrsData(originalState, rating as PerformanceRating)
+    const newSrsData = updateSrsData(originalState, rating as PerformanceRating, pacingMode)
 
     console.log('📈 New SRS data calculated:', newSrsData)
 

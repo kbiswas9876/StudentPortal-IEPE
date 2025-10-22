@@ -150,7 +150,20 @@ export async function POST(request: Request) {
     }
 
     // ============================================================================
-    // STEP 4: Apply the SRS Algorithm
+    // STEP 4: Fetch User's SRS Pacing Preference
+    // ============================================================================
+
+    const { data: prefs } = await supabaseAdmin
+      .from('user_notification_preferences')
+      .select('srs_pacing_mode')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    const pacingMode = prefs?.srs_pacing_mode ?? 0.00
+    console.log('⚙️ User pacing mode:', pacingMode)
+
+    // ============================================================================
+    // STEP 5: Apply the SRS Algorithm (with pacing)
     // ============================================================================
 
     const currentSrsData = {
@@ -164,7 +177,8 @@ export async function POST(request: Request) {
 
     const updatedSrsData = updateSrsData(
       currentSrsData,
-      performanceRating as PerformanceRating
+      performanceRating as PerformanceRating,
+      pacingMode
     );
 
     console.log('📈 Updated SRS data:', updatedSrsData);

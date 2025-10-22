@@ -290,6 +290,7 @@ export interface Database {
           user_timezone: string
           created_at: string
           updated_at: string
+          srs_pacing_mode: number
         }
         Insert: {
           user_id: string
@@ -299,6 +300,7 @@ export interface Database {
           user_timezone?: string
           created_at?: string
           updated_at?: string
+          srs_pacing_mode?: number
         }
         Update: {
           user_id?: string
@@ -308,6 +310,7 @@ export interface Database {
           user_timezone?: string
           created_at?: string
           updated_at?: string
+          srs_pacing_mode?: number
         }
       }
       student_notifications: {

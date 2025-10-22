@@ -19,6 +19,7 @@
  */
 
 import type { PerformanceRating, SrsData, SrsUpdateResult } from './types';
+import { applyPacingToInterval, calculatePacedReviewDate } from './pacing';
 
 /**
  * Minimum allowed ease factor to prevent intervals from becoming too short.
@@ -73,7 +74,8 @@ function calculateNextReviewDate(intervalDays: number): string {
  */
 export function updateSrsData(
   currentSrsData: SrsData,
-  performanceRating: PerformanceRating
+  performanceRating: PerformanceRating,
+  pacingMode: number = 0
 ): SrsUpdateResult {
   let n = currentSrsData.srs_repetitions;
   let ef = currentSrsData.srs_ease_factor;
@@ -143,19 +145,25 @@ export function updateSrsData(
   }
 
   // ============================================================================
-  // STEP 3: Calculate Next Review Date
+  // STEP 3: Apply Pacing
   // ============================================================================
-  
-  const nextReviewDate = calculateNextReviewDate(i);
+  // Before calculating next review date, apply user's pacing preference
+  const adjustedInterval = applyPacingToInterval(i, pacingMode);
 
   // ============================================================================
-  // STEP 4: Return Complete Updated State
+  // STEP 4: Calculate Next Review Date
+  // ============================================================================
+  
+  const nextReviewDate = calculatePacedReviewDate(adjustedInterval);
+
+  // ============================================================================
+  // STEP 5: Return Complete Updated State
   // ============================================================================
   
   return {
     srs_repetitions: n,
     srs_ease_factor: parseFloat(ef.toFixed(2)), // Round to 2 decimal places
-    srs_interval: i,
+    srs_interval: adjustedInterval,
     next_review_date: nextReviewDate,
   };
 }
