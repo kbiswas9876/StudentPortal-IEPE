@@ -34,6 +34,7 @@ interface SolutionQuestionDisplayWindowProps {
   filteredPosition?: number
   filteredTotal?: number
   showBookmark?: boolean
+  children?: React.ReactNode // Allow rendering additional content after solution
 }
 
 const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps> = ({
@@ -48,7 +49,8 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
   canNext,
   filteredPosition,
   filteredTotal,
-  showBookmark = true
+  showBookmark = true,
+  children
 }) => {
   // FOUC Fix: State to control fade-in animation
   const [isLoaded, setIsLoaded] = useState(false)
@@ -301,6 +303,13 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
                 </motion.div>
               )}
             </AnimatePresence>
+          </div>
+        )}
+
+        {/* Render additional content (SRS controls, bookmark history, etc.) */}
+        {children && (
+          <div className="w-full max-w-[880px] mx-auto">
+            {children}
           </div>
         )}
       </main>

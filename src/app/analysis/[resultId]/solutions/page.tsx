@@ -339,20 +339,8 @@ const handleSrsFeedbackError = (error: string) => {
   setTimeout(() => setSrsFeedbackError(null), 5000)
 }
 
-// Helper: Check if current question needs SRS feedback
-const needsSrsFeedback = () => {
-  if (source !== 'srs-daily-review') return false
-  if (!currentQuestion) return false
-  if (!bookmarkedMap[currentQuestion.question_id]) return false // Only for bookmarked questions
-  return !srsFeedbackGiven.has(currentQuestion.question_id)
-}
-
-// Get bookmark ID for current question
-const getCurrentQuestionBookmarkId = () => {
-  // We need to fetch this - for now return null and handle in the component
-  // The component will need the bookmark ID to log the review
-  return null // This will be handled by the SrsFeedbackControls component
-}
+// Note: needsSrsFeedback() helper removed - the conditional rendering at line 539 
+// already correctly handles showing SRS controls for all bookmarked questions
 
 
   // Bookmark toggle - now opens creation modal for new bookmarks
@@ -532,41 +520,45 @@ const getCurrentQuestionBookmarkId = () => {
                   canNext={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos >= 0 && pos < filteredIndices.length - 1; })()}
                   filteredPosition={(() => { const pos = filteredIndices.findIndex(i => i === currentQuestionIndex); return pos >= 0 ? pos + 1 : 1; })()}
                   filteredTotal={filteredIndices.length}
-                />
-                
-                {/* SRS Feedback Controls - For ALL Bookmarked Question Reviews */}
-                {(() => {
-                  const shouldShow = currentQuestion && bookmarkedMap[currentQuestion.question_id] && !srsFeedbackGiven.has(currentQuestion.question_id) && user
-                  console.log('🎯 [Solutions] SRS Buttons Check:', {
-                    currentQuestion: currentQuestion?.question_id,
-                    isBookmarked: currentQuestion ? bookmarkedMap[currentQuestion.question_id] : 'no question',
-                    feedbackGiven: currentQuestion ? srsFeedbackGiven.has(currentQuestion.question_id) : 'no question',
-                    hasUser: !!user,
-                    shouldShow,
-                    bookmarkedMap,
-                    source
-                  })
-                  return shouldShow ? (
-                    <div className="mt-6">
-                      {srsFeedbackError && (
-                        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 rounded-lg">
-                          {srsFeedbackError}
-                        </div>
-                      )}
-                      <DynamicSrsFeedbackControls
-                        bookmarkId={currentQuestion.question_id} // Using question_id as a proxy - API will handle the lookup
-                        userId={user.id}
-                        onFeedbackComplete={handleSrsFeedbackComplete}
-                        onError={handleSrsFeedbackError}
-                      />
-                    </div>
-                  ) : null
-                })()}
-                
-                {/* Post-Revision Feedback Loop: Bookmark History Component */}
-                {source === 'revision' && currentQuestion && (
-                  <DynamicBookmarkHistory questionId={currentQuestion.question_id} />
-                )}
+                >
+                  {/* SRS Feedback Controls - For ALL Bookmarked Question Reviews */}
+                  {(() => {
+                    const questionIdStr = currentQuestion ? String(currentQuestion.question_id) : null
+                    const shouldShow = currentQuestion && bookmarkedMap[questionIdStr!] && !srsFeedbackGiven.has(currentQuestion.question_id) && user
+                    console.log('🎯 [Solutions] SRS Buttons Check:', {
+                      currentQuestionId: currentQuestion?.question_id,
+                      currentQuestionIdType: typeof currentQuestion?.question_id,
+                      questionIdStr,
+                      isBookmarked: questionIdStr ? bookmarkedMap[questionIdStr] : 'no question',
+                      bookmarkedMapKeys: Object.keys(bookmarkedMap).slice(0, 3), // Show first 3 keys
+                      feedbackGiven: currentQuestion ? srsFeedbackGiven.has(currentQuestion.question_id) : 'no question',
+                      hasUser: !!user,
+                      shouldShow,
+                      source
+                    })
+                    return shouldShow ? (
+                      <div className="mt-6 p-6 bg-yellow-100 dark:bg-yellow-900 border-4 border-yellow-500">
+                        <h2 className="text-2xl font-bold text-red-600 mb-4">⚠️ SRS CONTROLS SHOULD APPEAR HERE ⚠️</h2>
+                        {srsFeedbackError && (
+                          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 rounded-lg">
+                            {srsFeedbackError}
+                          </div>
+                        )}
+                        <DynamicSrsFeedbackControls
+                          bookmarkId={currentQuestion.question_id} // Using question_id as a proxy - API will handle the lookup
+                          userId={user.id}
+                          onFeedbackComplete={handleSrsFeedbackComplete}
+                          onError={handleSrsFeedbackError}
+                        />
+                      </div>
+                    ) : null
+                  })()}
+                  
+                  {/* Bookmark History Component - Shows for all bookmarked questions */}
+                  {currentQuestion && bookmarkedMap[String(currentQuestion.question_id)] && (
+                    <DynamicBookmarkHistory questionId={String(currentQuestion.question_id)} />
+                  )}
+                </DynamicSolutionQuestionDisplayWindow>
               </>
             )
           )}

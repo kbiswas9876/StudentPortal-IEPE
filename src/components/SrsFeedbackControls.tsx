@@ -74,6 +74,9 @@ export default function SrsFeedbackControls({
   const [selectedRating, setSelectedRating] = useState<PerformanceRating | null>(null)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [intervalMessage, setIntervalMessage] = useState('')
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false)
+  const [customDate, setCustomDate] = useState('')
+  const [isRescheduling, setIsRescheduling] = useState(false)
 
   const handleFeedback = async (rating: PerformanceRating) => {
     if (isSubmitting) return
@@ -137,6 +140,53 @@ export default function SrsFeedbackControls({
       setIsSubmitting(false)
       setSelectedRating(null)
     }
+  }
+
+  const handleReschedule = async () => {
+    if (!customDate || isRescheduling) return
+
+    setIsRescheduling(true)
+    try {
+      const response = await fetch(`/api/revision-hub/bookmarks/${bookmarkId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          is_custom_reminder_active: true,
+          custom_next_review_date: customDate,
+        }),
+      })
+
+      if (!response.ok) {
+        const result = await response.json()
+        throw new Error(result.error || 'Failed to reschedule')
+      }
+
+      setIntervalMessage(`📅 Rescheduled to ${new Date(customDate).toLocaleDateString()}`)
+      setShowSuccessMessage(true)
+      setShowRescheduleModal(false)
+
+      setTimeout(() => {
+        setShowSuccessMessage(false)
+        onFeedbackComplete()
+      }, 2000)
+    } catch (error) {
+      console.error('Error rescheduling:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reschedule. Please try again.'
+      if (onError) {
+        onError(errorMessage)
+      }
+    } finally {
+      setIsRescheduling(false)
+    }
+  }
+
+  // Get minimum date (today)
+  const getMinDate = () => {
+    const today = new Date()
+    return today.toISOString().split('T')[0]
   }
 
   return (
@@ -212,11 +262,19 @@ export default function SrsFeedbackControls({
       </div>
 
       {/* Helper Text */}
-      {!showSuccessMessage && (
+      {!showSuccessMessage && !isSubmitting && (
         <div className="mt-4 text-center">
-          <p className="text-xs text-slate-500 dark:text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-500 mb-3">
             💡 Be honest with yourself for the best learning results
           </p>
+          
+          {/* Manual Reschedule Button */}
+          <button
+            onClick={() => setShowRescheduleModal(true)}
+            className="text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 underline transition-colors"
+          >
+            📅 Reschedule manually
+          </button>
         </div>
       )}
 
@@ -233,6 +291,73 @@ export default function SrsFeedbackControls({
               {intervalMessage}
             </p>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Manual Reschedule Modal */}
+      <AnimatePresence>
+        {showRescheduleModal && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowRescheduleModal(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            />
+            
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border-2 border-slate-200 dark:border-slate-700 p-6 max-w-md w-full z-50"
+            >
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                Reschedule Review
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                Choose a custom date for your next review of this question
+              </p>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Next Review Date
+                </label>
+                <input
+                  type="date"
+                  value={customDate}
+                  onChange={(e) => setCustomDate(e.target.value)}
+                  min={getMinDate()}
+                  className="w-full px-4 py-3 border-2 border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRescheduleModal(false)}
+                  className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReschedule}
+                  disabled={!customDate || isRescheduling}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isRescheduling ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    'Reschedule'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </motion.div>

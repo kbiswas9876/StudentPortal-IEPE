@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline'
 import { ClockIcon, CheckCircleIcon, XCircleIcon, TagIcon, DocumentTextIcon, PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { useAuth } from '@/lib/auth-context'
 
 interface BookmarkData {
   id: string
@@ -49,6 +50,7 @@ const difficultyColors = {
 }
 
 export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
+  const { session } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [historyData, setHistoryData] = useState<HistoryData | null>(null)
@@ -74,7 +76,11 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
         setIsLoading(true)
         setError(null)
         
-        const response = await fetch(`/api/revision-hub/history?questionId=${questionId}`)
+        const response = await fetch(`/api/revision-hub/history?questionId=${questionId}`, {
+          headers: {
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+        })
         const result = await response.json()
         
         if (!response.ok) {
@@ -90,10 +96,10 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
       }
     }
 
-    if (questionId) {
+    if (questionId && session) {
       fetchHistoryData()
     }
-  }, [questionId])
+  }, [questionId, session])
 
   // API call functions for updating bookmark data
   const updateBookmarkField = async (field: string, value: any) => {
@@ -117,6 +123,7 @@ export default function BookmarkHistory({ questionId }: BookmarkHistoryProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
         },
         body: JSON.stringify(requestBody)
       })

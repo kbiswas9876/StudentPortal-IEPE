@@ -13,7 +13,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const supabase = await createServerClient()
+    // Extract auth token from Authorization header
+    const authHeader = request.headers.get('authorization') ?? request.headers.get('Authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
+
+    const supabase = await createServerClient(token)
     
     // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -25,6 +29,23 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // First, get the numeric question ID from the questions table
+    const { data: questionData, error: questionError } = await supabase
+      .from('questions')
+      .select('id')
+      .eq('question_id', questionId)
+      .single()
+
+    if (questionError || !questionData) {
+      console.error('Error fetching question data:', questionError)
+      return NextResponse.json(
+        { error: 'Question not found' },
+        { status: 404 }
+      )
+    }
+
+    const numericQuestionId = questionData.id
+
     // Fetch bookmark details for the question
     const { data: bookmarkData, error: bookmarkError } = await supabase
       .from('bookmarked_questions')
@@ -33,12 +54,12 @@ export async function GET(request: NextRequest) {
       .eq('question_id', questionId)
       .single()
 
-    // Fetch attempt history for the question
+    // Fetch attempt history for the question using numeric ID
     const { data: attemptHistory, error: attemptError } = await supabase
       .from('answer_log')
       .select('status, time_taken, created_at')
       .eq('user_id', user.id)
-      .eq('question_id', questionId)
+      .eq('question_id', numericQuestionId)
       .order('created_at', { ascending: true })
 
     if (bookmarkError && bookmarkError.code !== 'PGRST116') {
