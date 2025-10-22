@@ -12,9 +12,10 @@ import AdvancedRevisionSessionModal from '@/components/AdvancedRevisionSessionMo
 import DifficultyBreakdown from '@/components/DifficultyBreakdown'
 import BookmarkRemovalModal from '@/components/BookmarkRemovalModal'
 import DueQuestionsCard from '@/components/DueQuestionsCard'
+import SrsSettingsModal from '@/components/SrsSettingsModal'
 import { FunnelIcon, BookmarkIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
-import { Archive, Play } from 'lucide-react'
+import { Archive, Play, Settings } from 'lucide-react'
 import type { DueQuestion } from '@/lib/srs/types'
 
 interface ChapterData {
@@ -81,6 +82,9 @@ export default function RevisionHubPage() {
   // Bulk selection states
   const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set())
   const [showBulkActions, setShowBulkActions] = useState(false)
+
+  // SRS Settings Modal state
+  const [isSrsSettingsOpen, setIsSrsSettingsOpen] = useState(false)
 
   // State persistence - prevent unnecessary reloads
   const dataFetchedRef = React.useRef(false)
@@ -574,37 +578,42 @@ export default function RevisionHubPage() {
   // Empty state - show two-column layout even when empty
   if (chapters.length === 0 && !loadingChapters) {
     return (
+      <>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
+          {/* Header with Buttons Only */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="mb-8"
+            className="mb-8 flex justify-end"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                  My Revision Hub
-                </h1>
-                <p className="text-slate-600 dark:text-slate-400">
-                  Your personal collection of questions for focused revision
-                </p>
-              </div>
-              
-              {/* Analytics Button */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => router.push('/revision-hub/analytics')}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
-              >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                </svg>
-                Analytics
-              </motion.button>
+            {/* SRS Settings & Analytics Buttons */}
+            <div className="flex gap-3">
+                {/* SRS Settings Button */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsSrsSettingsOpen(true)}
+                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-sm rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+                  title="SRS Settings"
+                >
+                  <Settings className="h-4 w-4" strokeWidth={2.5} />
+                  SRS Settings
+                </motion.button>
+
+                {/* Analytics Button */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => router.push('/revision-hub/analytics')}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                  </svg>
+                  Analytics
+                </motion.button>
             </div>
           </motion.div>
 
@@ -689,19 +698,42 @@ export default function RevisionHubPage() {
           </div>
         </div>
       </div>
-    )
-  }
+
+      {/* SRS Settings Modal - Available in empty state */}
+      {user && (
+        <SrsSettingsModal
+          isOpen={isSrsSettingsOpen}
+          onClose={() => setIsSrsSettingsOpen(false)}
+          userId={user.id}
+        />
+      )}
+    </>
+  )
+}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: '100vh' }}>
-        {/* Header with Analytics Button */}
+        {/* Header with Analytics & SRS Settings Buttons */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-6 flex justify-end"
+          className="mb-6 flex justify-end gap-3"
         >
+          {/* SRS Settings Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsSrsSettingsOpen(true)}
+            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-sm rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+            title="SRS Settings"
+          >
+            <Settings className="h-4 w-4" strokeWidth={2.5} />
+            SRS Settings
+          </motion.button>
+
+          {/* Analytics Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -730,6 +762,7 @@ export default function RevisionHubPage() {
               onStartReview={handleStartDailyReview}
               onBrowseLibrary={() => setShowLibrary(true)}
               compact={true}
+              userId={user?.id}
             />
           </motion.div>
         )}
@@ -742,6 +775,7 @@ export default function RevisionHubPage() {
             isLoading={loadingDueQuestions}
             onStartReview={handleStartDailyReview}
             onBrowseLibrary={() => setShowLibrary(true)}
+            userId={user?.id}
           />
         )}
 
@@ -1116,6 +1150,15 @@ export default function RevisionHubPage() {
         userDifficultyRating={removalUserRating}
         bulkDifficultyBreakdown={bulkDifficultyBreakdown}
       />
+
+      {/* SRS Settings Modal */}
+      {user && (
+        <SrsSettingsModal
+          isOpen={isSrsSettingsOpen}
+          onClose={() => setIsSrsSettingsOpen(false)}
+          userId={user.id}
+        />
+      )}
     </div>
   )
 }

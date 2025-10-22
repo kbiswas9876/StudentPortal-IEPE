@@ -1,8 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Calendar, PlayCircle, CheckCircle, Sparkles, Zap } from 'lucide-react'
+import { Calendar, PlayCircle, CheckCircle, Sparkles, Zap, Settings } from 'lucide-react'
+import SrsSettingsModal from './SrsSettingsModal'
 
 interface DueQuestionsCardProps {
   dueCount: number
@@ -11,6 +12,7 @@ interface DueQuestionsCardProps {
   onStartReview: () => void
   onBrowseLibrary: () => void
   compact?: boolean
+  userId?: string
 }
 
 export default function DueQuestionsCard({
@@ -20,7 +22,9 @@ export default function DueQuestionsCard({
   onStartReview,
   onBrowseLibrary,
   compact = false,
+  userId,
 }: DueQuestionsCardProps) {
+  const [isSrsSettingsOpen, setIsSrsSettingsOpen] = useState(false)
   if (isLoading) {
     return (
       <motion.div
@@ -71,18 +75,42 @@ export default function DueQuestionsCard({
               </div>
             </div>
 
-            {/* Right: Clean Action Button */}
-            <motion.button
-              whileHover={{ x: 2 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onStartReview}
-              className="group/btn relative flex-shrink-0 px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-xs rounded-full transition-all duration-200 flex items-center gap-2 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-purple-500/30"
-            >
-              <span className="relative z-10">Start Now</span>
-              <Zap className="h-3.5 w-3.5 relative z-10 group-hover/btn:rotate-12 transition-transform duration-200" strokeWidth={2.5} />
-            </motion.button>
+            {/* Right: Settings Icon + Action Button */}
+            <div className="flex items-center gap-2">
+              {/* Settings Icon */}
+              {userId && (
+                <button
+                  onClick={() => setIsSrsSettingsOpen(true)}
+                  className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group"
+                  title="SRS Settings"
+                  aria-label="Open SRS Settings"
+                >
+                  <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors" />
+                </button>
+              )}
+
+              {/* Start Button */}
+              <motion.button
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onStartReview}
+                className="group/btn relative flex-shrink-0 px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-xs rounded-full transition-all duration-200 flex items-center gap-2 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-purple-500/30"
+              >
+                <span className="relative z-10">Start Now</span>
+                <Zap className="h-3.5 w-3.5 relative z-10 group-hover/btn:rotate-12 transition-transform duration-200" strokeWidth={2.5} />
+              </motion.button>
+            </div>
           </div>
         </div>
+
+        {/* SRS Settings Modal */}
+        {userId && (
+          <SrsSettingsModal
+            isOpen={isSrsSettingsOpen}
+            onClose={() => setIsSrsSettingsOpen(false)}
+            userId={userId}
+          />
+        )}
       </motion.div>
     )
   }
