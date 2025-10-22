@@ -13,10 +13,10 @@ export default function RadialPacingControl({ value, onChange, disabled = false 
   const [isDragging, setIsDragging] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
 
-  const size = 180
+  const size = 220
   const center = size / 2
-  const radius = 68 // ⬆️ Increased for smoother larger arc
-  const strokeWidth = 10
+  const radius = 85 // ⬆️ Increased for smoother larger arc
+  const strokeWidth = 12
 
   // Label and Description
   const getPacingLabel = (val: number) => {
@@ -127,10 +127,11 @@ export default function RadialPacingControl({ value, onChange, disabled = false 
           style={{ touchAction: 'none' }}
         >
           <defs>
-            {/* Premium gradient and subtle lighting */}
-            <linearGradient id="trackGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#60a5fa" />
-              <stop offset="100%" stopColor="#1d4ed8" />
+            {/* Premium gradient like the reference */}
+            <linearGradient id="premiumGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#00e0ff" />
+              <stop offset="50%" stopColor="#00ff95" />
+              <stop offset="100%" stopColor="#ffe66d" />
             </linearGradient>
             <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#93c5fd" stopOpacity="0.5" />
@@ -151,19 +152,20 @@ export default function RadialPacingControl({ value, onChange, disabled = false 
             fill="none"
           />
 
-          {/* Progress path with glow */}
+          {/* Progress path with premium gradient */}
           <motion.path
             d={progressPath}
-            stroke="url(#glowGradient)"
+            stroke="url(#premiumGradient)"
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             fill="none"
             animate={{
               filter: isDragging
-                ? 'drop-shadow(0 0 12px rgba(96,165,250,0.7))'
-                : 'drop-shadow(0 0 6px rgba(59,130,246,0.4))',
+                ? 'drop-shadow(0 0 12px rgba(0,224,255,0.7))'
+                : 'drop-shadow(0 0 6px rgba(0,224,255,0.4))',
             }}
             transition={{ type: 'spring', stiffness: 180, damping: 25 }}
+            className="drop-shadow-md"
           />
 
           {/* Handle */}
