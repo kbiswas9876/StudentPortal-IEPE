@@ -54,15 +54,32 @@ export default function RadialPacingControl({ value, onChange, disabled = false 
   const currentAngle = useSpring(valueToAngle(value), { stiffness: 180, damping: 22, mass: 0.4 })
   const handlePos = polarToCartesian(valueToAngle(value))
 
-  // Pointer Control
+  // Pointer Control with proper boundary enforcement
   const getAngleFromPosition = (clientX: number, clientY: number): number => {
     if (!svgRef.current) return valueToAngle(value)
     const rect = svgRef.current.getBoundingClientRect()
-    const dx = clientX - (rect.left + rect.width / 2)
-    const dy = clientY - (rect.top + rect.height / 2)
-    let angle = Math.atan2(dy, dx) * 180 / Math.PI + 90
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+    const dx = clientX - centerX
+    const dy = clientY - centerY
+    
+    // Calculate angle from center (0° is at 3 o'clock, 90° is at 6 o'clock)
+    let angle = Math.atan2(dy, dx) * 180 / Math.PI
+    
+    // Convert to our coordinate system where 0° is at the start of our arc
+    // Our arc starts at 0° and goes to 270°, so we need to adjust
+    angle = (angle + 90) % 360
     if (angle < 0) angle += 360
-    return Math.max(0, Math.min(270, angle))
+    
+    // Now we have angle in 0-360 range, but our arc only goes 0-270
+    // Clamp to our arc range
+    if (angle > 270) {
+      return 270 // End of arc
+    } else if (angle < 0) {
+      return 0 // Start of arc
+    }
+    
+    return angle
   }
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -75,8 +92,25 @@ export default function RadialPacingControl({ value, onChange, disabled = false 
   const handlePointerMove = useCallback((e: PointerEvent) => {
     if (!isDragging) return
     e.preventDefault()
-    onChange(angleToValue(getAngleFromPosition(e.clientX, e.clientY)))
-  }, [isDragging, onChange])
+    
+    const newAngle = getAngleFromPosition(e.clientX, e.clientY)
+    const newValue = angleToValue(newAngle)
+    
+    // Strict boundary enforcement - prevent wrap around
+    const clampedValue = Math.max(-1, Math.min(1, newValue))
+    
+    // Additional check: if we're at the boundaries, don't allow jumping
+    if (clampedValue === -1 && value > -0.9) {
+      // If we're trying to go to -1 but current value is not close to -1, ignore
+      return
+    }
+    if (clampedValue === 1 && value < 0.9) {
+      // If we're trying to go to 1 but current value is not close to 1, ignore
+      return
+    }
+    
+    onChange(clampedValue)
+  }, [isDragging, onChange, value])
 
   const handlePointerUp = useCallback(() => setIsDragging(false), [])
 
