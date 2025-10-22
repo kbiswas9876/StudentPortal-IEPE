@@ -224,55 +224,31 @@ export default function RadialPacingControl({ value, onChange, disabled = false 
             className="drop-shadow-md"
           />
 
-          {/* Brushed Metal Button */}
-          <g filter="url(#softShadow)">
-            <motion.circle
-              cx={handlePos.x}
-              cy={handlePos.y}
-              r={isDragging ? 15 : 13}
-              fill="url(#metalRadial)"
-              animate={{
-                scale: isDragging ? 1.15 : 1,
-              }}
-              transition={{ 
-                type: 'tween', 
-                duration: 0.4, 
-                ease: 'easeInOut' 
-              }}
-              style={{
-                cursor: isDragging ? 'grabbing' : 'grab',
-              }}
-            />
-            <motion.circle
-              cx={handlePos.x}
-              cy={handlePos.y}
-              r={isDragging ? 15 : 13}
-              fill="url(#metalSweep)"
-              style={{ mixBlendMode: "overlay" }}
-              animate={{
-                scale: isDragging ? 1.15 : 1,
-              }}
-              transition={{ 
-                type: 'tween', 
-                duration: 0.4, 
-                ease: 'easeInOut' 
-              }}
-            />
-            <motion.circle
-              cx={handlePos.x}
-              cy={handlePos.y}
-              r={isDragging ? 15 : 13}
-              fill="url(#metalEdge)"
-              animate={{
-                scale: isDragging ? 1.15 : 1,
-              }}
-              transition={{ 
-                type: 'tween', 
-                duration: 0.4, 
-                ease: 'easeInOut' 
-              }}
-            />
-          </g>
+           {/* Brushed Metal Button */}
+           <g filter="url(#softShadow)">
+             <circle
+               cx={handlePos.x}
+               cy={handlePos.y}
+               r={13}
+               fill="url(#metalRadial)"
+               style={{
+                 cursor: isDragging ? 'grabbing' : 'grab',
+               }}
+             />
+             <circle
+               cx={handlePos.x}
+               cy={handlePos.y}
+               r={13}
+               fill="url(#metalSweep)"
+               style={{ mixBlendMode: "overlay" }}
+             />
+             <circle
+               cx={handlePos.x}
+               cy={handlePos.y}
+               r={13}
+               fill="url(#metalEdge)"
+             />
+           </g>
         </svg>
 
         {/* Center Label */}
