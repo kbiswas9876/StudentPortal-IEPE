@@ -88,7 +88,7 @@ export default function StreakActivityCard({
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="mb-4 p-4 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl border-2 border-orange-200 dark:border-orange-800"
+            className="mb-4 p-4 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl"
           >
             <div className="flex items-center gap-3">
               <div className="p-2 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg">
@@ -121,7 +121,7 @@ export default function StreakActivityCard({
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="p-4 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-xl border border-amber-200 dark:border-amber-800"
+            className="p-4 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-xl"
           >
             <div className="flex items-center gap-3">
               <div className="p-2 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-lg">
@@ -139,7 +139,7 @@ export default function StreakActivityCard({
           </motion.div>
 
           {currentStreak === 0 && longestStreak === 0 && (
-            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p className="text-xs text-blue-800 dark:text-blue-200">
                 💡 Complete a review today to start your streak!
               </p>
