@@ -78,7 +78,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
       case 'upcoming':
         return 'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/20'
       case 'live':
-        return 'border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/20'
+        return 'border-green-400 dark:border-green-600 bg-green-50/50 dark:bg-green-900/20 shadow-green-500/20 shadow-2xl'
       case 'completed':
         return 'border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50'
       default:
@@ -105,7 +105,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
         return (
           <button
             disabled
-            className="px-6 py-2 bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 rounded-lg font-medium cursor-not-allowed"
+            className="px-6 py-2.5 bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 rounded-lg font-medium cursor-not-allowed opacity-60"
           >
             Coming Soon
           </button>
@@ -116,9 +116,10 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => onStartTest(test.id)}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
           >
-            Start Test
+            <PlayIcon className="h-5 w-5" />
+            Start Test Now
           </motion.button>
         )
       case 'completed':
@@ -127,9 +128,10 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => test.resultId && onViewResult(test.resultId)}
-            className="px-6 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors"
+            className="px-6 py-2.5 bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
           >
-            View Result & Leaderboard
+            <EyeIcon className="h-5 w-5" />
+            View Results
           </motion.button>
         )
       default:
@@ -148,11 +150,30 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
         <div className="flex items-center space-x-3">
           {getStatusIcon()}
           <div>
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-              {test.name}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                {test.name}
+              </h3>
+              {type === 'live' && (
+                <motion.span
+                  animate={{ 
+                    scale: [1, 1.1, 1],
+                    boxShadow: [
+                      '0 0 0px rgba(34, 197, 94, 0.4)',
+                      '0 0 12px rgba(34, 197, 94, 0.6)',
+                      '0 0 0px rgba(34, 197, 94, 0.4)'
+                    ]
+                  }}
+                  transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                  className="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold flex items-center gap-1"
+                >
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                  LIVE
+                </motion.span>
+              )}
+            </div>
             {test.description && (
-              <p className="text-slate-600 dark:text-slate-400 mt-1">
+              <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm">
                 {test.description}
               </p>
             )}
@@ -169,7 +190,8 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
           )}
           {type === 'live' && (
             <div className="text-sm text-green-600 dark:text-green-400 font-medium">
-              Test is now live!
+              <div className="text-xs opacity-75">Available now</div>
+              <div className="text-base font-bold">Ready to Start!</div>
             </div>
           )}
           {type === 'completed' && test.userScore !== undefined && (
@@ -184,30 +206,30 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
       </div>
 
       {/* Test Details */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+        <div className="text-center p-3 rounded-lg bg-white/50 dark:bg-slate-700/30">
+          <div className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">
             {test.total_questions}
           </div>
-          <div className="text-sm text-slate-600 dark:text-slate-400">Questions</div>
+          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400">Questions</div>
         </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+        <div className="text-center p-3 rounded-lg bg-white/50 dark:bg-slate-700/30">
+          <div className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">
             {formatTime(test.total_time_minutes)}
           </div>
-          <div className="text-sm text-slate-600 dark:text-slate-400">Duration</div>
+          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400">Duration</div>
         </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+        <div className="text-center p-3 rounded-lg bg-white/50 dark:bg-slate-700/30">
+          <div className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-400">
             +{test.marks_per_correct}
           </div>
-          <div className="text-sm text-slate-600 dark:text-slate-400">Correct</div>
+          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400">Correct</div>
         </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+        <div className="text-center p-3 rounded-lg bg-white/50 dark:bg-slate-700/30">
+          <div className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">
             {test.negative_marks_per_incorrect || 0}
           </div>
-          <div className="text-sm text-slate-600 dark:text-slate-400">Incorrect</div>
+          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400">Incorrect</div>
         </div>
       </div>
 
