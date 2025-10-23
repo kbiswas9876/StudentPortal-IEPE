@@ -123,13 +123,18 @@ export default function MockTestHubPage() {
           })
         }
       )
-      .subscribe((status) => {
+      .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
           console.log('✅ Real-time subscription active for test status changes')
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Real-time subscription error')
+          console.error('❌ Real-time subscription error. This may be due to:')
+          console.error('  1. Supabase Realtime not enabled for the tests table')
+          console.error('  2. Database replication not configured')
+          console.error('  3. RLS policies blocking subscription')
+          console.error('Error details:', err)
+          console.warn('⚠️ Falling back to manual refresh mode. Tests will still work but won\'t update automatically.')
         } else if (status === 'TIMED_OUT') {
-          console.warn('⚠️ Real-time subscription timed out')
+          console.warn('⚠️ Real-time subscription timed out. Retrying...')
         }
       })
 
