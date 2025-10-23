@@ -11,6 +11,7 @@ import DeckMasteryChart from '@/components/analytics/DeckMasteryChart'
 import ReviewHeatmapCalendar from '@/components/analytics/ReviewHeatmapCalendar'
 import StreakActivityCard from '@/components/analytics/StreakActivityCard'
 import ActionableInsightsCard from '@/components/analytics/ActionableInsightsCard'
+import { AnalyticsPageSkeleton } from '@/components/analytics/SkeletonLoader'
 
 interface AnalyticsData {
   overview: {
@@ -134,14 +135,7 @@ export default function AnalyticsPage() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-          <p className="text-slate-600 dark:text-slate-400">Loading analytics...</p>
-        </div>
-      </div>
-    )
+    return <AnalyticsPageSkeleton />
   }
 
   if (error) {
