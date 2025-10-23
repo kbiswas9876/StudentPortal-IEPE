@@ -56,7 +56,7 @@ export async function GET(request: Request) {
           id,
           question_text,
           chapter_name,
-          book_code
+          book_source
         )
       `)
       .eq('user_id', userId);
