@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, Check, CheckCheck, Loader2 } from 'lucide-react'
+import { Bell, Check, CheckCheck, Loader2, MoreHorizontal } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -135,99 +135,129 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Bell Button */}
+      {/* Premium Bell Button */}
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        className="relative group"
         aria-label="Notifications"
       >
-        <Bell className="h-6 w-6 text-slate-700 dark:text-slate-300" />
-        
-        {/* Unread Badge */}
-        {unreadCount > 0 && (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 h-5 w-5 bg-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center"
-          >
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </motion.span>
-        )}
+        <div className="relative p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60 shadow-sm hover:shadow-md transition-all duration-300 hover:bg-white dark:hover:bg-slate-800">
+          <Bell className="h-5 w-5 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors duration-200" />
+          
+          {/* Premium Unread Badge */}
+          {unreadCount > 0 && (
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-semibold rounded-full flex items-center justify-center shadow-lg ring-2 ring-white dark:ring-slate-900"
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </motion.div>
+          )}
+        </div>
       </motion.button>
 
-      {/* Dropdown */}
+      {/* Premium Dropdown */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-96 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden"
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ 
+              duration: 0.2, 
+              ease: [0.16, 1, 0.3, 1] 
+            }}
+            className="absolute right-0 mt-3 w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-700/50 z-50 overflow-hidden"
+            style={{
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)'
+            }}
           >
-            {/* Header */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700">
+            {/* Minimalist Header */}
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800/50">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  Notifications
-                </h3>
+                <div className="flex items-center gap-2">
+                  <div className="h-1.5 w-1.5 bg-blue-500 rounded-full"></div>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    Notifications
+                  </h3>
+                  {unreadCount > 0 && (
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {unreadCount} new
+                    </span>
+                  )}
+                </div>
                 {unreadCount > 0 && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={handleMarkAllAsRead}
                     disabled={isLoading}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium flex items-center gap-1 disabled:opacity-50"
+                    className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 disabled:opacity-50"
                   >
                     {isLoading ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
                     ) : (
                       <CheckCheck className="h-3 w-3" />
                     )}
-                    Mark all as read
-                  </button>
+                    Mark all read
+                  </motion.button>
                 )}
               </div>
             </div>
 
             {/* Notifications List */}
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
               {notifications.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Bell className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                  <p className="text-slate-600 dark:text-slate-400">
-                    No notifications yet
+                <div className="px-5 py-12 text-center">
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <Bell className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                    All caught up
+                  </p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    No new notifications
                   </p>
                 </div>
               ) : (
-                <div className="divide-y divide-slate-200 dark:divide-slate-700">
-                  {notifications.map((notification) => (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                  {notifications.map((notification, index) => (
                     <motion.button
                       key={notification.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
                       whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.02)' }}
                       onClick={() => handleNotificationClick(notification)}
                       className={`
-                        w-full text-left p-4 transition-colors
+                        w-full text-left px-5 py-4 transition-all duration-200 group
                         ${!notification.is_read 
-                          ? 'bg-blue-50 dark:bg-blue-900/10' 
-                          : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                          ? 'bg-blue-50/50 dark:bg-blue-900/10 border-l-2 border-l-blue-500' 
+                          : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30'
                         }
                       `}
                     >
                       <div className="flex items-start gap-3">
                         {!notification.is_read && (
-                          <div className="h-2 w-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
+                          <motion.div 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="h-2 w-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"
+                          />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${!notification.is_read ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-300'}`}>
+                          <p className={`text-sm leading-relaxed ${!notification.is_read ? 'font-medium text-slate-900 dark:text-slate-100' : 'text-slate-600 dark:text-slate-300'}`}>
                             {notification.message}
                           </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1.5">
                             {formatTime(notification.created_at)}
                           </p>
                         </div>
                         {notification.is_read && (
-                          <Check className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1" />
+                          <Check className="h-4 w-4 text-slate-300 dark:text-slate-600 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                         )}
                       </div>
                     </motion.button>
@@ -235,6 +265,15 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
                 </div>
               )}
             </div>
+
+            {/* Footer */}
+            {notifications.length > 0 && (
+              <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30">
+                <div className="flex items-center justify-center">
+                  <MoreHorizontal className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
