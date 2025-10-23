@@ -3,6 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Target, Award, TrendingUp } from 'lucide-react'
+import InformationalTooltip from './InformationalTooltip'
 
 interface DeckMasteryData {
   learning: { count: number; percentage: number }
@@ -57,17 +58,33 @@ export default function DeckMasteryChart({ data }: DeckMasteryChartProps) {
       transition={{ duration: 0.3, delay: 0.2 }}
       className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-lg"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-            Deck Mastery
+      {/* Empty State */}
+      {total === 0 ? (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+            <Target className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+            Ready to start learning?
           </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Distribution across learning stages
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 max-w-md mx-auto">
+            As you <strong>bookmark questions</strong> during your practice sessions, this chart will fill up to track your mastery.
           </p>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                Deck Mastery
+              </h3>
+              <InformationalTooltip content="This chart shows how well you've learned your bookmarked questions over time. Learning: New questions you're just starting to memorize. Maturing: Questions you know well, but need occasional review. Mastered: Questions successfully remembered over many months. Your goal is to move all questions to Mastered!" />
+            </div>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+            Distribution across learning stages
+          </p>
 
       {/* Horizontal Bar Chart */}
       <div className="mb-6">
@@ -140,17 +157,17 @@ export default function DeckMasteryChart({ data }: DeckMasteryChartProps) {
         })}
       </div>
 
-      {/* Summary */}
-      {total > 0 && (
-        <div className="mt-4 p-3 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-700/30 dark:to-slate-600/30 rounded-lg">
-          <p className="text-xs text-center text-slate-700 dark:text-slate-300">
-            {data.mastered.percentage >= 50
-              ? "🎉 Over half your questions are mastered!"
-              : data.maturing.percentage >= 40
-              ? "📈 Great progress! Questions are maturing well."
-              : "🌱 Keep reviewing to move questions through the stages."}
-          </p>
-        </div>
+          {/* Summary */}
+          <div className="mt-4 p-3 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-700/30 dark:to-slate-600/30 rounded-lg">
+            <p className="text-xs text-center text-slate-700 dark:text-slate-300">
+              {data.mastered.percentage >= 50
+                ? "🎉 Over half your questions are mastered!"
+                : data.maturing.percentage >= 40
+                ? "📈 Great progress! Questions are maturing well."
+                : "🌱 Keep reviewing to move questions through the stages."}
+            </p>
+          </div>
+        </>
       )}
     </motion.div>
   )

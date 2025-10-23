@@ -9,6 +9,7 @@ import ReviewStreakCard from '@/components/analytics/ReviewStreakCard'
 import RetentionRateChart from '@/components/analytics/RetentionRateChart'
 import DeckMasteryChart from '@/components/analytics/DeckMasteryChart'
 import UpcomingReviewsCalendar from '@/components/analytics/UpcomingReviewsCalendar'
+import StreakActivityCard from '@/components/analytics/StreakActivityCard'
 
 interface AnalyticsData {
   overview: {
@@ -26,6 +27,14 @@ interface AnalyticsData {
     date: string
     count: number
   }>
+  streakData?: {
+    currentStreak: number
+    longestStreak: number
+    last90Days: Array<{
+      date: string
+      count: number
+    }>
+  }
 }
 
 export default function AnalyticsPage() {
@@ -132,20 +141,23 @@ export default function AnalyticsPage() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Review Streak Card */}
-          <ReviewStreakCard
-            currentStreak={analyticsData.overview.currentStreak}
-            totalQuestions={analyticsData.overview.totalQuestions}
-          />
+          {/* Streak Activity Card - Full Width */}
+          {analyticsData.streakData && (
+            <StreakActivityCard
+              currentStreak={analyticsData.streakData.currentStreak}
+              longestStreak={analyticsData.streakData.longestStreak}
+              last90Days={analyticsData.streakData.last90Days}
+            />
+          )}
+
+          {/* Deck Mastery Chart */}
+          <DeckMasteryChart data={analyticsData.deckMastery} />
 
           {/* Retention Rate Chart */}
           <RetentionRateChart
             retentionRate={analyticsData.overview.retentionRate}
             averageEaseFactor={analyticsData.overview.averageEaseFactor}
           />
-
-          {/* Deck Mastery Chart */}
-          <DeckMasteryChart data={analyticsData.deckMastery} />
 
           {/* Upcoming Reviews Calendar */}
           <UpcomingReviewsCalendar forecast={analyticsData.upcomingReviews} />

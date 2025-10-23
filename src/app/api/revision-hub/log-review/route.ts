@@ -215,7 +215,74 @@ export async function POST(request: Request) {
     console.log('📅 New next_review_date:', updatedSrsData.next_review_date);
 
     // ============================================================================
-    // STEP 6: Return Success Response
+    // STEP 6: Update Daily Review Summary (for streak tracking)
+    // ============================================================================
+    
+    try {
+      // Get current date in UTC (we'll store as DATE which normalizes to UTC)
+      const today = new Date().toISOString().split('T')[0];
+      
+      console.log('📊 Updating daily review summary for date:', today);
+      
+      // Upsert: increment reviews_completed for today
+      const { error: summaryError } = await supabaseAdmin
+        .from('daily_review_summary')
+        .upsert(
+          {
+            user_id: userId,
+            date: today,
+            reviews_completed: 1, // Will be incremented if row exists
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'user_id,date',
+            // PostgreSQL trick: increment existing value
+            ignoreDuplicates: false,
+          }
+        );
+      
+      // If upsert doesn't support increment, do manual update
+      if (summaryError) {
+        console.log('📊 Upsert failed, trying manual increment:', summaryError.message);
+        
+        // Try to get existing record
+        const { data: existing } = await supabaseAdmin
+          .from('daily_review_summary')
+          .select('reviews_completed')
+          .eq('user_id', userId)
+          .eq('date', today)
+          .maybeSingle();
+        
+        if (existing) {
+          // Update existing record
+          await supabaseAdmin
+            .from('daily_review_summary')
+            .update({
+              reviews_completed: existing.reviews_completed + 1,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('user_id', userId)
+            .eq('date', today);
+        } else {
+          // Insert new record
+          await supabaseAdmin
+            .from('daily_review_summary')
+            .insert({
+              user_id: userId,
+              date: today,
+              reviews_completed: 1,
+            });
+        }
+      }
+      
+      console.log('✅ Daily review summary updated');
+    } catch (summaryError) {
+      // Don't fail the whole request if summary update fails
+      console.error('⚠️ Error updating daily review summary (non-critical):', summaryError);
+    }
+
+    // ============================================================================
+    // STEP 7: Return Success Response
     // ============================================================================
 
     console.log('✅ Review logged successfully');
