@@ -3,6 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { TrendingUp, CheckCircle2 } from 'lucide-react'
+import InformationalTooltip from './InformationalTooltip'
 
 interface RetentionRateChartProps {
   retentionRate: number
@@ -45,9 +46,14 @@ export default function RetentionRateChart({ retentionRate, averageEaseFactor }:
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-          Retention Rate
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            Retention Rate
+          </h3>
+          <InformationalTooltip 
+            content="This shows how well you remember your bookmarked questions over time. A high retention rate means you're successfully learning and retaining information. The percentage is calculated based on your review performance and ease factors. Aim for 80%+ for optimal learning!"
+          />
+        </div>
         <div className={`p-3 bg-gradient-to-br ${colors.gradient} rounded-xl`}>
           <TrendingUp className="h-6 w-6 text-white" strokeWidth={2.5} />
         </div>
