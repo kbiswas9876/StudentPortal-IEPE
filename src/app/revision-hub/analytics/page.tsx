@@ -10,6 +10,7 @@ import RetentionRateChart from '@/components/analytics/RetentionRateChart'
 import DeckMasteryChart from '@/components/analytics/DeckMasteryChart'
 import UpcomingReviewsCalendar from '@/components/analytics/UpcomingReviewsCalendar'
 import StreakActivityCard from '@/components/analytics/StreakActivityCard'
+import ActionableInsightsCard from '@/components/analytics/ActionableInsightsCard'
 
 interface AnalyticsData {
   overview: {
@@ -33,6 +34,22 @@ interface AnalyticsData {
     last90Days: Array<{
       date: string
       count: number
+    }>
+  }
+  insights?: {
+    hardestQuestions: Array<{
+      bookmarkId: string
+      questionId: string
+      questionText: string
+      chapter: string
+      stat: string
+      difficultyScore: number
+    }>
+    weakestChapters: Array<{
+      chapter: string
+      questionCount: number
+      successRate: number
+      totalAttempts: number
     }>
   }
 }
@@ -64,14 +81,29 @@ export default function AnalyticsPage() {
       setLoading(true)
       setError(null)
       
-      const response = await fetch(`/api/revision-hub/analytics?userId=${user?.id}`)
-      const result = await response.json()
+      // Fetch analytics, streak data, and insights in parallel
+      const [analyticsResponse, streakResponse, insightsResponse] = await Promise.all([
+        fetch(`/api/revision-hub/analytics?userId=${user?.id}`),
+        fetch(`/api/revision-hub/streak?userId=${user?.id}`),
+        fetch(`/api/revision-hub/insights?userId=${user?.id}`)
+      ])
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch analytics')
+      const analyticsResult = await analyticsResponse.json()
+      const streakResult = await streakResponse.json()
+      const insightsResult = await insightsResponse.json()
+
+      if (!analyticsResponse.ok) {
+        throw new Error(analyticsResult.error || 'Failed to fetch analytics')
       }
 
-      setAnalyticsData(result.data)
+      // Combine the data
+      const combinedData = {
+        ...analyticsResult.data,
+        streakData: streakResponse.ok ? streakResult.data : undefined,
+        insights: insightsResponse.ok ? insightsResult.data : undefined
+      }
+
+      setAnalyticsData(combinedData)
     } catch (err) {
       console.error('Error fetching analytics:', err)
       setError(err instanceof Error ? err.message : 'Failed to load analytics')
@@ -161,6 +193,14 @@ export default function AnalyticsPage() {
 
           {/* Upcoming Reviews Calendar */}
           <UpcomingReviewsCalendar forecast={analyticsData.upcomingReviews} />
+
+          {/* Actionable Insights Card */}
+          {analyticsData.insights && (
+            <ActionableInsightsCard
+              hardestQuestions={analyticsData.insights.hardestQuestions}
+              weakestChapters={analyticsData.insights.weakestChapters}
+            />
+          )}
         </div>
 
         {/* Note about streak tracking */}

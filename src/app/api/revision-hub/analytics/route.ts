@@ -135,6 +135,8 @@ export async function GET(request: Request) {
     // ============================================================================
     // 6. RETURN ANALYTICS DATA
     // ============================================================================
+    // Note: Insights are fetched separately via /api/revision-hub/insights
+    // to keep this endpoint fast and focused on core metrics
     const analytics = {
       overview: {
         totalQuestions: totalBookmarks,
