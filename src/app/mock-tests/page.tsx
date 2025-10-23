@@ -4,10 +4,268 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Tab } from '@headlessui/react'
-import { MagnifyingGlassIcon, XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, XMarkIcon, FunnelIcon, ClockIcon, PlayIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabaseClient'
-import TestCard from '@/components/TestCard'
+
+// Minimalist Test Card Component
+function MinimalistTestCard({ test, type, onStartTest, onViewResult, index }: {
+  test: Test & { userScore?: number; resultId?: number }
+  type: 'upcoming' | 'live' | 'completed'
+  onStartTest: (testId: number) => void
+  onViewResult: (resultId: number) => void
+  index: number
+}) {
+  const [timeRemaining, setTimeRemaining] = useState<string>('')
+
+  useEffect(() => {
+    if (type === 'upcoming') {
+      const updateCountdown = () => {
+        const now = new Date().getTime()
+        const startTime = new Date(test.start_time).getTime()
+        const difference = startTime - now
+
+        if (difference > 0) {
+          const days = Math.floor(difference / (1000 * 60 * 60 * 24))
+          const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+          const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+
+          if (days > 0) {
+            setTimeRemaining(`${days}d ${hours}h`)
+          } else if (hours > 0) {
+            setTimeRemaining(`${hours}h ${minutes}m`)
+          } else {
+            setTimeRemaining(`${minutes}m`)
+          }
+        } else {
+          setTimeRemaining('Starting now')
+        }
+      }
+
+      updateCountdown()
+      const interval = setInterval(updateCountdown, 1000)
+      return () => clearInterval(interval)
+    }
+  }, [test.start_time, type])
+
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
+  }
+
+  const getStatusColor = () => {
+    switch (type) {
+      case 'upcoming':
+        return 'text-blue-600 dark:text-blue-400'
+      case 'live':
+        return 'text-green-600 dark:text-green-400'
+      case 'completed':
+        return 'text-slate-600 dark:text-slate-400'
+      default:
+        return 'text-slate-600 dark:text-slate-400'
+    }
+  }
+
+  const getStatusIcon = () => {
+    switch (type) {
+      case 'upcoming':
+        return <ClockIcon className="h-5 w-5" />
+      case 'live':
+        return <PlayIcon className="h-5 w-5" />
+      case 'completed':
+        return <CheckCircleIcon className="h-5 w-5" />
+      default:
+        return null
+    }
+  }
+
+  const getActionButton = () => {
+    switch (type) {
+      case 'upcoming':
+        return (
+          <button
+            disabled
+            className="w-full py-3 px-4 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-lg font-medium cursor-not-allowed text-sm"
+          >
+            {timeRemaining === 'Starting now' ? 'Starting Soon' : 'Coming Soon'}
+          </button>
+        )
+      case 'live':
+        return (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onStartTest(test.id)}
+            className="w-full py-3 px-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-semibold transition-all duration-200 hover:bg-slate-800 dark:hover:bg-slate-200 text-sm"
+          >
+            Start Test
+          </motion.button>
+        )
+      case 'completed':
+        return (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => test.resultId && onViewResult(test.resultId)}
+            className="w-full py-3 px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-all duration-200 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm"
+          >
+            View Results
+          </motion.button>
+        )
+      default:
+        return null
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.1 }}
+      className="group relative bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 border border-slate-200 dark:border-slate-700"
+    >
+      {/* Live Status Badge */}
+      {type === 'live' && (
+        <div className="absolute -top-2 -right-2 z-10">
+          <motion.div
+            animate={{ 
+              scale: [1, 1.05, 1],
+            }}
+            transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+            className="px-2 py-1 bg-green-500 text-white rounded-full text-xs font-medium flex items-center gap-1"
+          >
+            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+            LIVE
+          </motion.div>
+        </div>
+      )}
+
+      <div className="p-6">
+        {/* Header with Status Badge */}
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+              {test.name}
+            </h3>
+            {test.description && (
+              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                {test.description}
+              </p>
+            )}
+          </div>
+          
+          {/* Status Badge */}
+          <div className="flex items-center gap-1.5">
+            {getStatusIcon()}
+            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+              type === 'upcoming' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
+              type === 'live' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+              'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+            }`}>
+              {type === 'upcoming' && timeRemaining}
+              {type === 'live' && 'Available'}
+              {type === 'completed' && test.userScore !== undefined && `${test.userScore.toFixed(1)}%`}
+            </span>
+          </div>
+        </div>
+
+        {/* Key Metrics - Admin Panel Style */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{test.total_questions}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Questions</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{formatTime(test.total_time_minutes)}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Duration</div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l-2.83 2.83M6 7l2.83 2.83m6-2.83a5.002 5.002 0 01-9.002 0" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-slate-900 dark:text-slate-100">+{test.marks_per_correct} / {test.negative_marks_per_incorrect || 0}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">Marking</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Time Information - Admin Panel Style */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 text-slate-500 dark:text-slate-400">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 01-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                {type === 'upcoming' ? 'Starts' : type === 'live' ? 'Started' : 'Completed'}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {type === 'upcoming' ? new Date(test.start_time).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric', 
+                  year: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true 
+                }) : 
+                type === 'live' ? 'Now' :
+                'Finished'}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 text-slate-500 dark:text-slate-400">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-slate-900 dark:text-slate-100">Ends</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {type === 'upcoming' ? new Date(test.end_time).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric', 
+                  year: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true 
+                }) : 
+                type === 'live' ? 'Ongoing' :
+                'Completed'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Button */}
+        {getActionButton()}
+      </div>
+    </motion.div>
+  )
+}
 
 type Test = {
   id: number
@@ -88,11 +346,17 @@ export default function MockTestHubPage() {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'tests',
-          filter: 'status=in.(scheduled,live,completed)'
+          table: 'tests'
+          // Removed filter to allow all updates - filter on client side instead
         },
         (payload) => {
-          console.log('Test status update received:', payload)
+          console.log('🔄 Test status update received:', payload)
+          
+          // Only process if it's a status we care about
+          if (!['scheduled', 'live', 'completed'].includes(payload.new.status)) {
+            console.log('⏭️ Skipping update for status:', payload.new.status)
+            return
+          }
           
           // Update the test in our local state
           setMockTestData((currentData) => {
@@ -100,7 +364,16 @@ export default function MockTestHubPage() {
 
             const updatedTests = currentData.tests.map((test) => {
               if (test.id === payload.new.id) {
-                console.log(`Updating test ${test.id} from status '${test.status}' to '${payload.new.status}'`)
+                console.log(`🔄 Updating test ${test.id} from status '${test.status}' to '${payload.new.status}'`)
+                console.log('📊 Test details:', {
+                  id: test.id,
+                  name: test.name,
+                  oldStatus: test.status,
+                  newStatus: payload.new.status,
+                  startTime: payload.new.start_time,
+                  endTime: payload.new.end_time
+                })
+                
                 // Merge the updated fields from the database
                 return {
                   ...test,
@@ -115,6 +388,8 @@ export default function MockTestHubPage() {
               }
               return test
             })
+
+            console.log('✅ Updated tests array:', updatedTests.map(t => ({ id: t.id, name: t.name, status: t.status })))
 
             return {
               ...currentData,
@@ -200,13 +475,13 @@ export default function MockTestHubPage() {
           userScore: userAttempt.score_percentage,
           resultId: userAttempt.id
         })
-      } else if (test.status === 'scheduled') {
-        upcoming.push(test)
       } else if (test.status === 'live') {
         live.push(test)
       } else if (test.status === 'completed') {
         // Test is completed but user hasn't attempted it
         completed.push(test)
+      } else if (test.status === 'scheduled') {
+        upcoming.push(test)
       }
     })
 
@@ -259,125 +534,67 @@ export default function MockTestHubPage() {
   const { upcoming, live, completed } = categorizeTests()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6"
-        >
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            Mock Tests
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Official mock tests to help you prepare for your exams
-          </p>
-        </motion.div>
-
-        {/* Search and Filter Controls */}
+    <div className="min-h-screen bg-white dark:bg-slate-950">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Search and Tabs Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-6"
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-12"
         >
-          <div className="flex flex-col sm:flex-row gap-3">
             {/* Search Bar */}
-            <div className="flex-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-slate-400" />
-              </div>
+          <div className="mb-8">
+            <div className="w-full max-w-md">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search tests by name..."
+                  placeholder="Search tests..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full pl-10 pr-10 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-900 border-0 rounded-2xl text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300 dark:focus:ring-slate-700 transition-all duration-300 shadow-sm font-light"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                 >
                   <XMarkIcon className="h-5 w-5" />
                 </button>
               )}
-            </div>
-
-            {/* Sort Dropdown */}
-            <div className="sm:w-64">
-              <div className="relative">
-                <FunnelIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'date' | 'score' | 'name')}
-                  className="block w-full pl-10 pr-10 py-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none cursor-pointer"
-                >
-                  <option value="date">Sort by Date</option>
-                  <option value="name">Sort by Name (A-Z)</option>
-                  <option value="score">Sort by Score</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
               </div>
             </div>
           </div>
-
-          {/* Active filters indicator */}
-          {searchQuery && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mt-3 text-sm text-slate-600 dark:text-slate-400"
-            >
-              Showing results for: <span className="font-semibold text-slate-900 dark:text-slate-100">"{searchQuery}"</span>
-            </motion.div>
-          )}
-        </motion.div>
-
-        {/* Tabbed Interface */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
           <Tab.Group>
-            <Tab.List className="flex space-x-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-8">
+            <Tab.List className="flex space-x-1 bg-slate-100 dark:bg-slate-900 rounded-2xl p-1.5 max-w-lg shadow-sm">
               {[
-                { key: 'upcoming', label: 'Upcoming', count: upcoming.length },
-                { key: 'live', label: 'Live', count: live.length },
-                { key: 'completed', label: 'Completed', count: completed.length }
+                { key: 'upcoming', label: 'Upcoming', count: upcoming.length, icon: ClockIcon },
+                { key: 'live', label: 'Live', count: live.length, icon: PlayIcon },
+                { key: 'completed', label: 'Completed', count: completed.length, icon: CheckCircleIcon }
               ].map((tab) => (
                 <Tab
                   key={tab.key}
                   className={({ selected }) =>
-                    `w-full rounded-lg py-2.5 text-sm font-medium leading-5 transition-all duration-200 ${
+                    `flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-sm font-medium transition-all duration-300 ${
                       selected
-                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-lg'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50'
+                        ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                     }`
                   }
                 >
-                  <div className="flex items-center justify-center space-x-2">
-                    <span>{tab.label}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      tab.count > 0 
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' 
-                        : 'bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-400'
-                    }`}>
+                  <tab.icon className="h-4 w-4" />
+                  <span className="tracking-wide">{tab.label}</span>
+                  {tab.count > 0 && (
+                    <span className="ml-1 px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-medium">
                       {tab.count}
                     </span>
-                  </div>
+                  )}
                 </Tab>
               ))}
             </Tab.List>
 
-            <Tab.Panels>
+            <Tab.Panels className="mt-12">
               <Tab.Panel>
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -385,34 +602,26 @@ export default function MockTestHubPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-6"
+                    transition={{ duration: 0.4 }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                   >
                     {upcoming.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="bg-white dark:bg-slate-800 p-10 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 max-w-md mx-auto">
-                          <div className="text-7xl mb-6">📅</div>
-                          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
-                            No Upcoming Tests
-                          </h3>
-                          <p className="text-slate-600 dark:text-slate-400 mb-6">
-                            {searchQuery 
-                              ? `No tests match "${searchQuery}". Try a different search term.`
-                              : "Check back soon for new mock tests, or explore practice mode to sharpen your skills!"}
-                          </p>
-                          {!searchQuery && (
-                            <button
-                              onClick={() => router.push('/practice')}
-                              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                            >
-                              Go to Practice Mode
-                            </button>
-                          )}
+                      <div className="col-span-full flex flex-col items-center justify-center py-24">
+                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                          <ClockIcon className="h-8 w-8 text-slate-400" />
                         </div>
+                        <h3 className="text-xl font-light text-slate-800 dark:text-slate-200 mb-3 tracking-wide">
+                          No Upcoming Tests
+                        </h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-center max-w-md font-light leading-relaxed">
+                          {searchQuery 
+                            ? `No tests match "${searchQuery}". Try a different search term.`
+                            : "New mock tests will appear here when they're scheduled."}
+                        </p>
                       </div>
                     ) : (
                       upcoming.map((test, index) => (
-                        <TestCard
+                        <MinimalistTestCard
                           key={test.id}
                           test={test}
                           type="upcoming"
@@ -433,26 +642,26 @@ export default function MockTestHubPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-6"
+                    transition={{ duration: 0.4 }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                   >
                     {live.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="bg-white dark:bg-slate-800 p-10 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 max-w-md mx-auto">
-                          <div className="text-7xl mb-6">⏰</div>
-                          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
-                            No Live Tests
-                          </h3>
-                          <p className="text-slate-600 dark:text-slate-400">
-                            {searchQuery 
-                              ? `No live tests match "${searchQuery}".`
-                              : "No tests are currently live. Upcoming tests will appear here automatically when they start."}
-                          </p>
+                      <div className="col-span-full flex flex-col items-center justify-center py-24">
+                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                          <PlayIcon className="h-8 w-8 text-slate-400" />
                         </div>
+                        <h3 className="text-xl font-light text-slate-800 dark:text-slate-200 mb-3 tracking-wide">
+                          No Live Tests
+                        </h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-center max-w-md font-light leading-relaxed">
+                          {searchQuery 
+                            ? `No live tests match "${searchQuery}".`
+                            : "No tests are currently live. Check back when tests start."}
+                        </p>
                       </div>
                     ) : (
                       live.map((test, index) => (
-                        <TestCard
+                        <MinimalistTestCard
                           key={test.id}
                           test={test}
                           type="live"
@@ -473,31 +682,26 @@ export default function MockTestHubPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-6"
+                    transition={{ duration: 0.4 }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                   >
                     {completed.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="bg-white dark:bg-slate-800 p-10 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 max-w-md mx-auto">
-                          <div className="text-7xl mb-6">📊</div>
-                          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
-                            No Completed Tests Yet
-                          </h3>
-                          <p className="text-slate-600 dark:text-slate-400 mb-6">
-                            {searchQuery 
-                              ? `No completed tests match "${searchQuery}".`
-                              : "You haven't taken any tests yet. Start your first mock test to see your performance analysis here!"}
-                          </p>
-                          {!searchQuery && (
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                              Check the Upcoming tab for available tests
-                            </p>
-                          )}
+                      <div className="col-span-full flex flex-col items-center justify-center py-24">
+                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                          <CheckCircleIcon className="h-8 w-8 text-slate-400" />
                         </div>
+                        <h3 className="text-xl font-light text-slate-800 dark:text-slate-200 mb-3 tracking-wide">
+                          No Completed Tests
+                        </h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-center max-w-md font-light leading-relaxed">
+                          {searchQuery 
+                            ? `No completed tests match "${searchQuery}".`
+                            : "Your test results will appear here once you complete a mock test."}
+                        </p>
                       </div>
                     ) : (
                       completed.map((test, index) => (
-                        <TestCard
+                        <MinimalistTestCard
                           key={test.id}
                           test={test}
                           type="completed"

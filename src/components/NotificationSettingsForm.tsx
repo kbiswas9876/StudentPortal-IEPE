@@ -277,7 +277,7 @@ export default function NotificationSettingsForm({ userId }: NotificationSetting
                   Preferred Reminder Time
                 </label>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-                  Choose what time you'd like to receive daily reminders
+                  Choose what time you&apos;d like to receive daily reminders
                 </p>
               </div>
             </div>

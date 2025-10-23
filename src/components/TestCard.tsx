@@ -105,18 +105,18 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
         return (
           <button
             disabled
-            className="px-6 py-2.5 bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 rounded-lg font-medium cursor-not-allowed opacity-60"
+            className="px-8 py-3 bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-xl font-semibold cursor-not-allowed opacity-70 border border-slate-300 dark:border-slate-600"
           >
-            Coming Soon
+            {timeRemaining === 'Starting now!' ? 'Starting Soon...' : 'Coming Soon'}
           </button>
         )
       case 'live':
         return (
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => onStartTest(test.id)}
-            className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+            className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center gap-2 border-2 border-green-400"
           >
             <PlayIcon className="h-5 w-5" />
             Start Test Now
@@ -125,10 +125,10 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
       case 'completed':
         return (
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => test.resultId && onViewResult(test.resultId)}
-            className="px-6 py-2.5 bg-slate-700 hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+            className="px-8 py-3 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl flex items-center gap-2 border border-slate-600"
           >
             <EyeIcon className="h-5 w-5" />
             View Results
@@ -144,59 +144,72 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.1 }}
-      className={`p-6 rounded-xl shadow-lg border-2 ${getCardStyles()}`}
+      className={`relative p-6 rounded-xl shadow-lg border-2 ${getCardStyles()} hover:shadow-xl transition-all duration-300`}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          {getStatusIcon()}
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+      {/* Live Status Badge */}
+      {type === 'live' && (
+        <motion.div
+          animate={{ 
+            scale: [1, 1.05, 1],
+            boxShadow: [
+              '0 0 0px rgba(34, 197, 94, 0.4)',
+              '0 0 20px rgba(34, 197, 94, 0.6)',
+              '0 0 0px rgba(34, 197, 94, 0.4)'
+            ]
+          }}
+          transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+          className="absolute -top-2 -right-2 px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold flex items-center gap-1 shadow-lg"
+        >
+          <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+          LIVE
+        </motion.div>
+      )}
+
+      {/* Header Section */}
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start space-x-4 flex-1">
+          <div className="flex-shrink-0 mt-1">
+            {getStatusIcon()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-2">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 truncate">
                 {test.name}
               </h3>
-              {type === 'live' && (
-                <motion.span
-                  animate={{ 
-                    scale: [1, 1.1, 1],
-                    boxShadow: [
-                      '0 0 0px rgba(34, 197, 94, 0.4)',
-                      '0 0 12px rgba(34, 197, 94, 0.6)',
-                      '0 0 0px rgba(34, 197, 94, 0.4)'
-                    ]
-                  }}
-                  transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                  className="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-bold flex items-center gap-1"
-                >
-                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                  LIVE
-                </motion.span>
-              )}
             </div>
             {test.description && (
-              <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm">
+              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                 {test.description}
               </p>
             )}
+            {/* Syllabus/Topics placeholder - can be enhanced with actual data */}
+            <div className="mt-2">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                Mock Test
+              </span>
+            </div>
           </div>
         </div>
-        <div className="text-right">
+        
+        {/* Status Display */}
+        <div className="text-right flex-shrink-0 ml-4">
           {type === 'upcoming' && (
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              <div className="font-medium">Starts in:</div>
+            <div className="text-sm">
+              <div className="text-slate-500 dark:text-slate-400 font-medium mb-1">Starts in:</div>
               <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
                 {timeRemaining}
               </div>
             </div>
           )}
           {type === 'live' && (
-            <div className="text-sm text-green-600 dark:text-green-400 font-medium">
-              <div className="text-xs opacity-75">Available now</div>
+            <div className="text-sm text-green-600 dark:text-green-400">
+              <div className="text-xs opacity-75 mb-1">Available now</div>
               <div className="text-base font-bold">Ready to Start!</div>
             </div>
           )}
           {type === 'completed' && test.userScore !== undefined && (
-            <div className="text-sm text-slate-600 dark:text-slate-400">
-              <div className="font-medium">Your Score:</div>
+            <div className="text-sm">
+              <div className="text-slate-500 dark:text-slate-400 font-medium mb-1">Your Score:</div>
               <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
                 {test.userScore.toFixed(1)}%
               </div>
@@ -205,35 +218,35 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
         </div>
       </div>
 
-      {/* Test Details */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-        <div className="text-center p-3 rounded-lg bg-white/50 dark:bg-slate-700/30">
-          <div className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">
+      {/* Enhanced Test Details Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="text-center p-4 rounded-lg bg-white/60 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600">
+          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">
             {test.total_questions}
           </div>
-          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400">Questions</div>
+          <div className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Questions</div>
         </div>
-        <div className="text-center p-3 rounded-lg bg-white/50 dark:bg-slate-700/30">
-          <div className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">
+        <div className="text-center p-4 rounded-lg bg-white/60 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600">
+          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">
             {formatTime(test.total_time_minutes)}
           </div>
-          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400">Duration</div>
+          <div className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase tracking-wide">Duration</div>
         </div>
-        <div className="text-center p-3 rounded-lg bg-white/50 dark:bg-slate-700/30">
-          <div className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-400">
+        <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+          <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
             +{test.marks_per_correct}
           </div>
-          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400">Correct</div>
+          <div className="text-xs font-medium text-green-700 dark:text-green-300 uppercase tracking-wide">Correct</div>
         </div>
-        <div className="text-center p-3 rounded-lg bg-white/50 dark:bg-slate-700/30">
-          <div className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">
+        <div className="text-center p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <div className="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">
             {test.negative_marks_per_incorrect || 0}
           </div>
-          <div className="text-xs md:text-sm text-slate-600 dark:text-slate-400">Incorrect</div>
+          <div className="text-xs font-medium text-red-700 dark:text-red-300 uppercase tracking-wide">Incorrect</div>
         </div>
       </div>
 
-      {/* Action Button */}
+      {/* Enhanced Action Button */}
       <div className="flex justify-end">
         {getActionButton()}
       </div>
