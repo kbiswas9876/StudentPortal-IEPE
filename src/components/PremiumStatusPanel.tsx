@@ -588,7 +588,7 @@ export default function PremiumStatusPanel({
             </div>
             <div className="flex justify-between">
               <span>Incorrect Answer:</span>
-              <span className="font-semibold">{mockTestData.test.marks_per_incorrect} marks</span>
+              <span className="font-semibold">{mockTestData.test.negative_marks_per_incorrect} marks</span>
             </div>
           </div>
         </motion.div>

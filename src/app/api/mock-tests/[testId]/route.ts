@@ -42,7 +42,7 @@ export async function GET(
           description,
           total_time_minutes,
           marks_per_correct,
-          marks_per_incorrect,
+          negative_marks_per_incorrect,
           status
         ),
         questions!inner(

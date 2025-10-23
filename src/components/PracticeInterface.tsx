@@ -43,7 +43,7 @@ interface PracticeInterfaceProps {
       name: string
       total_time_minutes: number
       marks_per_correct: number
-      marks_per_incorrect: number
+      negative_marks_per_incorrect: number
     }
   }
   savedSessionState?: any
@@ -743,7 +743,7 @@ useEffect(() => {
       if (mockTestData) {
         // Mock test scoring: use actual marks
         const totalMarks = (correctAnswers * mockTestData.test.marks_per_correct) + 
-                          (incorrectAnswers * mockTestData.test.marks_per_incorrect)
+                          (incorrectAnswers * mockTestData.test.negative_marks_per_incorrect)
         const maxMarks = totalQuestions * mockTestData.test.marks_per_correct
         score = maxMarks > 0 ? Math.round((totalMarks / maxMarks) * 100) : 0
       } else {

@@ -30,10 +30,10 @@ export async function GET(request: Request) {
 
     console.log('Fetching mock tests and user attempts for user:', userId)
 
-    // Query 1: Fetch all relevant tests
+    // Query 1: Fetch all relevant tests with question counts
     const { data: tests, error: testsError } = await supabaseAdmin
       .from('tests')
-      .select('*')
+      .select('*, test_questions(count)')
       .in('status', ['scheduled', 'live', 'completed'])
       .order('start_time', { ascending: true })
 
@@ -41,6 +41,14 @@ export async function GET(request: Request) {
       console.error('Error fetching tests:', testsError)
       return NextResponse.json({ error: testsError.message }, { status: 500 })
     }
+
+    // Transform response to flatten question count
+    const transformedTests = (tests || []).map((test: any) => ({
+      ...test,
+      total_questions: test.test_questions?.[0]?.count || 0,
+      // Remove the nested test_questions object
+      test_questions: undefined
+    }))
 
     // Query 2: Fetch user's attempts
     const { data: userAttempts, error: attemptsError } = await supabaseAdmin
@@ -54,11 +62,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: attemptsError.message }, { status: 500 })
     }
 
-    console.log(`Successfully fetched ${tests?.length || 0} tests and ${userAttempts?.length || 0} user attempts`)
+    console.log(`Successfully fetched ${transformedTests?.length || 0} tests and ${userAttempts?.length || 0} user attempts`)
 
     return NextResponse.json({
       data: {
-        tests: tests || [],
+        tests: transformedTests || [],
         userAttempts: userAttempts || []
       }
     })

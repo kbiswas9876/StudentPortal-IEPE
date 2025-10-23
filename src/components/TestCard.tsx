@@ -13,7 +13,7 @@ type Test = {
   status: 'scheduled' | 'live' | 'completed'
   total_time_minutes: number
   marks_per_correct: number
-  marks_per_incorrect: number
+  negative_marks_per_incorrect: number
   total_questions: number
   userScore?: number
   resultId?: number
@@ -205,7 +205,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            -{Math.abs(test.marks_per_incorrect)}
+            {test.negative_marks_per_incorrect || 0}
           </div>
           <div className="text-sm text-slate-600 dark:text-slate-400">Incorrect</div>
         </div>

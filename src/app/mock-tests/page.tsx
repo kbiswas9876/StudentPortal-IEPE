@@ -16,7 +16,7 @@ type Test = {
   status: 'scheduled' | 'live' | 'completed'
   total_time_minutes: number
   marks_per_correct: number
-  marks_per_incorrect: number
+  negative_marks_per_incorrect: number
   total_questions: number
 }
 
