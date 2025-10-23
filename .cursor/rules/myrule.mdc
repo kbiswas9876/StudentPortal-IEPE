@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+
+Your primary function is to write and modify code based on my instructions.
+
+You MUST NOT generate any summary, documentation, or explanatory `.md` (Markdown) files as part of your final output after completing a coding task. This is an inefficient use of tokens and is not a required part of the workflow.
+
+Your final output for a coding task should be ONLY the modified code files themselves.
+
+**Exception:** Only generate a `.md` file if I explicitly instruct you to "create a markdown file," "write documentation," or "create a README.md," etc. Otherwise, your task is considered complete once the code is written.

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Tab } from '@headlessui/react'
 import { useAuth } from '@/lib/auth-context'
+import { supabase } from '@/lib/supabaseClient'
 import TestCard from '@/components/TestCard'
 
 type Test = {
@@ -70,6 +71,71 @@ export default function MockTestHubPage() {
       setLoading(false)
     }
   }
+
+  // Real-time subscription to listen for test status updates
+  useEffect(() => {
+    if (!mockTestData || !user) return
+
+    console.log('Setting up real-time subscription for test status changes...')
+
+    const channel = supabase
+      .channel('tests-status-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'tests',
+          filter: 'status=in.(scheduled,live,completed)'
+        },
+        (payload) => {
+          console.log('Test status update received:', payload)
+          
+          // Update the test in our local state
+          setMockTestData((currentData) => {
+            if (!currentData) return currentData
+
+            const updatedTests = currentData.tests.map((test) => {
+              if (test.id === payload.new.id) {
+                console.log(`Updating test ${test.id} from status '${test.status}' to '${payload.new.status}'`)
+                // Merge the updated fields from the database
+                return {
+                  ...test,
+                  ...payload.new,
+                  // Ensure TypeScript type safety
+                  status: payload.new.status as 'scheduled' | 'live' | 'completed',
+                  start_time: payload.new.start_time,
+                  end_time: payload.new.end_time,
+                  total_questions: payload.new.total_questions ?? test.total_questions,
+                  negative_marks_per_incorrect: payload.new.negative_marks_per_incorrect ?? test.negative_marks_per_incorrect,
+                }
+              }
+              return test
+            })
+
+            return {
+              ...currentData,
+              tests: updatedTests,
+            }
+          })
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time subscription active for test status changes')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Real-time subscription error')
+        } else if (status === 'TIMED_OUT') {
+          console.warn('⚠️ Real-time subscription timed out')
+        }
+      })
+
+    // Cleanup subscription on unmount or when dependencies change
+    return () => {
+      console.log('Cleaning up real-time subscription...')
+      channel.unsubscribe()
+    }
+  }, [mockTestData, user])
 
   const categorizeTests = () => {
     if (!mockTestData) return { upcoming: [], live: [], completed: [] }
