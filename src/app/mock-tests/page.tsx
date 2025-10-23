@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Tab } from '@headlessui/react'
-import { MagnifyingGlassIcon, XMarkIcon, FunnelIcon, ClockIcon, PlayIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, XMarkIcon, FunnelIcon, ClockIcon, PlayIcon, CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabaseClient'
 import TestCard from '@/components/tests/TestCard'
@@ -42,6 +42,79 @@ export default function MockTestHubPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'score' | 'name'>('date')
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(0)
+
+  // State persistence - load from localStorage on mount
+  useEffect(() => {
+    const savedSearchQuery = localStorage.getItem('mockTestSearchQuery')
+    const savedSortBy = localStorage.getItem('mockTestSortBy')
+    const savedMockTestData = localStorage.getItem('mockTestData')
+    
+    if (savedSearchQuery) setSearchQuery(savedSearchQuery)
+    if (savedSortBy && ['date', 'score', 'name'].includes(savedSortBy)) {
+      setSortBy(savedSortBy as 'date' | 'score' | 'name')
+    }
+    if (savedMockTestData) {
+      try {
+        const parsedData = JSON.parse(savedMockTestData)
+        setMockTestData(parsedData)
+        setLoading(false) // Don't show loading if we have cached data
+      } catch (error) {
+        console.warn('Failed to parse cached mock test data:', error)
+      }
+    }
+  }, [])
+
+  // Save search and sort preferences to localStorage
+  useEffect(() => {
+    localStorage.setItem('mockTestSearchQuery', searchQuery)
+  }, [searchQuery])
+
+  useEffect(() => {
+    localStorage.setItem('mockTestSortBy', sortBy)
+  }, [sortBy])
+
+  // Save mock test data to localStorage when it changes
+  useEffect(() => {
+    if (mockTestData) {
+      localStorage.setItem('mockTestData', JSON.stringify(mockTestData))
+    }
+  }, [mockTestData])
+
+  const fetchMockTestData = useCallback(async (forceRefresh = false) => {
+    if (!user?.id) return
+    
+    // Check if we need to refresh (only if forced or data is stale)
+    const now = Date.now()
+    const timeSinceLastRefresh = now - lastRefreshTime
+    const REFRESH_COOLDOWN = 30000 // 30 seconds
+    
+    if (!forceRefresh && timeSinceLastRefresh < REFRESH_COOLDOWN) {
+      console.log('⏭️ Skipping refresh - data is still fresh')
+      return
+    }
+
+    try {
+      setLoading(true)
+      console.log('Fetching mock test data for user:', user.id)
+
+      const response = await fetch(`/api/mock-tests?userId=${user.id}`)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch mock test data')
+      }
+
+      console.log('Mock test data fetched successfully:', result.data)
+      setMockTestData(result.data)
+      setLastRefreshTime(now)
+    } catch (error) {
+      console.error('Error fetching mock test data:', error)
+      setError(error instanceof Error ? error.message : 'Failed to fetch mock test data')
+    } finally {
+      setLoading(false)
+    }
+  }, [user?.id, lastRefreshTime])
 
   useEffect(() => {
     if (authLoading) return
@@ -51,30 +124,22 @@ export default function MockTestHubPage() {
       return
     }
 
-    fetchMockTestData()
-  }, [user, authLoading, router])
-
-  const fetchMockTestData = async () => {
-    try {
-      setLoading(true)
-      console.log('Fetching mock test data for user:', user?.id)
-
-      const response = await fetch(`/api/mock-tests?userId=${user?.id}`)
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch mock test data')
-      }
-
-      console.log('Mock test data fetched successfully:', result.data)
-      setMockTestData(result.data)
-    } catch (error) {
-      console.error('Error fetching mock test data:', error)
-      setError(error instanceof Error ? error.message : 'Failed to fetch mock test data')
-    } finally {
+    // Only fetch if we don't have cached data or if data is very stale
+    const now = Date.now()
+    const timeSinceLastRefresh = now - lastRefreshTime
+    const STALE_DATA_THRESHOLD = 300000 // 5 minutes
+    
+    if (!mockTestData || timeSinceLastRefresh > STALE_DATA_THRESHOLD) {
+      fetchMockTestData()
+    } else {
+      console.log('📱 Using cached data, skipping initial fetch')
       setLoading(false)
     }
-  }
+  }, [user, authLoading, router, fetchMockTestData, mockTestData, lastRefreshTime])
+
+  // Disabled automatic refresh on tab visibility change to prevent unwanted refreshes
+  // The real-time subscription will handle updates automatically
+  // Users can manually refresh using the refresh button if needed
 
   // Real-time subscription to listen for test status updates
   useEffect(() => {
@@ -256,6 +321,11 @@ export default function MockTestHubPage() {
     router.push(`/analysis/${resultId}`)
   }
 
+  const handleRefresh = () => {
+    console.log('🔄 Manual refresh triggered')
+    fetchMockTestData(true) // Force refresh
+  }
+
   // Compute categorized tests using useMemo (must be before early returns)
   const { upcoming, live, completed } = useMemo(() => {
     if (!mockTestData) {
@@ -304,8 +374,8 @@ export default function MockTestHubPage() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="mb-12"
         >
-            {/* Search Bar */}
-          <div className="mb-8">
+            {/* Search Bar and Refresh Button */}
+          <div className="mb-8 flex items-center gap-4">
             <div className="w-full max-w-md">
               <div className="relative">
                 <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -326,6 +396,18 @@ export default function MockTestHubPage() {
               )}
               </div>
             </div>
+            
+            {/* Refresh Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRefresh}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl transition-all duration-300 shadow-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ArrowPathIcon className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </motion.button>
           </div>
           <Tab.Group>
             <Tab.List className="flex space-x-1 bg-slate-100 dark:bg-slate-900 rounded-2xl p-1.5 max-w-lg shadow-sm">
