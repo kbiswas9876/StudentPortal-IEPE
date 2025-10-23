@@ -9,17 +9,28 @@ import PerformanceAnalysisDashboard from '@/components/PerformanceAnalysisDashbo
 import Leaderboard from '@/components/Leaderboard'
 import AnalysisSkeletonLoader from '@/components/AnalysisSkeletonLoader'
 import RevisionPerformanceInsights from '@/components/RevisionPerformanceInsights'
+import SectionalPerformance from '@/components/SectionalPerformance'
 import { Tab } from '@headlessui/react'
 
 type TestResult = Database['public']['Tables']['test_results']['Row']
 type AnswerLog = Database['public']['Tables']['answer_log']['Row']
 type Question = Database['public']['Tables']['questions']['Row']
 
+interface SectionalStats {
+  total: number
+  correct: number
+  incorrect: number
+  skipped: number
+  accuracy: number
+  avgTime: number
+}
+
 interface AnalysisData {
   testResult: TestResult
   answerLog: AnswerLog[]
   questions: Question[]
   peerAverages: Record<number, number>
+  sectionalPerformance?: Record<string, SectionalStats>
   isMockTest?: boolean
   mockTestId?: number
 }
@@ -367,6 +378,7 @@ export default function AnalysisReportPage() {
             <Tab.List className="flex space-x-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-8">
               {[
                 { key: 'analysis', label: 'My Analysis', icon: '📊' },
+                { key: 'sectional', label: 'Chapter-wise', icon: '📚' },
                 { key: 'leaderboard', label: 'Leaderboard', icon: '🏆' }
               ].map((tab) => (
                 <Tab
@@ -410,6 +422,25 @@ export default function AnalysisReportPage() {
                         router.push(url)
                       }}
                     />
+                  )}
+                </motion.div>
+              </Tab.Panel>
+
+              <Tab.Panel>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {analysisData?.sectionalPerformance && (
+                    <SectionalPerformance sectionalPerformance={analysisData.sectionalPerformance} />
+                  )}
+                  {!analysisData?.sectionalPerformance && (
+                    <div className="text-center py-12">
+                      <p className="text-slate-600 dark:text-slate-400">
+                        No sectional performance data available for this test.
+                      </p>
+                    </div>
                   )}
                 </motion.div>
               </Tab.Panel>

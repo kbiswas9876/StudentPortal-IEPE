@@ -108,8 +108,65 @@ export async function GET(
       })
     }
 
+    // Calculate sectional performance (by chapter)
+    const sectionalPerformance: Record<string, {
+      total: number
+      correct: number
+      incorrect: number
+      skipped: number
+      accuracy: number
+      avgTime: number
+    }> = {}
+
+    // Create a map of question_id to question data for quick lookup
+    const questionMap = new Map(questions.map(q => [q.id, q]))
+
+    answerLog.forEach(answer => {
+      const question = questionMap.get(answer.question_id)
+      if (!question || !question.chapter_name) return
+
+      const chapter = question.chapter_name
+
+      if (!sectionalPerformance[chapter]) {
+        sectionalPerformance[chapter] = {
+          total: 0,
+          correct: 0,
+          incorrect: 0,
+          skipped: 0,
+          accuracy: 0,
+          avgTime: 0
+        }
+      }
+
+      sectionalPerformance[chapter].total++
+      
+      if (answer.status === 'correct') {
+        sectionalPerformance[chapter].correct++
+      } else if (answer.status === 'incorrect') {
+        sectionalPerformance[chapter].incorrect++
+      } else if (answer.status === 'skipped') {
+        sectionalPerformance[chapter].skipped++
+      }
+    })
+
+    // Calculate accuracy and average time for each chapter
+    Object.entries(sectionalPerformance).forEach(([chapter, stats]) => {
+      const attempted = stats.correct + stats.incorrect
+      stats.accuracy = attempted > 0 ? (stats.correct / attempted) * 100 : 0
+
+      // Calculate average time for this chapter's questions
+      const chapterAnswers = answerLog.filter(answer => {
+        const question = questionMap.get(answer.question_id)
+        return question && question.chapter_name === chapter
+      })
+      
+      const totalTime = chapterAnswers.reduce((sum, answer) => sum + (answer.time_taken || 0), 0)
+      stats.avgTime = chapterAnswers.length > 0 ? Math.round(totalTime / chapterAnswers.length) : 0
+    })
+
     console.log('Fetched questions:', questions)
     console.log('Peer averages calculated:', peerAverages)
+    console.log('Sectional performance calculated:', sectionalPerformance)
     console.log(`Successfully fetched analysis data: ${testResult ? '1' : '0'} test result, ${answerLog.length} answers, ${questions.length} questions`)
 
     return NextResponse.json({
@@ -117,7 +174,8 @@ export async function GET(
         testResult,
         answerLog,
         questions,
-        peerAverages
+        peerAverages,
+        sectionalPerformance
       }
     })
   } catch (error) {
