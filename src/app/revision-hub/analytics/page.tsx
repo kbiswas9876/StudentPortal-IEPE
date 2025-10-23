@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth-context'
 import ReviewStreakCard from '@/components/analytics/ReviewStreakCard'
 import RetentionRateChart from '@/components/analytics/RetentionRateChart'
 import DeckMasteryChart from '@/components/analytics/DeckMasteryChart'
-import UpcomingReviewsCalendar from '@/components/analytics/UpcomingReviewsCalendar'
+import ReviewHeatmapCalendar from '@/components/analytics/ReviewHeatmapCalendar'
 import StreakActivityCard from '@/components/analytics/StreakActivityCard'
 import ActionableInsightsCard from '@/components/analytics/ActionableInsightsCard'
 
@@ -34,9 +34,10 @@ interface AnalyticsData {
     maturing: { count: number; percentage: number }
     mastered: { count: number; percentage: number }
   }
-  upcomingReviews: Array<{
+  monthlyData: Array<{
     date: string
-    count: number
+    reviewsCompleted: number
+    reviewsScheduled: number
   }>
   streakData?: {
     currentStreak: number
@@ -212,8 +213,8 @@ export default function AnalyticsPage() {
             retentionData={analyticsData.retention.breakdown}
           />
 
-          {/* Upcoming Reviews Calendar */}
-          <UpcomingReviewsCalendar forecast={analyticsData.upcomingReviews} />
+          {/* Monthly Activity Calendar */}
+          <ReviewHeatmapCalendar monthlyData={analyticsData.monthlyData} />
 
           {/* Actionable Insights Card */}
           {analyticsData.insights && (

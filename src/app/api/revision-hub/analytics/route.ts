@@ -89,24 +89,47 @@ export async function GET(request: Request) {
     });
 
     // ============================================================================
-    // 3. CALCULATE UPCOMING REVIEWS FORECAST
+    // 3. CALCULATE MONTHLY CALENDAR DATA (Past + Future)
     // ============================================================================
-    const forecast = [];
-    for (let i = 0; i < 7; i++) {
-      const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() + i);
+    
+    // Get current month boundaries
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const daysInMonth = lastDayOfMonth.getDate();
+
+    // Fetch completed reviews from daily_review_summary for this month
+    const { data: dailySummaries } = await supabaseAdmin
+      .from('daily_review_summary')
+      .select('date, reviews_completed')
+      .eq('user_id', userId)
+      .gte('date', firstDayOfMonth.toISOString().split('T')[0])
+      .lte('date', lastDayOfMonth.toISOString().split('T')[0]);
+
+    // Create a map for quick lookup
+    const summaryMap = new Map();
+    dailySummaries?.forEach(summary => {
+      summaryMap.set(summary.date, summary.reviews_completed);
+    });
+
+    // Build monthly data array
+    const monthlyData = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const targetDate = new Date(now.getFullYear(), now.getMonth(), day);
       const dateStr = targetDate.toISOString().split('T')[0];
 
-      const dueOnDate = bookmarks?.filter(bookmark => {
+      // Count scheduled reviews for this date
+      const scheduledReviews = bookmarks?.filter(bookmark => {
         const reviewDate = bookmark.is_custom_reminder_active
           ? bookmark.custom_next_review_date
           : bookmark.next_review_date;
         return reviewDate === dateStr;
       }).length || 0;
 
-      forecast.push({
+      monthlyData.push({
         date: dateStr,
-        count: dueOnDate,
+        reviewsCompleted: summaryMap.get(dateStr) || 0,
+        reviewsScheduled: scheduledReviews,
       });
     }
 
@@ -214,7 +237,7 @@ export async function GET(request: Request) {
           percentage: totalBookmarks > 0 ? Math.round((mastered / totalBookmarks) * 100) : 0,
         },
       },
-      upcomingReviews: forecast,
+      monthlyData: monthlyData,
     };
 
     console.log('✅ Analytics calculated successfully');
