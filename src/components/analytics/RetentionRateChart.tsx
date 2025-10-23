@@ -8,9 +8,15 @@ import InformationalTooltip from './InformationalTooltip'
 interface RetentionRateChartProps {
   retentionRate: number
   averageEaseFactor: number
+  retentionData: {
+    young7Days: number | null
+    mature7Days: number | null
+    young30Days: number | null
+    mature30Days: number | null
+  }
 }
 
-export default function RetentionRateChart({ retentionRate, averageEaseFactor }: RetentionRateChartProps) {
+export default function RetentionRateChart({ retentionRate, averageEaseFactor, retentionData }: RetentionRateChartProps) {
   // Determine color based on retention rate
   const getColorClasses = (rate: number) => {
     if (rate >= 80) return {
@@ -51,7 +57,7 @@ export default function RetentionRateChart({ retentionRate, averageEaseFactor }:
             Retention Rate
           </h3>
           <InformationalTooltip 
-            content="This shows how well you remember your bookmarked questions over time. A high retention rate means you're successfully learning and retaining information. The percentage is calculated based on your review performance and ease factors. Aim for 80%+ for optimal learning!"
+            content="This shows how well you remember questions over time. The circular progress shows your overall retention rate. The table breaks this down by question maturity: Young questions (< 21 days) are still being learned, while Mature questions (≥ 21 days) test long-term memory. A high retention rate (above 85%) means your study habits are effective."
           />
         </div>
         <div className={`p-3 bg-gradient-to-br ${colors.gradient} rounded-xl`}>
@@ -108,6 +114,51 @@ export default function RetentionRateChart({ retentionRate, averageEaseFactor }:
               {retentionRate}%
             </motion.div>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">retention</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Maturity-Based Retention Table */}
+      <div className="mt-6 mb-4">
+        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+          <TrendingUp className="h-4 w-4" />
+          Retention by Maturity
+        </h4>
+        
+        <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+          {/* Table Header */}
+          <div className="grid grid-cols-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+            <div className="px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400">Maturity</div>
+            <div className="px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 text-center">Last 7 Days</div>
+            <div className="px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 text-center">Last 30 Days</div>
+          </div>
+          
+          {/* Young Questions Row */}
+          <div className="grid grid-cols-3 border-b border-slate-200 dark:border-slate-700">
+            <div className="px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
+              Young Questions
+              <span className="block text-xs text-slate-500 dark:text-slate-500">(&lt; 21 days)</span>
+            </div>
+            <div className="px-3 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {retentionData.young7Days !== null ? `${retentionData.young7Days}%` : 'N/A'}
+            </div>
+            <div className="px-3 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {retentionData.young30Days !== null ? `${retentionData.young30Days}%` : 'N/A'}
+            </div>
+          </div>
+          
+          {/* Mature Questions Row */}
+          <div className="grid grid-cols-3">
+            <div className="px-3 py-3 text-sm text-slate-700 dark:text-slate-300">
+              Mature Questions
+              <span className="block text-xs text-slate-500 dark:text-slate-500">(≥ 21 days)</span>
+            </div>
+            <div className="px-3 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {retentionData.mature7Days !== null ? `${retentionData.mature7Days}%` : 'N/A'}
+            </div>
+            <div className="px-3 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {retentionData.mature30Days !== null ? `${retentionData.mature30Days}%` : 'N/A'}
+            </div>
           </div>
         </div>
       </div>

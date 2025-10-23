@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
-import { AlertCircle, TrendingDown, PlayCircle } from 'lucide-react'
+import { AlertCircle, TrendingDown, PlayCircle, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface HardQuestion {
@@ -24,11 +24,22 @@ interface WeakChapter {
 interface ActionableInsightsCardProps {
   hardestQuestions: HardQuestion[]
   weakestChapters: WeakChapter[]
+  hourlyPerformance?: {
+    hasEnoughData: boolean
+    performanceByTimeBlock: Array<{
+      timeBlock: string
+      label: string
+      timeRange: string
+      successRate: number
+      totalReviews: number
+    }>
+  }
 }
 
 export default function ActionableInsightsCard({
   hardestQuestions,
   weakestChapters,
+  hourlyPerformance,
 }: ActionableInsightsCardProps) {
   const router = useRouter()
 
@@ -174,6 +185,82 @@ export default function ActionableInsightsCard({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Hourly Performance Breakdown */}
+      {hourlyPerformance && hourlyPerformance.hasEnoughData && (
+        <div className="mt-6">
+          <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
+            <Clock className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            Your Peak Performance Time
+          </h4>
+          
+          <div className="space-y-3">
+            {hourlyPerformance.performanceByTimeBlock.map((block, index) => (
+              <motion.div
+                key={block.timeBlock}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 + index * 0.1 }}
+                className="group relative"
+              >
+                {/* Time Block Label */}
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {block.label}
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {block.timeRange}
+                  </span>
+                </div>
+                
+                {/* Bar Chart */}
+                <div className="relative h-8 bg-slate-100 dark:bg-slate-700 rounded-lg overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${block.successRate}%` }}
+                    transition={{ duration: 0.8, delay: 0.8 + index * 0.1 }}
+                    className={`h-full flex items-center justify-end pr-2 ${
+                      block.successRate >= 80 
+                        ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+                        : block.successRate >= 60
+                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                        : 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                    }`}
+                  >
+                    <span className="text-xs font-bold text-white">
+                      {block.successRate}%
+                    </span>
+                  </motion.div>
+                  
+                  {/* Hover Tooltip */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/80 dark:bg-slate-100/80 rounded-lg">
+                    <span className="text-xs font-medium text-white dark:text-slate-900">
+                      Success Rate: {block.successRate}% ({block.totalReviews} reviews)
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          
+          {/* Insight Message */}
+          <div className="mt-4 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+            <p className="text-xs text-indigo-800 dark:text-indigo-200">
+              💡 <strong>Tip:</strong> Schedule your most challenging reviews during your peak performance time for maximum effectiveness!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State for Insufficient Data */}
+      {hourlyPerformance && !hourlyPerformance.hasEnoughData && (
+        <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+          <Clock className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Keep studying at different times of the day to unlock your performance insights!
+          </p>
         </div>
       )}
 

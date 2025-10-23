@@ -55,7 +55,7 @@ export async function GET(request: Request) {
         questions (
           id,
           question_text,
-          chapter,
+          chapter_name,
           book_code
         )
       `)
@@ -134,7 +134,7 @@ export async function GET(request: Request) {
         bookmarkId: bookmark.id,
         questionId: bookmark.question_id,
         questionText: question.question_text || '',
-        chapter: question.chapter || 'Unknown',
+        chapter: question.chapter_name || 'Unknown',
         difficultyScore,
         easeFactor: bookmark.srs_ease_factor,
         repetitions: bookmark.srs_repetitions,
@@ -174,9 +174,9 @@ export async function GET(request: Request) {
 
     for (const bookmark of bookmarks) {
       const question = bookmark.questions as any;
-      if (!question || !question.chapter) continue;
+      if (!question || !question.chapter_name) continue;
 
-      const chapter = question.chapter;
+      const chapter = question.chapter_name;
       
       if (!chapterMap.has(chapter)) {
         chapterMap.set(chapter, {
@@ -208,6 +208,26 @@ export async function GET(request: Request) {
       .slice(0, 3);
 
     // ============================================================================
+    // STEP 4.5: Fetch Hourly Performance Data
+    // ============================================================================
+
+    let hourlyPerformance = null;
+
+    try {
+      const hourlyResponse = await fetch(
+        `${env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/revision-hub/hourly-performance?userId=${userId}`,
+        { cache: 'no-store' }
+      );
+      
+      if (hourlyResponse.ok) {
+        hourlyPerformance = await hourlyResponse.json();
+        console.log('✅ Hourly performance fetched for insights');
+      }
+    } catch (error) {
+      console.error('⚠️ Error fetching hourly performance (non-critical):', error);
+    }
+
+    // ============================================================================
     // STEP 5: Return Results
     // ============================================================================
 
@@ -221,6 +241,7 @@ export async function GET(request: Request) {
       data: {
         hardestQuestions,
         weakestChapters,
+        hourlyPerformance,
       },
     });
 

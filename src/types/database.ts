@@ -339,6 +339,50 @@ export interface Database {
           created_at?: string
         }
       }
+      review_history: {
+        Row: {
+          id: string
+          user_id: string
+          bookmark_id: string
+          question_id: string
+          performance_rating: number
+          interval_at_review: number
+          ease_factor_at_review: number
+          repetitions_at_review: number
+          new_interval: number
+          new_ease_factor: number
+          new_repetitions: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          bookmark_id: string
+          question_id: string
+          performance_rating: number
+          interval_at_review: number
+          ease_factor_at_review: number
+          repetitions_at_review: number
+          new_interval: number
+          new_ease_factor: number
+          new_repetitions: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          bookmark_id?: string
+          question_id?: string
+          performance_rating?: number
+          interval_at_review?: number
+          ease_factor_at_review?: number
+          repetitions_at_review?: number
+          new_interval?: number
+          new_ease_factor?: number
+          new_repetitions?: number
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

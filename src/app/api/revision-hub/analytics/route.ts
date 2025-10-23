@@ -133,6 +133,57 @@ export async function GET(request: Request) {
     const estimatedRetentionRate = Math.min(100, Math.max(0, ((avgEaseFactor - 1.3) / (3.0 - 1.3)) * 100));
 
     // ============================================================================
+    // 5.5 FETCH RETENTION BREAKDOWN DATA
+    // ============================================================================
+    // Fetch detailed retention data by maturity from the new endpoint
+    let retentionBreakdown = {
+      young7Days: null,
+      mature7Days: null,
+      young30Days: null,
+      mature30Days: null,
+    };
+
+    try {
+      const retentionResponse = await fetch(
+        `${env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/revision-hub/retention-rate?userId=${userId}`,
+        { cache: 'no-store' }
+      );
+      
+      if (retentionResponse.ok) {
+        const retentionData = await retentionResponse.json();
+        retentionBreakdown = {
+          young7Days: retentionData.young7Days,
+          mature7Days: retentionData.mature7Days,
+          young30Days: retentionData.young30Days,
+          mature30Days: retentionData.mature30Days,
+        };
+        console.log('✅ Retention breakdown fetched');
+      }
+    } catch (error) {
+      console.error('⚠️ Error fetching retention breakdown (non-critical):', error);
+    }
+
+    // ============================================================================
+    // 5.6 FETCH HOURLY PERFORMANCE DATA
+    // ============================================================================
+    // Fetch hourly performance breakdown from the new endpoint
+    let hourlyPerformance = null;
+
+    try {
+      const hourlyResponse = await fetch(
+        `${env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/revision-hub/hourly-performance?userId=${userId}`,
+        { cache: 'no-store' }
+      );
+      
+      if (hourlyResponse.ok) {
+        hourlyPerformance = await hourlyResponse.json();
+        console.log('✅ Hourly performance fetched');
+      }
+    } catch (error) {
+      console.error('⚠️ Error fetching hourly performance (non-critical):', error);
+    }
+
+    // ============================================================================
     // 6. RETURN ANALYTICS DATA
     // ============================================================================
     // Note: Insights are fetched separately via /api/revision-hub/insights
@@ -143,6 +194,11 @@ export async function GET(request: Request) {
         currentStreak,
         retentionRate: Math.round(estimatedRetentionRate),
         averageEaseFactor: Number(avgEaseFactor.toFixed(2)),
+      },
+      retention: {
+        rate: Math.round(estimatedRetentionRate),
+        averageEaseFactor: Number(avgEaseFactor.toFixed(2)),
+        breakdown: retentionBreakdown,
       },
       deckMastery: {
         learning: {

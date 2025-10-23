@@ -19,6 +19,16 @@ interface AnalyticsData {
     retentionRate: number
     averageEaseFactor: number
   }
+  retention: {
+    rate: number
+    averageEaseFactor: number
+    breakdown: {
+      young7Days: number | null
+      mature7Days: number | null
+      young30Days: number | null
+      mature30Days: number | null
+    }
+  }
   deckMastery: {
     learning: { count: number; percentage: number }
     maturing: { count: number; percentage: number }
@@ -51,6 +61,16 @@ interface AnalyticsData {
       successRate: number
       totalAttempts: number
     }>
+    hourlyPerformance?: {
+      hasEnoughData: boolean
+      performanceByTimeBlock: Array<{
+        timeBlock: string
+        label: string
+        timeRange: string
+        successRate: number
+        totalReviews: number
+      }>
+    }
   }
 }
 
@@ -187,8 +207,9 @@ export default function AnalyticsPage() {
 
           {/* Retention Rate Chart */}
           <RetentionRateChart
-            retentionRate={analyticsData.overview.retentionRate}
-            averageEaseFactor={analyticsData.overview.averageEaseFactor}
+            retentionRate={analyticsData.retention.rate}
+            averageEaseFactor={analyticsData.retention.averageEaseFactor}
+            retentionData={analyticsData.retention.breakdown}
           />
 
           {/* Upcoming Reviews Calendar */}
@@ -199,6 +220,7 @@ export default function AnalyticsPage() {
             <ActionableInsightsCard
               hardestQuestions={analyticsData.insights.hardestQuestions}
               weakestChapters={analyticsData.insights.weakestChapters}
+              hourlyPerformance={analyticsData.insights.hourlyPerformance}
             />
           )}
         </div>

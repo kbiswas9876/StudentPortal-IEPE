@@ -215,6 +215,36 @@ export async function POST(request: Request) {
     console.log('📅 New next_review_date:', updatedSrsData.next_review_date);
 
     // ============================================================================
+    // STEP 5.5: Insert into Review History (for retention analytics)
+    // ============================================================================
+    
+    try {
+      const { error: historyError } = await supabaseAdmin
+        .from('review_history')
+        .insert({
+          user_id: userId,
+          bookmark_id: bookmark.id,
+          question_id: bookmark.question_id,
+          performance_rating: performanceRating,
+          interval_at_review: currentSrsData.srs_interval,
+          ease_factor_at_review: currentSrsData.srs_ease_factor,
+          repetitions_at_review: currentSrsData.srs_repetitions,
+          new_interval: updatedSrsData.srs_interval,
+          new_ease_factor: updatedSrsData.srs_ease_factor,
+          new_repetitions: updatedSrsData.srs_repetitions,
+        });
+
+      if (historyError) {
+        console.error('⚠️ Failed to log review history (non-critical):', historyError);
+      } else {
+        console.log('✅ Review history logged successfully');
+      }
+    } catch (historyError) {
+      // Don't fail the whole request if history logging fails
+      console.error('⚠️ Error logging review history (non-critical):', historyError);
+    }
+
+    // ============================================================================
     // STEP 6: Update Daily Review Summary (for streak tracking)
     // ============================================================================
     
