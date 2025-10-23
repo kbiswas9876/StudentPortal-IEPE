@@ -4,12 +4,14 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
+import { useToast } from '@/lib/toast-context'
 import { Database } from '@/types/database'
 import PerformanceAnalysisDashboard from '@/components/PerformanceAnalysisDashboard'
 import Leaderboard from '@/components/Leaderboard'
 import AnalysisSkeletonLoader from '@/components/AnalysisSkeletonLoader'
 import RevisionPerformanceInsights from '@/components/RevisionPerformanceInsights'
 import SectionalPerformance from '@/components/SectionalPerformance'
+import ActionableInsights from '@/components/ActionableInsights'
 import { Tab } from '@headlessui/react'
 
 type TestResult = Database['public']['Tables']['test_results']['Row']
@@ -197,6 +199,38 @@ export default function AnalysisReportPage() {
       }
     } catch (error) {
       console.error('Error reporting question:', error)
+    }
+  }
+
+  const { showToast } = useToast()
+
+  const handleGenerateRevisionPack = async () => {
+    try {
+      showToast({ title: 'Generating...', message: 'Creating your revision pack...', type: 'info' })
+      
+      const response = await fetch(`/api/analysis/${resultId}/generate-revision-pack`)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to generate revision pack')
+      }
+
+      if (result.questionIds.length === 0) {
+        showToast({ title: 'All Correct!', message: 'No incorrect answers found. Great job!', type: 'success' })
+        return
+      }
+
+      // Create practice session URL with incorrect questions
+      const questionIdsParam = result.questionIds.join(',')
+      const url = `/practice?questionIds=${questionIdsParam}&testMode=practice&source=revision-pack`
+      
+      showToast({ title: 'Success', message: `Revision pack created with ${result.count} questions!`, type: 'success' })
+      
+      // Navigate to practice with these questions
+      router.push(url)
+    } catch (error) {
+      console.error('Error generating revision pack:', error)
+      showToast({ title: 'Error', message: 'Failed to generate revision pack. Please try again.', type: 'error' })
     }
   }
 
@@ -407,21 +441,35 @@ export default function AnalysisReportPage() {
                   transition={{ duration: 0.3 }}
                 >
                   {analysisData && (
-                    <PerformanceAnalysisDashboard
-                      sessionResult={{
-                        testResult: analysisData.testResult,
-                        answerLog: analysisData.answerLog,
-                        questions: analysisData.questions
-                      }}
-                      onNavigateToSolutions={() => {
-                        const source = searchParams.get('source')
-                        let url = `/analysis/${resultId}/solutions`
-                        if (source === 'revision') {
-                          url += `?source=revision`
-                        }
-                        router.push(url)
-                      }}
-                    />
+                    <>
+                      <PerformanceAnalysisDashboard
+                        sessionResult={{
+                          testResult: analysisData.testResult,
+                          answerLog: analysisData.answerLog,
+                          questions: analysisData.questions
+                        }}
+                        onNavigateToSolutions={() => {
+                          const source = searchParams.get('source')
+                          let url = `/analysis/${resultId}/solutions`
+                          if (source === 'revision') {
+                            url += `?source=revision`
+                          }
+                          router.push(url)
+                        }}
+                      />
+                      
+                      {/* Actionable Insights */}
+                      {analysisData.sectionalPerformance && (
+                        <div className="mt-8">
+                          <ActionableInsights
+                            answerLog={analysisData.answerLog}
+                            sectionalPerformance={analysisData.sectionalPerformance}
+                            peerAverages={analysisData.peerAverages}
+                            onGenerateRevisionPack={handleGenerateRevisionPack}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </motion.div>
               </Tab.Panel>
