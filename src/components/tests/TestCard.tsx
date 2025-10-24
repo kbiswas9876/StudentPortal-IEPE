@@ -239,7 +239,16 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
             </div>
             {timeRemaining && (
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg shadow-md">
-                <p className="text-xl font-bold tracking-wider font-mono">{timeRemaining}</p>
+                <p 
+                  className="text-xl font-bold tracking-wider"
+                  style={{ 
+                    fontFamily: '"Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                    fontWeight: '700',
+                    letterSpacing: '0.05em'
+                  }}
+                >
+                  {timeRemaining}
+                </p>
                 <p className="text-xs opacity-90 mt-1">until test starts</p>
               </div>
             )}
