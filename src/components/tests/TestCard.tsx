@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, FileText, Clock, CheckCircle, XCircle, TrendingUp, Award, Eye, Play, AlertCircle } from 'lucide-react'
+import { getScoreColor, getPercentileColor } from '@/utils/colorUtils'
 
 type Test = {
   id: number
@@ -128,7 +129,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => test.resultId && onViewResult(test.resultId)}
-            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-sm py-3.5 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 border border-indigo-800"
+            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-sm py-2.5 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 border border-indigo-800"
           >
             <Eye className="w-4 h-4" />
             <span>View Results</span>
@@ -144,7 +145,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="group relative bg-[#F7F8FA] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 h-full flex flex-col"
+      className="group relative bg-[#F7F8FA] rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 h-full flex flex-col"
     >
       {/* Live Status Badge */}
       {type === 'live' && (
@@ -174,10 +175,10 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
       </div>
 
       {/* Content Section */}
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-4 flex flex-col flex-1 space-y-3">
         
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="flex items-start">
             <FileText className="w-4 h-4 text-[#5F6368] mr-2 mt-0.5" />
             <div>
@@ -194,8 +195,8 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
           </div>
         </div>
 
-                 {/* Marking Scheme Pills */}
-                 <div className="mb-4">
+        {/* Marking Scheme Pills */}
+        <div className="mb-3">
                    <p className="text-xs text-[#5F6368] mb-2">Marking</p>
                    <div className="flex gap-2">
                      <div className="inline-flex items-center bg-green-600 rounded-full px-2.5 py-1">
@@ -211,10 +212,15 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
 
         {/* Score Display - Only for completed tests */}
         {type === 'completed' && test.results && (
-          <div className="bg-white rounded-lg p-4 mb-4 shadow-sm text-center">
+          <div className="bg-white rounded-lg p-3 mb-3 shadow-sm text-center">
             <p className="text-xs text-[#5F6368] mb-2 uppercase tracking-wide">Final Score</p>
-            <div className="font-bold text-[#1A1C1E] tracking-tight">
-              <span className="text-4xl">{test.results.marks_obtained.toFixed(2)}</span>
+            <div className="font-bold tracking-tight">
+              <span 
+                className="text-4xl"
+                style={{ color: getScoreColor(test.results.marks_obtained, test.results.total_marks) }}
+              >
+                {test.results.marks_obtained === 0 ? '0' : test.results.marks_obtained.toFixed(2)}
+              </span>
               <span className="text-2xl text-[#5F6368] mx-1.5">/</span>
               <span className="text-3xl text-[#5F6368]">{test.results.total_marks}</span>
             </div>
@@ -241,13 +247,18 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
 
         {/* Percentile and Rank - Only for completed tests */}
         {type === 'completed' && test.results && (
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="grid grid-cols-2 gap-3 mb-3">
             <div className="bg-white rounded-lg p-3 shadow-sm text-center">
               <div className="flex items-center justify-center mb-1">
                 <TrendingUp className="w-3.5 h-3.5 text-[#1E8E3E] mr-1" />
                 <p className="text-xs text-[#5F6368] font-medium">Percentile</p>
               </div>
-              <p className="text-2xl font-bold text-[#1E8E3E]">{test.results.percentile?.toFixed(1) || '0.0'}</p>
+              <p 
+                className="text-2xl font-bold"
+                style={{ color: getPercentileColor(test.results.percentile || 0) }}
+              >
+                {test.results.percentile === 0 ? '0' : (test.results.percentile?.toFixed(1) || '0')}
+              </p>
             </div>
             <div className="bg-white rounded-lg p-3 shadow-sm text-center">
               <div className="flex items-center justify-center mb-1">
