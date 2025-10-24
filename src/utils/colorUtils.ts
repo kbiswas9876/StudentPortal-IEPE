@@ -36,12 +36,18 @@ export const getScoreColor = (marksObtained: number, totalMarks: number): string
 /**
  * Calculates the color for the percentile with a defined floor value.
  * Any percentile below the floor will be shown in absolute red.
+ * High percentiles (100% or higher) will use deep green.
  */
 export const getPercentileColor = (percentile: number): string => {
   const PERCENTILE_FLOOR = 40; // You can adjust this threshold
 
   if (percentile < PERCENTILE_FLOOR) {
     return 'hsl(0, 90%, 45%)'; // Absolute Red
+  }
+
+  // Use deep green for 100% or higher percentiles
+  if (percentile >= 100) {
+    return 'hsl(120, 95%, 25%)'; // Deep Green
   }
 
   // The color scale will apply from the floor (40) to 100
