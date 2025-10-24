@@ -50,21 +50,21 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
           return
         }
 
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const totalHours = Math.floor(diff / (1000 * 60 * 60))
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000)
 
-        if (days > 0) {
-          setTimeRemaining(`${days}d ${hours}h`)
-        } else if (hours > 0) {
-          setTimeRemaining(`${hours}h ${minutes}m`)
-        } else {
-          setTimeRemaining(`${minutes}m`)
-        }
+        // Format as HH:MM:SS
+        const hours = totalHours % 24
+        const formattedHours = hours.toString().padStart(2, '0')
+        const formattedMinutes = minutes.toString().padStart(2, '0')
+        const formattedSeconds = seconds.toString().padStart(2, '0')
+        
+        setTimeRemaining(`${formattedHours}:${formattedMinutes}:${formattedSeconds}`)
       }
 
       updateTimeRemaining()
-      const interval = setInterval(updateTimeRemaining, 60000)
+      const interval = setInterval(updateTimeRemaining, 1000) // Update every second
       return () => clearInterval(interval)
     }
   }, [test.start_time, type])
@@ -149,15 +149,15 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
     >
       {/* Live Status Badge */}
       {type === 'live' && (
-        <div className="absolute -top-2 -right-2 z-10">
+        <div className="absolute -top-1 -right-1 z-50">
           <motion.div
             animate={{ 
               scale: [1, 1.05, 1],
             }}
             transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-            className="px-2 py-1 bg-green-500 text-white rounded-full text-xs font-medium flex items-center gap-1"
+            className="px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-xs font-bold flex items-center gap-1.5 shadow-xl border-2 border-white"
           >
-            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
             LIVE
           </motion.div>
         </div>
@@ -227,20 +227,20 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
           </div>
         )}
 
-        {/* Status Display for non-completed tests */}
-        {type !== 'completed' && (
+        {/* Status Display for upcoming tests only */}
+        {type === 'upcoming' && (
           <div className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-lg p-3 mb-3 shadow-lg text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               {getStatusIcon()}
               <p className="text-xs text-[#5F6368] font-medium uppercase tracking-wide">
-                {type === 'upcoming' ? 'Upcoming' : 'Live'}
+                Upcoming
               </p>
             </div>
-            {type === 'upcoming' && timeRemaining && (
-              <p className="text-sm font-semibold text-[#1A1C1E]">{timeRemaining}</p>
-            )}
-            {type === 'live' && (
-              <p className="text-sm font-semibold text-green-600">Available Now</p>
+            {timeRemaining && (
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg shadow-md">
+                <p className="text-xl font-bold tracking-wider font-mono">{timeRemaining}</p>
+                <p className="text-xs opacity-90 mt-1">until test starts</p>
+              </div>
             )}
           </div>
         )}
