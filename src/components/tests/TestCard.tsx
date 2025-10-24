@@ -145,17 +145,18 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="group relative bg-gradient-to-br from-slate-50 via-white to-slate-100 rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 h-full flex flex-col"
+      className="group relative bg-gradient-to-br from-slate-50 via-white to-slate-100 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 h-full flex flex-col"
     >
       {/* Live Status Badge */}
       {type === 'live' && (
-        <div className="absolute -top-1 -right-1 z-50">
+        <div className="absolute -top-2 -right-2" style={{ zIndex: 9999 }}>
           <motion.div
             animate={{ 
               scale: [1, 1.05, 1],
             }}
             transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
             className="px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-xs font-bold flex items-center gap-1.5 shadow-xl border-2 border-white"
+            style={{ zIndex: 9999 }}
           >
             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
             LIVE
