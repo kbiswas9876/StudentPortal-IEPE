@@ -175,18 +175,18 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
       </div>
 
       {/* Content Section */}
-      <div className="p-4 flex flex-col flex-1 space-y-3">
+      <div className="p-3 flex flex-col flex-1 space-y-2">
         
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div className="flex items-start bg-gradient-to-r from-blue-50 to-cyan-50 p-2 rounded-lg shadow-sm">
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <div className="flex items-start bg-gradient-to-r from-blue-50 to-cyan-50 p-1.5 rounded-lg shadow-sm">
             <FileText className="w-4 h-4 text-[#5F6368] mr-2 mt-0.5" />
             <div>
               <p className="text-xs text-[#5F6368]">Questions</p>
               <p className="text-sm font-semibold text-[#1A1C1E]">{test.total_questions}</p>
             </div>
           </div>
-          <div className="flex items-start bg-gradient-to-r from-emerald-50 to-teal-50 p-2 rounded-lg shadow-sm">
+          <div className="flex items-start bg-gradient-to-r from-emerald-50 to-teal-50 p-1.5 rounded-lg shadow-sm">
             <Clock className="w-4 h-4 text-[#5F6368] mr-2 mt-0.5" />
             <div>
               <p className="text-xs text-[#5F6368]">Duration</p>
@@ -196,7 +196,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
         </div>
 
         {/* Marking Scheme Pills */}
-        <div className="mb-3">
+        <div className="mb-2">
                    <p className="text-xs text-[#5F6368] mb-2">Marking</p>
                    <div className="flex gap-2">
                      <div className="inline-flex items-center bg-green-600 rounded-full px-2.5 py-1">
@@ -212,7 +212,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
 
         {/* Score Display - Only for completed tests */}
         {type === 'completed' && test.results && (
-          <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg p-3 mb-3 shadow-lg text-center">
+          <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg p-2.5 mb-2 shadow-lg text-center">
             <p className="text-xs text-[#5F6368] mb-2 uppercase tracking-wide">Final Score</p>
             <div className="font-bold tracking-tight">
                <span 
@@ -229,7 +229,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
 
         {/* Status Display for non-completed tests */}
         {type !== 'completed' && (
-          <div className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-lg p-4 mb-4 shadow-lg text-center">
+          <div className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-lg p-3 mb-3 shadow-lg text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               {getStatusIcon()}
               <p className="text-xs text-[#5F6368] font-medium uppercase tracking-wide">
@@ -247,8 +247,8 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
 
         {/* Percentile and Rank - Only for completed tests */}
         {type === 'completed' && test.results && (
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div className="bg-gradient-to-br from-purple-50 to-violet-100 rounded-lg p-3 shadow-lg text-center">
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="bg-gradient-to-br from-purple-50 to-violet-100 rounded-lg p-2.5 shadow-lg text-center">
               <div className="flex items-center justify-center mb-1">
                 <TrendingUp className="w-3.5 h-3.5 text-[#1E8E3E] mr-1" />
                 <p className="text-xs text-[#5F6368] font-medium">Percentile</p>
@@ -260,7 +260,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
                  {test.results.percentile === 0 ? '0' : (test.results.percentile % 1 === 0 ? test.results.percentile.toString() : test.results.percentile?.toFixed(1) || '0')}
                </p>
             </div>
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-3 shadow-lg text-center">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-2.5 shadow-lg text-center">
               <div className="flex items-center justify-center mb-1">
                 <Award className="w-3.5 h-3.5 text-[#3F51B5] mr-1" />
                 <p className="text-xs text-[#5F6368] font-medium">Rank</p>
@@ -276,7 +276,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
       </div>
 
       {/* Action Button - Fixed at Bottom */}
-      <div className="px-4 pb-4 bg-gradient-to-t from-slate-100 to-transparent shadow-xl">
+      <div className="px-3 pb-3 bg-gradient-to-t from-slate-100 to-transparent shadow-xl">
         {getActionButton()}
       </div>
     </motion.div>
