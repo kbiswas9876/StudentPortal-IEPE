@@ -133,7 +133,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="group relative bg-white dark:bg-slate-900 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 border border-slate-200 dark:border-slate-700"
+      className="group relative bg-white dark:bg-slate-900 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-slate-200 dark:border-slate-700 h-full flex flex-col"
     >
       {/* Live Status Badge */}
       {type === 'live' && (
@@ -151,38 +151,22 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
         </div>
       )}
 
-      <div className="p-6">
-        {/* Header with Status Badge */}
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
-              {test.name}
-            </h3>
-            {test.description && (
-              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                {test.description}
-              </p>
-            )}
-          </div>
-          
-          {/* Status Badge */}
-          <div className="flex items-center gap-1.5">
-            {getStatusIcon()}
-            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-              type === 'upcoming' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
-              type === 'live' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
-              'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-            }`}>
-              {type === 'upcoming' && timeRemaining}
-              {type === 'live' && 'Available'}
-              {type === 'completed' && test.userScore !== undefined && `${test.userScore.toFixed(1)}%`}
-            </span>
-          </div>
+      <div className="p-6 flex flex-col flex-1">
+        {/* Header - Clean title only */}
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+            {test.name}
+          </h3>
+          {test.description && (
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+              {test.description}
+            </p>
+          )}
         </div>
 
-        {/* Key Metrics - Admin Panel Style */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="flex items-center gap-2">
+        {/* Key Metrics - Center-aligned for better balance */}
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="flex flex-col items-center text-center gap-2">
             <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
               <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -194,7 +178,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center text-center gap-2">
             <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
               <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -206,7 +190,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center text-center gap-2">
             <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
               <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l-2.83 2.83M6 7l2.83 2.83m6-2.83a5.002 5.002 0 01-9.002 0" />
@@ -219,8 +203,8 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
           </div>
         </div>
 
-        {/* Time Information - Admin Panel Style */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        {/* Time Information - Closer to stats */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 text-slate-500 dark:text-slate-400">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,8 +257,40 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
           )}
         </div>
 
-        {/* Action Button */}
-        {getActionButton()}
+        {/* Status and Score - Grouped together at bottom */}
+        <div className="flex items-center gap-2 mb-4">
+          {getStatusIcon()}
+          <div className="flex items-center gap-2">
+            <span className={`text-sm font-medium ${
+              type === 'upcoming' ? 'text-blue-600 dark:text-blue-400' :
+              type === 'live' ? 'text-green-600 dark:text-green-400' :
+              'text-slate-600 dark:text-slate-400'
+            }`}>
+              {type === 'upcoming' ? 'Upcoming' : type === 'live' ? 'Available' : 'Completed'}
+            </span>
+            {type === 'completed' && test.userScore !== undefined && (
+              <>
+                <span className="text-slate-400 dark:text-slate-500">•</span>
+                <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                  {test.userScore.toFixed(1)}%
+                </span>
+              </>
+            )}
+            {type === 'upcoming' && timeRemaining && (
+              <>
+                <span className="text-slate-400 dark:text-slate-500">•</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  {timeRemaining}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Action Button - Pushed to bottom */}
+        <div className="mt-auto">
+          {getActionButton()}
+        </div>
       </div>
     </motion.div>
   )
