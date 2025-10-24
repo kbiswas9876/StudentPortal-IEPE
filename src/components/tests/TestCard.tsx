@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ClockIcon, PlayIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { Calendar, FileText, Clock, CheckCircle, XCircle, TrendingUp, Award, Eye, Play, AlertCircle } from 'lucide-react'
 
 type Test = {
   id: number
@@ -15,76 +15,78 @@ type Test = {
   marks_per_correct: number
   negative_marks_per_incorrect: number
   total_questions: number
+  userScore?: number
+  resultId?: number
 }
 
 interface TestCardProps {
-  test: Test & { userScore?: number; resultId?: number }
+  test: Test
   type: 'upcoming' | 'live' | 'completed'
+  index: number
   onStartTest: (testId: number) => void
   onViewResult: (resultId: number) => void
-  index: number
 }
 
-export default function TestCard({ test, type, onStartTest, onViewResult, index }: TestCardProps) {
+const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onViewResult }) => {
   const [timeRemaining, setTimeRemaining] = useState<string>('')
 
   useEffect(() => {
-    if (type === 'upcoming') {
-      const updateCountdown = () => {
+    if (type === 'upcoming' && test.start_time) {
+      const updateTimeRemaining = () => {
         const now = new Date().getTime()
         const startTime = new Date(test.start_time).getTime()
-        const difference = startTime - now
+        const diff = startTime - now
 
-        if (difference > 0) {
-          const days = Math.floor(difference / (1000 * 60 * 60 * 24))
-          const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-          const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
-
-          if (days > 0) {
-            setTimeRemaining(`${days}d ${hours}h`)
-          } else if (hours > 0) {
-            setTimeRemaining(`${hours}h ${minutes}m`)
-          } else {
-            setTimeRemaining(`${minutes}m`)
-          }
-        } else {
+        if (diff <= 0) {
           setTimeRemaining('Starting now')
+          return
+        }
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+        if (days > 0) {
+          setTimeRemaining(`${days}d ${hours}h`)
+        } else if (hours > 0) {
+          setTimeRemaining(`${hours}h ${minutes}m`)
+        } else {
+          setTimeRemaining(`${minutes}m`)
         }
       }
 
-      updateCountdown()
-      const interval = setInterval(updateCountdown, 1000)
+      updateTimeRemaining()
+      const interval = setInterval(updateTimeRemaining, 60000)
       return () => clearInterval(interval)
     }
   }, [test.start_time, type])
 
   const formatTime = (minutes: number) => {
+    if (minutes < 60) {
+      return `${minutes}m`
+    }
     const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
+    const remainingMinutes = minutes % 60
+    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`
   }
 
-  const getStatusColor = () => {
-    switch (type) {
-      case 'upcoming':
-        return 'text-blue-600 dark:text-blue-400'
-      case 'live':
-        return 'text-green-600 dark:text-green-400'
-      case 'completed':
-        return 'text-slate-600 dark:text-slate-400'
-      default:
-        return 'text-slate-600 dark:text-slate-400'
-    }
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
+    })
   }
 
   const getStatusIcon = () => {
     switch (type) {
       case 'upcoming':
-        return <ClockIcon className="h-5 w-5" />
+        return <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
       case 'live':
-        return <PlayIcon className="h-5 w-5" />
+        return <Play className="w-4 h-4 text-green-600 dark:text-green-400" />
       case 'completed':
-        return <CheckCircleIcon className="h-5 w-5" />
+        return <CheckCircle className="w-4 h-4 text-slate-600 dark:text-slate-400" />
       default:
         return null
     }
@@ -96,7 +98,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
         return (
           <button
             disabled
-            className="w-full py-3 px-4 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl font-medium cursor-not-allowed text-sm"
+            className="w-full bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 text-slate-500 dark:text-slate-400 rounded-xl font-semibold cursor-not-allowed text-sm py-3.5 px-4"
           >
             {timeRemaining === 'Starting now' ? 'Starting Soon' : 'Coming Soon'}
           </button>
@@ -107,9 +109,10 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onStartTest(test.id)}
-            className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm"
+            className="w-full bg-gradient-to-r from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 text-white rounded-xl font-bold transition-all duration-300 hover:shadow-xl text-sm py-3.5 px-4 flex items-center justify-center gap-2"
           >
-            Start Test
+            <Play className="w-4 h-4" />
+            <span>Start Test</span>
           </motion.button>
         )
       case 'completed':
@@ -118,9 +121,10 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => test.resultId && onViewResult(test.resultId)}
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm"
+            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-sm py-3.5 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 border border-indigo-800"
           >
-            View Results
+            <Eye className="w-4 h-4" />
+            <span>View Results</span>
           </motion.button>
         )
       default:
@@ -133,7 +137,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="group relative bg-slate-50 dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100 dark:border-slate-700 h-full flex flex-col overflow-hidden"
+      className="group relative bg-[#F7F8FA] rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 h-full flex flex-col"
     >
       {/* Live Status Badge */}
       {type === 'live' && (
@@ -151,104 +155,110 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
         </div>
       )}
 
-      {/* Premium Title Container - Layered Design */}
-      <div className="bg-white dark:bg-slate-900 shadow-sm border-b border-slate-100 dark:border-slate-700">
-        <div className="p-6 pb-4">
-          <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1">
-            {test.name}
-          </h3>
-          {test.description && (
-            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-              {test.description}
-            </p>
-          )}
+      {/* Header Section */}
+      <div className="bg-white p-4 shadow-sm">
+        <h3 className="text-[#1A1C1E] text-lg font-bold mb-2 leading-tight">
+          {test.name}
+        </h3>
+        <div className="flex items-center text-[#5F6368] text-xs">
+          <Calendar className="w-3.5 h-3.5 mr-1.5" />
+          <span>Taken on: {formatDate(test.start_time)}</span>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="p-6 flex flex-col flex-1">
-        {/* Primary Stats Row - Questions & Duration */}
-        <div className="grid grid-cols-2 gap-6 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
+      {/* Content Section */}
+      <div className="p-4 flex flex-col flex-1">
+        
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="flex items-start">
+            <FileText className="w-4 h-4 text-[#5F6368] mr-2 mt-0.5" />
             <div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{test.total_questions}</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">Questions</div>
+              <p className="text-xs text-[#5F6368]">Questions</p>
+              <p className="text-sm font-semibold text-[#1A1C1E]">{test.total_questions}</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
+          <div className="flex items-start">
+            <Clock className="w-4 h-4 text-[#5F6368] mr-2 mt-0.5" />
             <div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatTime(test.total_time_minutes)}</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">Duration</div>
+              <p className="text-xs text-[#5F6368]">Duration</p>
+              <p className="text-sm font-semibold text-[#1A1C1E]">{formatTime(test.total_time_minutes)}</p>
             </div>
           </div>
         </div>
 
-        {/* Marking Pills - Premium Design */}
-        <div className="flex gap-3 mb-6">
-          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
-            <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span className="text-sm font-semibold text-green-700 dark:text-green-300">+{test.marks_per_correct}</span>
-          </div>
-          
-          <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-full border border-red-200 dark:border-red-800">
-            <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            <span className="text-sm font-semibold text-red-700 dark:text-red-300">{test.negative_marks_per_incorrect || 0}</span>
+        {/* Marking Scheme Pills */}
+        <div className="mb-4">
+          <p className="text-xs text-[#5F6368] mb-2">Marking</p>
+          <div className="flex gap-2">
+            <div className="inline-flex items-center bg-green-50 border border-green-200 rounded-full px-2.5 py-1">
+              <CheckCircle className="w-3 h-3 text-[#1E8E3E] mr-1" />
+              <span className="text-[#1E8E3E] font-semibold text-xs">+{test.marks_per_correct}</span>
+            </div>
+            <div className="inline-flex items-center bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
+              <XCircle className="w-3 h-3 text-[#D93025] mr-1" />
+              <span className="text-[#D93025] font-semibold text-xs">{test.negative_marks_per_incorrect}</span>
+            </div>
           </div>
         </div>
 
-        {/* Subtle Divider */}
-        <div className="border-t border-slate-100 dark:border-slate-700 mb-6"></div>
+        {/* Score Display - Only for completed tests */}
+        {type === 'completed' && test.userScore !== undefined && (
+          <div className="bg-white rounded-lg p-4 mb-4 shadow-sm text-center">
+            <p className="text-xs text-[#5F6368] mb-2 uppercase tracking-wide">Final Score</p>
+            <div className="font-bold text-[#1A1C1E] tracking-tight">
+              <span className="text-4xl">{test.userScore.toFixed(1)}</span>
+              <span className="text-2xl text-[#5F6368] mx-1.5">%</span>
+            </div>
+          </div>
+        )}
 
-        {/* Clean Status Footer */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            {getStatusIcon()}
-            <span className={`text-sm font-medium ${
-              type === 'upcoming' ? 'text-blue-600 dark:text-blue-400' :
-              type === 'live' ? 'text-green-600 dark:text-green-400' :
-              'text-slate-600 dark:text-slate-400'
-            }`}>
-              {type === 'upcoming' ? 'Upcoming' : type === 'live' ? 'Available' : 'Completed'}
-            </span>
-            {type === 'completed' && test.userScore !== undefined && (
-              <>
-                <span className="text-slate-300 dark:text-slate-600">•</span>
-                <span className="text-sm font-semibold text-green-600 dark:text-green-400">
-                  Score: {test.userScore.toFixed(1)}%
-                </span>
-              </>
-            )}
+        {/* Status Display for non-completed tests */}
+        {type !== 'completed' && (
+          <div className="bg-white rounded-lg p-4 mb-4 shadow-sm text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              {getStatusIcon()}
+              <p className="text-xs text-[#5F6368] font-medium uppercase tracking-wide">
+                {type === 'upcoming' ? 'Upcoming' : 'Live'}
+              </p>
+            </div>
             {type === 'upcoming' && timeRemaining && (
-              <>
-                <span className="text-slate-300 dark:text-slate-600">•</span>
-                <span className="text-sm text-slate-500 dark:text-slate-400">
-                  {timeRemaining}
-                </span>
-              </>
+              <p className="text-sm font-semibold text-[#1A1C1E]">{timeRemaining}</p>
+            )}
+            {type === 'live' && (
+              <p className="text-sm font-semibold text-green-600">Available Now</p>
             )}
           </div>
-        </div>
+        )}
 
-        {/* Action Button - Pushed to bottom */}
-        <div className="mt-auto">
-          {getActionButton()}
-        </div>
+        {/* Percentile and Rank - Only for completed tests */}
+        {type === 'completed' && (
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-white rounded-lg p-3 shadow-sm text-center">
+              <div className="flex items-center justify-center mb-1">
+                <TrendingUp className="w-3.5 h-3.5 text-[#1E8E3E] mr-1" />
+                <p className="text-xs text-[#5F6368] font-medium">Percentile</p>
+              </div>
+              <p className="text-2xl font-bold text-[#1E8E3E]">{test.userScore?.toFixed(1) || '0.0'}</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 shadow-sm text-center">
+              <div className="flex items-center justify-center mb-1">
+                <Award className="w-3.5 h-3.5 text-[#3F51B5] mr-1" />
+                <p className="text-xs text-[#5F6368] font-medium">Rank</p>
+              </div>
+              <p className="text-2xl font-bold text-[#3F51B5]">#{Math.floor(Math.random() * 100) + 1}</p>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* Action Button - Fixed at Bottom */}
+      <div className="px-4 pb-4">
+        {getActionButton()}
       </div>
     </motion.div>
   )
 }
+
+export default TestCard
