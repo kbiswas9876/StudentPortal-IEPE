@@ -27,6 +27,17 @@ type UserAttempt = {
   mock_test_id: number
   score_percentage: number
   id: number
+  total_correct: number
+  total_incorrect: number
+  total_questions: number
+  submitted_at: string
+  results?: {
+    marks_obtained: number
+    total_marks: number
+    percentile: number
+    rank: number
+    total_test_takers: number
+  }
 }
 
 interface MockTestData {
@@ -106,6 +117,7 @@ export default function MockTestHubPage() {
       }
 
       console.log('Mock test data fetched successfully:', result.data)
+      console.log('User attempts with results:', result.data.userAttempts)
       setMockTestData(result.data)
       setLastRefreshTime(now)
     } catch (error) {
@@ -234,12 +246,12 @@ export default function MockTestHubPage() {
     userAttempts: UserAttempt[],
     searchQuery: string,
     sortBy: 'date' | 'score' | 'name'
-  ): { upcoming: Test[], live: Test[], completed: (Test & { userScore?: number; resultId?: number })[] } {
+  ): { upcoming: Test[], live: Test[], completed: (Test & { userScore?: number; resultId?: number; results?: UserAttempt['results'] })[] } {
     const userAttemptMap = new Map(userAttempts.map(attempt => [attempt.mock_test_id, attempt]))
 
     const upcoming: Test[] = []
     const live: Test[] = []
-    const completed: (Test & { userScore?: number; resultId?: number })[] = []
+    const completed: (Test & { userScore?: number; resultId?: number; results?: UserAttempt['results'] })[] = []
 
     tests.forEach(test => {
       const userAttempt = userAttemptMap.get(test.id)
@@ -249,7 +261,8 @@ export default function MockTestHubPage() {
         completed.push({
           ...test,
           userScore: userAttempt.score_percentage,
-          resultId: userAttempt.id
+          resultId: userAttempt.id,
+          results: userAttempt.results
         })
       } else if (test.status === 'live') {
         live.push(test)

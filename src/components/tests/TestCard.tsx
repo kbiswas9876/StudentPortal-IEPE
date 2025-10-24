@@ -17,6 +17,13 @@ type Test = {
   total_questions: number
   userScore?: number
   resultId?: number
+  results?: {
+    marks_obtained: number
+    total_marks: number
+    percentile: number
+    rank: number
+    total_test_takers: number
+  }
 }
 
 interface TestCardProps {
@@ -203,12 +210,13 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
         </div>
 
         {/* Score Display - Only for completed tests */}
-        {type === 'completed' && test.userScore !== undefined && (
+        {type === 'completed' && test.results && (
           <div className="bg-white rounded-lg p-4 mb-4 shadow-sm text-center">
             <p className="text-xs text-[#5F6368] mb-2 uppercase tracking-wide">Final Score</p>
             <div className="font-bold text-[#1A1C1E] tracking-tight">
-              <span className="text-4xl">{test.userScore.toFixed(1)}</span>
-              <span className="text-2xl text-[#5F6368] mx-1.5">%</span>
+              <span className="text-4xl">{test.results.marks_obtained.toFixed(2)}</span>
+              <span className="text-2xl text-[#5F6368] mx-1.5">/</span>
+              <span className="text-3xl text-[#5F6368]">{test.results.total_marks}</span>
             </div>
           </div>
         )}
@@ -232,21 +240,24 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
         )}
 
         {/* Percentile and Rank - Only for completed tests */}
-        {type === 'completed' && (
+        {type === 'completed' && test.results && (
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div className="bg-white rounded-lg p-3 shadow-sm text-center">
               <div className="flex items-center justify-center mb-1">
                 <TrendingUp className="w-3.5 h-3.5 text-[#1E8E3E] mr-1" />
                 <p className="text-xs text-[#5F6368] font-medium">Percentile</p>
               </div>
-              <p className="text-2xl font-bold text-[#1E8E3E]">{test.userScore?.toFixed(1) || '0.0'}</p>
+              <p className="text-2xl font-bold text-[#1E8E3E]">{test.results.percentile?.toFixed(1) || '0.0'}</p>
             </div>
             <div className="bg-white rounded-lg p-3 shadow-sm text-center">
               <div className="flex items-center justify-center mb-1">
                 <Award className="w-3.5 h-3.5 text-[#3F51B5] mr-1" />
                 <p className="text-xs text-[#5F6368] font-medium">Rank</p>
               </div>
-              <p className="text-2xl font-bold text-[#3F51B5]">#{Math.floor(Math.random() * 100) + 1}</p>
+              <div className="flex items-baseline justify-center space-x-1">
+                <span className="text-2xl font-bold text-[#3F51B5]">#{test.results.rank || '0'}</span>
+                <span className="text-base font-medium text-[#5F6368]">/ {test.results.total_test_takers || '0'}</span>
+              </div>
             </div>
           </div>
         )}
