@@ -24,6 +24,7 @@ interface QuestionDisplayProps {
   cumulativeTime?: number
   isPaused?: boolean
   showBookmark?: boolean // New prop to control bookmark visibility
+  hideMetadata?: boolean // New prop to control metadata visibility
 }
 
 export default function QuestionDisplay({
@@ -40,7 +41,8 @@ export default function QuestionDisplay({
   currentQuestionStartTime,
   cumulativeTime,
   isPaused = false,
-  showBookmark = true // Default to true for backward compatibility
+  showBookmark = true, // Default to true for backward compatibility
+  hideMetadata = false // Default to false for backward compatibility
 }: QuestionDisplayProps) {
   const [isBookmarking, setIsBookmarking] = useState(false)
 
@@ -257,7 +259,7 @@ export default function QuestionDisplay({
       </motion.div>
 
       {/* Question Metadata */}
-      {(question.exam_metadata || question.admin_tags) && (
+      {!hideMetadata && (question.exam_metadata || question.admin_tags) && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

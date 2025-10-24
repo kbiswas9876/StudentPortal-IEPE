@@ -52,6 +52,8 @@ interface PracticeInterfaceProps {
 }
 
 export default function PracticeInterface({ questions, testMode = 'practice', timeLimitInMinutes, mockTestData, savedSessionState, source, hideMetadata = false }: PracticeInterfaceProps) {
+  // Hide metadata by default for mock tests
+  const shouldHideMetadata = hideMetadata || (testMode === 'mock' || mockTestData !== undefined)
   const { user, session } = useAuth()
   const { showToast } = useToast()
   const router = useRouter()
@@ -928,7 +930,7 @@ useEffect(() => {
           // CRITICAL: Pass the real button handlers from PracticeInterface
           onSaveAndNext={handleSaveAndNext}
           onMarkForReviewAndNext={handleMarkForReviewAndNext}
-          hideMetadata={hideMetadata}
+          hideMetadata={shouldHideMetadata}
           correctMarks={mockTestData?.test.marks_per_correct}
           negativeMarks={mockTestData?.test.negative_marks_per_incorrect}
         />
