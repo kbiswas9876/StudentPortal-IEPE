@@ -267,7 +267,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
               </div>
               <div className="flex items-baseline justify-center space-x-1">
                 <span className="text-2xl font-bold text-[#3F51B5]">#{test.results.rank || '0'}</span>
-                <span className="text-base font-medium text-[#5F6368]">/ {test.results.total_test_takers || '0'}</span>
+                <span className="text-2xl font-medium text-[#5F6368]">/ {test.results.total_test_takers || '0'}</span>
               </div>
             </div>
           </div>
