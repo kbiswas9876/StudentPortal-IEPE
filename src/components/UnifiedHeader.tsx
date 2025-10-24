@@ -14,6 +14,9 @@ interface UnifiedHeaderProps {
   onReport?: () => void
   isPaused?: boolean
   onTogglePause?: () => void
+  // Scoring information
+  correctMarks?: number
+  negativeMarks?: number
 }
 
 const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
@@ -24,7 +27,9 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   onBack,
   onReport,
   isPaused = false,
-  onTogglePause
+  onTogglePause,
+  correctMarks,
+  negativeMarks
 }) => {
   return (
     <header className="unified-header">
@@ -67,6 +72,24 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
       </div>
 
       <div className="header-zone right">
+        {/* Scoring Information */}
+        {(correctMarks !== undefined || negativeMarks !== undefined) && (
+          <div className="flex items-center space-x-3 mr-4">
+            {correctMarks !== undefined && (
+              <div className="flex items-center space-x-1 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold shadow-md">
+                <span>+</span>
+                <span>{correctMarks}</span>
+              </div>
+            )}
+            {negativeMarks !== undefined && (
+              <div className="flex items-center space-x-1 bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold shadow-md">
+                <span>-</span>
+                <span>{Math.abs(negativeMarks)}</span>
+              </div>
+            )}
+          </div>
+        )}
+        
         <button 
           className="icon-button report-button" 
           aria-label="Report this question"

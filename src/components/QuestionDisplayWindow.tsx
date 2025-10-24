@@ -45,6 +45,9 @@ interface QuestionDisplayWindowProps {
   onSaveAndNext?: () => void
   onMarkForReviewAndNext?: () => void
   hideMetadata?: boolean
+  // Scoring information
+  correctMarks?: number
+  negativeMarks?: number
 }
 
 const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({ 
@@ -67,7 +70,10 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   // CRITICAL: Add missing button functionality props
   onSaveAndNext,
   onMarkForReviewAndNext,
-  hideMetadata = false
+  hideMetadata = false,
+  // Scoring information
+  correctMarks,
+  negativeMarks
 }) => {
   // FOUC Fix: State to control fade-in animation
   const [isLoaded, setIsLoaded] = useState(false)
@@ -139,6 +145,8 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
         onReport={handleReport}
         isPaused={isPaused}
         onTogglePause={onTogglePause}
+        correctMarks={correctMarks}
+        negativeMarks={negativeMarks}
       />
 
       {/* 

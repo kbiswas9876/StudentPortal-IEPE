@@ -929,6 +929,8 @@ useEffect(() => {
           onSaveAndNext={handleSaveAndNext}
           onMarkForReviewAndNext={handleMarkForReviewAndNext}
           hideMetadata={hideMetadata}
+          correctMarks={mockTestData?.test.marks_per_correct}
+          negativeMarks={mockTestData?.test.negative_marks_per_incorrect}
         />
       </div>
 

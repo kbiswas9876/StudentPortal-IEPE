@@ -572,27 +572,6 @@ export default function PremiumStatusPanel({
         </div>
       )}
 
-      {/* Mock Test Data Section */}
-      {mockTestData && (
-        <motion.div 
-          className="p-4 border-t border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-900/20"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-        >
-          <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">Scoring Rules</h4>
-          <div className="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-            <div className="flex justify-between">
-              <span>Correct Answer:</span>
-              <span className="font-semibold">+{mockTestData.test.marks_per_correct} marks</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Incorrect Answer:</span>
-              <span className="font-semibold">{mockTestData.test.negative_marks_per_incorrect} marks</span>
-            </div>
-          </div>
-        </motion.div>
-      )}
         </motion.div>
       ) : (
         // --- Panel Collapsed State - Apple-Inspired Toggle Button ---
