@@ -96,7 +96,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
         return (
           <button
             disabled
-            className="w-full py-3 px-4 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-lg font-medium cursor-not-allowed text-sm"
+            className="w-full py-3 px-4 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl font-medium cursor-not-allowed text-sm"
           >
             {timeRemaining === 'Starting now' ? 'Starting Soon' : 'Coming Soon'}
           </button>
@@ -107,7 +107,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onStartTest(test.id)}
-            className="w-full py-3 px-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg font-semibold transition-all duration-200 hover:bg-slate-800 dark:hover:bg-slate-200 text-sm"
+            className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm"
           >
             Start Test
           </motion.button>
@@ -118,7 +118,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => test.resultId && onViewResult(test.resultId)}
-            className="w-full py-3 px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-all duration-200 hover:bg-slate-200 dark:hover:bg-slate-700 text-sm"
+            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm"
           >
             View Results
           </motion.button>
@@ -133,7 +133,7 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="group relative bg-white dark:bg-slate-900 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-slate-200 dark:border-slate-700 h-full flex flex-col"
+      className="group relative bg-slate-50 dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-slate-100 dark:border-slate-700 h-full flex flex-col overflow-hidden"
     >
       {/* Live Status Badge */}
       {type === 'live' && (
@@ -151,10 +151,10 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
         </div>
       )}
 
-      <div className="p-6 flex flex-col flex-1">
-        {/* Header - Clean title only */}
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+      {/* Premium Title Container - Layered Design */}
+      <div className="bg-white dark:bg-slate-900 shadow-sm border-b border-slate-100 dark:border-slate-700">
+        <div className="p-6 pb-4">
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-1">
             {test.name}
           </h3>
           {test.description && (
@@ -163,104 +163,61 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
             </p>
           )}
         </div>
+      </div>
 
-        {/* Key Metrics - Center-aligned for better balance */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="flex flex-col items-center text-center gap-2">
-            <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      {/* Main Content Area */}
+      <div className="p-6 flex flex-col flex-1">
+        {/* Primary Stats Row - Questions & Duration */}
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
+              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
             <div>
-              <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{test.total_questions}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Questions</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{test.total_questions}</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">Questions</div>
             </div>
           </div>
           
-          <div className="flex flex-col items-center text-center gap-2">
-            <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
+              <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{formatTime(test.total_time_minutes)}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Duration</div>
-            </div>
-          </div>
-          
-          <div className="flex flex-col items-center text-center gap-2">
-            <div className="w-8 h-8 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l-2.83 2.83M6 7l2.83 2.83m6-2.83a5.002 5.002 0 01-9.002 0" />
-              </svg>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-slate-900 dark:text-slate-100">+{test.marks_per_correct} / {test.negative_marks_per_incorrect || 0}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Marking</div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{formatTime(test.total_time_minutes)}</div>
+              <div className="text-sm text-slate-500 dark:text-slate-400">Duration</div>
             </div>
           </div>
         </div>
 
-        {/* Time Information - Closer to stats */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 text-slate-500 dark:text-slate-400">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 01-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                {type === 'upcoming' ? 'Starts' : type === 'live' ? 'Started' : 'Completed'}
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {type === 'upcoming' ? new Date(test.start_time).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric', 
-                  year: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true 
-                }) : 
-                type === 'live' ? 'Now' :
-                'Finished'}
-              </div>
-            </div>
+        {/* Marking Pills - Premium Design */}
+        <div className="flex gap-3 mb-6">
+          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
+            <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-sm font-semibold text-green-700 dark:text-green-300">+{test.marks_per_correct}</span>
           </div>
           
-          {/* Only render "Ends" section if end_time is not null (not perpetual) */}
-          {test.end_time && (
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 text-slate-500 dark:text-slate-400">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">Ends</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {type === 'upcoming' ? new Date(test.end_time).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric', 
-                    year: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true 
-                  }) : 
-                  type === 'live' ? 'Ongoing' :
-                  'Completed'}
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 rounded-full border border-red-200 dark:border-red-800">
+            <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span className="text-sm font-semibold text-red-700 dark:text-red-300">{test.negative_marks_per_incorrect || 0}</span>
+          </div>
         </div>
 
-        {/* Status and Score - Grouped together at bottom */}
-        <div className="flex items-center gap-2 mb-4">
-          {getStatusIcon()}
+        {/* Subtle Divider */}
+        <div className="border-t border-slate-100 dark:border-slate-700 mb-6"></div>
+
+        {/* Clean Status Footer */}
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
+            {getStatusIcon()}
             <span className={`text-sm font-medium ${
               type === 'upcoming' ? 'text-blue-600 dark:text-blue-400' :
               type === 'live' ? 'text-green-600 dark:text-green-400' :
@@ -270,15 +227,15 @@ export default function TestCard({ test, type, onStartTest, onViewResult, index 
             </span>
             {type === 'completed' && test.userScore !== undefined && (
               <>
-                <span className="text-slate-400 dark:text-slate-500">•</span>
+                <span className="text-slate-300 dark:text-slate-600">•</span>
                 <span className="text-sm font-semibold text-green-600 dark:text-green-400">
-                  {test.userScore.toFixed(1)}%
+                  Score: {test.userScore.toFixed(1)}%
                 </span>
               </>
             )}
             {type === 'upcoming' && timeRemaining && (
               <>
-                <span className="text-slate-400 dark:text-slate-500">•</span>
+                <span className="text-slate-300 dark:text-slate-600">•</span>
                 <span className="text-sm text-slate-500 dark:text-slate-400">
                   {timeRemaining}
                 </span>
