@@ -221,8 +221,8 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
                >
                  {test.results.marks_obtained === 0 ? '0' : (test.results.marks_obtained % 1 === 0 ? test.results.marks_obtained.toString() : test.results.marks_obtained.toFixed(2))}
                </span>
-              <span className="text-2xl text-[#5F6368] mx-1.5">/</span>
-              <span className="text-3xl text-[#5F6368]">{test.results.total_marks}</span>
+              <span className="text-4xl text-[#5F6368] mx-1.5">/</span>
+              <span className="text-4xl text-[#5F6368]">{test.results.total_marks}</span>
             </div>
           </div>
         )}
