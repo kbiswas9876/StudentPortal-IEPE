@@ -215,12 +215,12 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
           <div className="bg-gradient-to-br from-emerald-50 to-teal-100 rounded-lg p-3 mb-3 shadow-lg text-center">
             <p className="text-xs text-[#5F6368] mb-2 uppercase tracking-wide">Final Score</p>
             <div className="font-bold tracking-tight">
-              <span 
-                className="text-4xl"
-                style={{ color: getScoreColor(test.results.marks_obtained, test.results.total_marks) }}
-              >
-                {test.results.marks_obtained === 0 ? '0' : test.results.marks_obtained.toFixed(2)}
-              </span>
+               <span 
+                 className="text-4xl"
+                 style={{ color: getScoreColor(test.results.marks_obtained, test.results.total_marks) }}
+               >
+                 {test.results.marks_obtained === 0 ? '0' : (test.results.marks_obtained % 1 === 0 ? test.results.marks_obtained.toString() : test.results.marks_obtained.toFixed(2))}
+               </span>
               <span className="text-2xl text-[#5F6368] mx-1.5">/</span>
               <span className="text-3xl text-[#5F6368]">{test.results.total_marks}</span>
             </div>
@@ -253,12 +253,12 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
                 <TrendingUp className="w-3.5 h-3.5 text-[#1E8E3E] mr-1" />
                 <p className="text-xs text-[#5F6368] font-medium">Percentile</p>
               </div>
-              <p 
-                className="text-2xl font-bold"
-                style={{ color: getPercentileColor(test.results.percentile || 0) }}
-              >
-                {test.results.percentile === 0 ? '0' : (test.results.percentile?.toFixed(1) || '0')}
-              </p>
+               <p 
+                 className="text-2xl font-bold"
+                 style={{ color: getPercentileColor(test.results.percentile || 0) }}
+               >
+                 {test.results.percentile === 0 ? '0' : (test.results.percentile % 1 === 0 ? test.results.percentile.toString() : test.results.percentile?.toFixed(1) || '0')}
+               </p>
             </div>
             <div className="bg-gradient-to-br from-cyan-50 to-blue-100 rounded-lg p-3 shadow-lg text-center">
               <div className="flex items-center justify-center mb-1">
