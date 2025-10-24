@@ -103,14 +103,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
   const getActionButton = () => {
     switch (type) {
       case 'upcoming':
-        return (
-          <button
-            disabled
-            className="w-full bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-800 text-slate-500 dark:text-slate-400 rounded-xl font-semibold cursor-not-allowed text-sm py-3.5 px-4"
-          >
-            {timeRemaining === 'Starting now' ? 'Starting Soon' : 'Coming Soon'}
-          </button>
-        )
+        return null
       case 'live':
         return (
           <motion.button
@@ -160,6 +153,23 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
           >
             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
             LIVE
+          </motion.div>
+        </div>
+      )}
+
+      {/* Upcoming Status Badge */}
+      {type === 'upcoming' && (
+        <div className="absolute -top-2 -right-2" style={{ zIndex: 9999 }}>
+          <motion.div
+            animate={{ 
+              scale: [1, 1.02, 1],
+            }}
+            transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+            className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-xs font-bold flex items-center gap-1.5 shadow-xl border-2 border-white"
+            style={{ zIndex: 9999 }}
+          >
+            <Clock className="w-3 h-3" />
+            UPCOMING
           </motion.div>
         </div>
       )}
