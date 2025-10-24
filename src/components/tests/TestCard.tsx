@@ -194,20 +194,20 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
           </div>
         </div>
 
-        {/* Marking Scheme Pills */}
-        <div className="mb-4">
-          <p className="text-xs text-[#5F6368] mb-2">Marking</p>
-          <div className="flex gap-2">
-            <div className="inline-flex items-center bg-green-50 border border-green-200 rounded-full px-2.5 py-1">
-              <CheckCircle className="w-3 h-3 text-[#1E8E3E] mr-1" />
-              <span className="text-[#1E8E3E] font-semibold text-xs">+{test.marks_per_correct}</span>
-            </div>
-            <div className="inline-flex items-center bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
-              <XCircle className="w-3 h-3 text-[#D93025] mr-1" />
-              <span className="text-[#D93025] font-semibold text-xs">{test.negative_marks_per_incorrect}</span>
-            </div>
-          </div>
-        </div>
+                 {/* Marking Scheme Pills */}
+                 <div className="mb-4">
+                   <p className="text-xs text-[#5F6368] mb-2">Marking</p>
+                   <div className="flex gap-2">
+                     <div className="inline-flex items-center bg-green-600 rounded-full px-2.5 py-1">
+                       <CheckCircle className="w-3 h-3 text-white mr-1" />
+                       <span className="text-white font-semibold text-xs">+{test.marks_per_correct}</span>
+                     </div>
+                     <div className="inline-flex items-center bg-red-600 rounded-full px-2.5 py-1">
+                       <XCircle className="w-3 h-3 text-white mr-1" />
+                       <span className="text-white font-semibold text-xs">{test.negative_marks_per_incorrect}</span>
+                     </div>
+                   </div>
+                 </div>
 
         {/* Score Display - Only for completed tests */}
         {type === 'completed' && test.results && (
