@@ -21,6 +21,8 @@ type Test = {
   marks_per_correct: number
   negative_marks_per_incorrect: number
   total_questions: number
+  allow_pausing?: boolean
+  show_in_question_timer?: boolean
 }
 
 type UserAttempt = {

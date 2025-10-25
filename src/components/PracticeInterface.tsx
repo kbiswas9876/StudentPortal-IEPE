@@ -44,6 +44,8 @@ interface PracticeInterfaceProps {
       total_time_minutes: number
       marks_per_correct: number
       negative_marks_per_incorrect: number
+      allow_pausing?: boolean
+      show_in_question_timer?: boolean
     }
   }
   savedSessionState?: any
@@ -163,6 +165,25 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     }
     setShowExitModal(true);
   };
+
+  // === CONDITIONAL FEATURE LOGIC ===
+  // Practice sessions (customizable) always show both features
+  // Mock tests follow teacher settings from Admin Panel
+  const shouldShowPauseButton = useMemo(() => {
+    // If no mockTestData, it's a customizable practice session
+    if (!mockTestData) return true
+    
+    // For mock tests, check teacher setting (default to false for safety)
+    return mockTestData.test.allow_pausing ?? false
+  }, [mockTestData])
+
+  const shouldShowInQuestionTimer = useMemo(() => {
+    // If no mockTestData, it's a customizable practice session
+    if (!mockTestData) return true
+    
+    // For mock tests, check teacher setting (default to false for safety)
+    return mockTestData.test.show_in_question_timer ?? false
+  }, [mockTestData])
 
   // FR-1.1: Open exit modal and instantly pause timers
   const handleOpenExitModal = () => {
@@ -924,9 +945,10 @@ useEffect(() => {
           mainTimer={mainTimerDisplay}
           isLowTime={isLowTime}
           inQuestionTime={inQuestionTime}
+          showInQuestionTimer={shouldShowInQuestionTimer}
           isPaused={isPaused}
           showBookmark={false} // Disable bookmarking in practice interface
-          onTogglePause={handlePauseSession}
+          onTogglePause={shouldShowPauseButton ? handlePauseSession : undefined}
           // CRITICAL: Pass the real button handlers from PracticeInterface
           onSaveAndNext={handleSaveAndNext}
           onMarkForReviewAndNext={handleMarkForReviewAndNext}

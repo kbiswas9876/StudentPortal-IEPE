@@ -31,6 +31,10 @@ CREATE TABLE IF NOT EXISTS public.tests (
     CHECK (result_policy IN ('instant', 'scheduled', 'manual')),
   result_release_at TIMESTAMPTZ,
   
+  -- Teacher-Controlled Features
+  allow_pausing BOOLEAN NOT NULL DEFAULT false,
+  show_in_question_timer BOOLEAN NOT NULL DEFAULT false,
+  
   -- Metadata
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -195,6 +199,12 @@ COMMENT ON COLUMN tests.result_policy IS
 
 COMMENT ON COLUMN tests.result_release_at IS 
 'Timestamp when results become visible (only used when result_policy = scheduled)';
+
+COMMENT ON COLUMN tests.allow_pausing IS 
+'Whether students can pause the test during the session. Controlled by teacher in Admin Panel.';
+
+COMMENT ON COLUMN tests.show_in_question_timer IS 
+'Whether to show per-question timer to students. Controlled by teacher in Admin Panel.';
 
 -- Legacy field removed in migration
 

@@ -48,6 +48,7 @@ interface QuestionDisplayWindowProps {
   // Scoring information
   correctMarks?: number
   negativeMarks?: number
+  showInQuestionTimer?: boolean
 }
 
 const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({ 
@@ -73,7 +74,8 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   hideMetadata = false,
   // Scoring information
   correctMarks,
-  negativeMarks
+  negativeMarks,
+  showInQuestionTimer = true
 }) => {
   // FOUC Fix: State to control fade-in animation
   const [isLoaded, setIsLoaded] = useState(false)
@@ -156,7 +158,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
       <main className={`main-content-area ${isLoaded ? 'loaded' : ''}`}>
         <QuestionCard 
           questionText={currentQuestion.question_text} 
-          inQuestionTimer={inQuestionTime}
+          inQuestionTimer={showInQuestionTimer ? inQuestionTime : undefined}
           isPaused={isPaused}
         />
         

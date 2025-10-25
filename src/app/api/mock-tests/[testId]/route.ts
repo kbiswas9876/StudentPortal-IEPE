@@ -43,7 +43,9 @@ export async function GET(
           total_time_minutes,
           marks_per_correct,
           negative_marks_per_incorrect,
-          status
+          status,
+          allow_pausing,
+          show_in_question_timer
         ),
         questions!inner(
           id,
