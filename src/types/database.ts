@@ -254,7 +254,8 @@ export interface Database {
           id: string // UUID
           question_id: number
           reported_by_user_id: string // UUID string
-          report_description: string
+          report_tag: string
+          report_description: string | null
           status: 'new' | 'reviewed' | 'resolved' | 'dismissed'
           admin_notes: string | null
           created_at: string
@@ -264,7 +265,8 @@ export interface Database {
           id?: string
           question_id: number
           reported_by_user_id: string
-          report_description: string
+          report_tag: string
+          report_description?: string | null
           status?: 'new' | 'reviewed' | 'resolved' | 'dismissed'
           admin_notes?: string | null
           created_at?: string
@@ -274,7 +276,8 @@ export interface Database {
           id?: string
           question_id?: number
           reported_by_user_id?: string
-          report_description?: string
+          report_tag?: string
+          report_description?: string | null
           status?: 'new' | 'reviewed' | 'resolved' | 'dismissed'
           admin_notes?: string | null
           created_at?: string

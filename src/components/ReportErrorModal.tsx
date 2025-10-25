@@ -6,31 +6,40 @@ import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/lib/toast-context'
 import { useAuth } from '@/lib/auth-context'
 import KatexRenderer from './ui/KatexRenderer'
+import { REPORT_OPTIONS } from '@/lib/constants'
 
 interface ReportErrorModalProps {
   isOpen: boolean
   onClose: () => void
   questionId: number
   questionText: string
+  reportTag: string
 }
 
 export default function ReportErrorModal({
   isOpen,
   onClose,
   questionId,
-  questionText
+  questionText,
+  reportTag
 }: ReportErrorModalProps) {
   const [description, setDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { showToast } = useToast()
   const { session } = useAuth()
+  
+  // Get the label for the selected report tag
+  const reportOption = REPORT_OPTIONS.find(opt => opt.tag === reportTag)
+  const modalTitle = reportOption?.label || 'Report Issue'
+  const isDescriptionRequired = reportTag === 'other'
 
   const handleSubmit = async () => {
-    if (!description.trim()) {
+    // Validate description requirement based on report tag
+    if (isDescriptionRequired && !description.trim()) {
       showToast({
         type: 'error',
         title: 'Description Required',
-        message: 'Please provide a description of the issue.'
+        message: 'Please provide details for this report type.'
       })
       return
     }
@@ -47,6 +56,7 @@ export default function ReportErrorModal({
         },
         body: JSON.stringify({
           questionId,
+          reportTag,
           description: description.trim()
         })
       })
@@ -109,10 +119,10 @@ export default function ReportErrorModal({
             <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  Report an Issue with this Question
+                  Report: {modalTitle}
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  Help us improve by reporting any issues you find
+                  Help us improve by reporting this specific issue
                 </p>
               </div>
               <button
@@ -140,18 +150,24 @@ export default function ReportErrorModal({
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Issue Description
+                  {isDescriptionRequired ? 'Please provide details' : 'Optional Details'}
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Please describe the issue (e.g., typo in the question, incorrect solution, unclear wording)..."
+                  placeholder={isDescriptionRequired 
+                    ? "Please describe the issue in detail..." 
+                    : "Additional details (optional)..."
+                  }
                   className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                   rows={4}
                   disabled={isSubmitting}
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Be as specific as possible to help us understand and fix the issue.
+                  {isDescriptionRequired 
+                    ? 'Details are required for this report type.'
+                    : 'Additional context helps us understand and fix the issue.'
+                  }
                 </p>
               </div>
             </div>
@@ -167,7 +183,7 @@ export default function ReportErrorModal({
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting || !description.trim()}
+                disabled={isSubmitting || (isDescriptionRequired && !description.trim())}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-colors"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Report'}

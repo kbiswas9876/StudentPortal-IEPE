@@ -33,7 +33,7 @@ interface QuestionDisplayWindowProps {
   isBookmarked?: boolean
   onAnswerChange?: (answer: string) => void
   onBookmark?: () => void
-  onReportError?: () => void
+  onReportError?: (reportTag: string) => void
   onExit?: () => void
   mainTimer?: string
   isLowTime?: boolean
@@ -129,9 +129,9 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
     }
   }
 
-  const handleReport = () => {
+  const handleReport = (reportTag: string) => {
     if (onReportError) {
-      onReportError()
+      onReportError(reportTag)
     }
   }
 

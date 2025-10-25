@@ -71,6 +71,12 @@ export default function DetailedSolutionReviewPage() {
 
   // Report modal
   const [showReportModal, setShowReportModal] = useState(false)
+  const [selectedReportTag, setSelectedReportTag] = useState<string | null>(null)
+  
+  const handleReportError = (reportTag: string) => {
+    setSelectedReportTag(reportTag)
+    setShowReportModal(true)
+  }
   
   // View All Questions modal
   const [showViewAllModal, setShowViewAllModal] = useState(false)
@@ -784,12 +790,16 @@ const handleSrsFeedbackError = (error: string) => {
         </motion.button>
       )}
       {/* Report Error Modal */}
-      {showReportModal && currentQuestion && (
+      {showReportModal && currentQuestion && selectedReportTag && (
         <DynamicReportErrorModal
           isOpen={showReportModal}
-          onClose={() => setShowReportModal(false)}
+          onClose={() => {
+            setShowReportModal(false)
+            setSelectedReportTag(null)
+          }}
           questionId={currentQuestion.id}
           questionText={currentQuestion.question_text}
+          reportTag={selectedReportTag}
         />
       )}
 

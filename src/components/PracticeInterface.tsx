@@ -82,8 +82,14 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
-  const [showEndSessionModal, setShowEndSessionModal] = useState(false)
+  const [selectedReportTag, setSelectedReportTag] = useState<string | null>(null)
+  
+  const handleReportError = (reportTag: string) => {
+    setSelectedReportTag(reportTag)
+    setShowReportModal(true)
+  }
   const [showExitModal, setShowExitModal] = useState(false)
+  const [showEndSessionModal, setShowEndSessionModal] = useState(false)
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false)
   const [showPauseModal, setShowPauseModal] = useState(false)
   const [showSubmissionModal, setShowSubmissionModal] = useState(false)
@@ -940,7 +946,7 @@ useEffect(() => {
           isBookmarked={currentState.is_bookmarked}
           onAnswerChange={handleAnswerChange}
           onBookmark={handleBookmark}
-          onReportError={() => setShowReportModal(true)}
+          onReportError={handleReportError}
           onExit={handleOpenExitModal}
           mainTimer={mainTimerDisplay}
           isLowTime={isLowTime}
@@ -1034,12 +1040,16 @@ useEffect(() => {
       />
 
       {/* Report Error Modal */}
-      {showReportModal && (
+      {showReportModal && selectedReportTag && (
         <ReportErrorModal
           isOpen={showReportModal}
-          onClose={() => setShowReportModal(false)}
+          onClose={() => {
+            setShowReportModal(false)
+            setSelectedReportTag(null)
+          }}
           questionId={currentQuestion.id}
           questionText={currentQuestion.question_text}
+          reportTag={selectedReportTag}
         />
       )}
 

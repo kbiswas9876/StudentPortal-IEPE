@@ -1,9 +1,11 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { ChevronLeft, Flag, Clock, Play, Pause } from 'lucide-react'
+import { Menu, Transition } from '@headlessui/react'
 import '../styles/UnifiedHeader.css'
 import '@/styles/TimerTypography.css'
+import { REPORT_OPTIONS } from '@/lib/constants'
 
 interface UnifiedHeaderProps {
   currentQuestion: number
@@ -11,7 +13,7 @@ interface UnifiedHeaderProps {
   mainTimer: string
   isLowTime?: boolean // NEW: Flag for low time styling
   onBack?: () => void
-  onReport?: () => void
+  onReport?: (reportTag: string) => void
   isPaused?: boolean
   onTogglePause?: () => void
   // Scoring information
@@ -31,6 +33,11 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   correctMarks,
   negativeMarks
 }) => {
+  const handleReportSelect = (reportTag: string) => {
+    if (onReport) {
+      onReport(reportTag)
+    }
+  }
   return (
     <header className="unified-header">
       <div className="header-zone left">
@@ -90,13 +97,43 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
           </div>
         )}
         
-        <button 
-          className="icon-button report-button" 
-          aria-label="Report this question"
-          onClick={onReport}
-        >
-          <Flag size={16} />
-        </button>
+        <Menu as="div" className="relative">
+          <Menu.Button 
+            className="icon-button report-button" 
+            aria-label="Report this question"
+          >
+            <Flag size={16} />
+          </Menu.Button>
+          
+          <Transition
+            as={React.Fragment}
+            enter="transition ease-out duration-200"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-150"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right bg-white dark:bg-slate-800 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+              <div className="py-1">
+                {REPORT_OPTIONS.map((option) => (
+                  <Menu.Item key={option.tag}>
+                    {({ active }) => (
+                      <button
+                        onClick={() => handleReportSelect(option.tag)}
+                        className={`${
+                          active ? 'bg-slate-100 dark:bg-slate-700' : ''
+                        } block w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300`}
+                      >
+                        {option.label}
+                      </button>
+                    )}
+                  </Menu.Item>
+                ))}
+              </div>
+            </Menu.Items>
+          </Transition>
+        </Menu>
       </div>
     </header>
   )

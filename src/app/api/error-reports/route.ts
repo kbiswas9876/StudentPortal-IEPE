@@ -9,11 +9,18 @@ const supabaseAdmin = createAdminClient()
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { questionId, description } = body
+    const { questionId, reportTag, description } = body
 
-    if (!questionId || !description) {
+    if (!questionId || !reportTag) {
       return NextResponse.json({
-        error: 'Question ID and description are required'
+        error: 'Question ID and report tag are required'
+      }, { status: 400 })
+    }
+
+    // Special validation: if reportTag is 'other', description is required
+    if (reportTag === 'other' && (!description || description.trim() === '')) {
+      return NextResponse.json({
+        error: 'Description is required for "Other" reports'
       }, { status: 400 })
     }
 
@@ -39,11 +46,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log('Creating error report:', { questionId, userId: user.id, description })
+    console.log('Creating error report:', { questionId, userId: user.id, reportTag, description })
 
     const insertData = {
       question_id: questionId,
       reported_by_user_id: user.id,
+      report_tag: reportTag,
       report_description: description,
       status: 'new' as const
     }
