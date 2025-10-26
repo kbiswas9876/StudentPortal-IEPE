@@ -4,7 +4,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, Flag, Bookmark } from 'lucide-react'
 import '../styles/UnifiedHeader.css'
-import { getNuancedPerformanceState, type AdvancedDifficulty } from '@/lib/speed-calculator'
+import { getNuancedPerformanceState, ADVANCED_TIME_THRESHOLDS, type AdvancedDifficulty } from '@/lib/speed-calculator'
 
 interface SolutionUnifiedHeaderProps {
   currentQuestion: number
@@ -92,14 +92,6 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
 
   // Get target time based on difficulty
   const getTargetTime = (difficulty: string | null): number => {
-    const ADVANCED_TIME_THRESHOLDS = {
-      'Easy': 20,
-      'Easy-Moderate': 30,
-      'Moderate': 45,
-      'Moderate-Hard': 60,
-      'Hard': 90,
-      'default': 36
-    }
     return ADVANCED_TIME_THRESHOLDS[difficulty as keyof typeof ADVANCED_TIME_THRESHOLDS] || ADVANCED_TIME_THRESHOLDS.default
   }
 
@@ -180,27 +172,29 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
             {getPremiumPerformanceChipStyle(timeTakenSeconds, difficulty, status).label}
           </span>
           
-          {/* Separator */}
-          <span className="text-white font-bold">|</span>
-          
           {/* Time Information */}
-          <div className="flex items-center space-x-4 text-sm">
-            {/* User's Time */}
-            <div className="flex items-center space-x-1">
-              <span className="font-medium text-white">You:</span>
-              <span className="font-mono font-bold text-white text-base">
-                {formatTime(timeTakenSeconds)}
-              </span>
-            </div>
+          <>
+            {/* Separator */}
+            <span className="text-white font-bold">|</span>
             
-            {/* Target Time */}
-            <div className="flex items-center space-x-1">
-              <span className="font-medium text-white">Target:</span>
-              <span className="font-mono font-bold text-white text-base">
-                {formatTime(getTargetTime(difficulty))}
-              </span>
+            <div className="flex items-center space-x-4 text-sm">
+              {/* User's Time */}
+              <div className="flex items-center space-x-1">
+                <span className="font-medium text-white">You:</span>
+                <span className="font-mono font-bold text-white text-base">
+                  {formatTime(timeTakenSeconds)}
+                </span>
+              </div>
+              
+              {/* Target Time */}
+              <div className="flex items-center space-x-1">
+                <span className="font-medium text-white">Target:</span>
+                <span className="font-mono font-bold text-white text-base">
+                  {formatTime(getTargetTime(difficulty))}
+                </span>
+              </div>
             </div>
-          </div>
+          </>
         </div>
       </div>
 

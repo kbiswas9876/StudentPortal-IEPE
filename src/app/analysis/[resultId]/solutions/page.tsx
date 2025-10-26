@@ -73,8 +73,17 @@ export default function DetailedSolutionReviewPage() {
   const [showReportModal, setShowReportModal] = useState(false)
   const [selectedReportTag, setSelectedReportTag] = useState<string | null>(null)
   
-  const handleReportError = (reportTag: string) => {
+  // Handler that accepts a reportTag parameter
+  const handleReportWithTag = (reportTag: string) => {
     setSelectedReportTag(reportTag)
+    setShowReportModal(true)
+  }
+  
+  // Handler for the SolutionQuestionDisplayWindow component (no parameters)
+  const handleReportError = () => {
+    // For solutions page, we'll just open the modal without a specific tag
+    // The modal will handle tag selection
+    setSelectedReportTag(null)
     setShowReportModal(true)
   }
   
@@ -490,11 +499,6 @@ const handleSrsFeedbackError = (error: string) => {
     } finally {
       bookmarkInProgressRef.current = false
     }
-  }
-
-  // Inline report handler
-  const handleReportError = () => {
-    setShowReportModal(true)
   }
   
   const clearAllFilters = () => {
