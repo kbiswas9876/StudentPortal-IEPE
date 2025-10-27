@@ -98,6 +98,8 @@ export interface Database {
           total_incorrect: number | null
           total_skipped: number | null
           session_type: string
+          test_mode: string | null
+          time_limit_minutes: number | null
           srs_feedback_log: SrsFeedbackLog | null
         }
         Insert: {
@@ -115,6 +117,8 @@ export interface Database {
           total_incorrect?: number | null
           total_skipped?: number | null
           session_type?: string
+          test_mode?: string | null
+          time_limit_minutes?: number | null
           srs_feedback_log?: SrsFeedbackLog | null
         }
         Update: {
@@ -132,6 +136,8 @@ export interface Database {
           total_incorrect?: number | null
           total_skipped?: number | null
           session_type?: string
+          test_mode?: string | null
+          time_limit_minutes?: number | null
           srs_feedback_log?: SrsFeedbackLog | null
         }
       }

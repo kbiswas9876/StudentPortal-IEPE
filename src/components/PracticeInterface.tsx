@@ -55,7 +55,7 @@ interface PracticeInterfaceProps {
 
 export default function PracticeInterface({ questions, testMode = 'practice', timeLimitInMinutes, mockTestData, savedSessionState, source, hideMetadata = false }: PracticeInterfaceProps) {
   // Hide metadata by default for mock tests only (not for regular practice sessions)
-  const shouldHideMetadata = hideMetadata || (testMode === 'mock' || !!mockTestData)
+  const shouldHideMetadata = hideMetadata || !!mockTestData
   const { user, session } = useAuth()
   const { showToast } = useToast()
   const router = useRouter()
@@ -844,7 +844,10 @@ useEffect(() => {
           skipped_answers: skippedAnswers,
           // Mock test specific fields
           session_type: mockTestData ? 'mock_test' : 'practice',
-          mock_test_id: mockTestData ? mockTestData.test.id : null
+          mock_test_id: mockTestData ? mockTestData.test.id : null,
+          // Practice session mode tracking
+          test_mode: testMode === 'timed' ? 'timed' : 'practice',
+          time_limit_minutes: timeLimitInMinutes || null
         })
       })
 

@@ -31,7 +31,9 @@ export async function POST(request: Request) {
       incorrect_answers,
       skipped_answers,
       session_type = 'practice',
-      mock_test_id = null
+      mock_test_id = null,
+      test_mode = 'practice',
+      time_limit_minutes = null
     } = body
   
     // Allow anonymous submissions for local verification and testing
@@ -65,6 +67,8 @@ export async function POST(request: Request) {
         total_skipped: skipped_answers,
         session_type: session_type,
         mock_test_id: mock_test_id,
+        test_mode: test_mode,
+        time_limit_minutes: time_limit_minutes,
         submitted_at: new Date().toISOString()
       })
       .select('id')
@@ -147,7 +151,9 @@ export async function POST(request: Request) {
           total_correct: correct_answers,
           total_incorrect: incorrect_answers,
           total_skipped: skipped_answers,
-          chapter_performance: chapterPerformance
+          chapter_performance: chapterPerformance,
+          test_mode: test_mode,
+          time_limit_minutes: time_limit_minutes
         }
 
         // Log the activity event

@@ -2,6 +2,8 @@
 const nextConfig = {
   // Enable React 19 features
   reactStrictMode: true,
+  // Set output file tracing root to this directory
+  outputFileTracingRoot: require('path').join(__dirname),
   // Optimize development server
   onDemandEntries: {
     // period (in ms) where the server will keep pages in the buffer
