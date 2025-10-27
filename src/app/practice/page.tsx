@@ -28,7 +28,8 @@ function PracticePageContent() {
   const isSavedSession = searchParams.get('savedSession') === 'true'
   const savedSessionData = searchParams.get('sessionData')
   const source = searchParams.get('source') // Track session origin
-  const hideMetadata = searchParams.get('hideMetadata') === 'true' // Get hideMetadata setting
+  const hideMetadataParam = searchParams.get('hideMetadata')
+  const hideMetadata = hideMetadataParam === 'true' // Get hideMetadata setting (default to false if not specified)
 
   useEffect(() => {
     if (authLoading) return
