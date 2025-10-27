@@ -103,6 +103,28 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   // Memoize questionIds for stable dependency in bookmark checks
   const questionIds = useMemo(() => questions.map(q => q.question_id), [questions]);
   
+  // Helper function to convert timer display format to modal format
+  // Converts "MM:SS" or "HH:MM:SS" to "XXm XXs"
+  const formatTimeForModal = useCallback((timerDisplay: string): string => {
+    const parts = timerDisplay.split(':')
+    
+    if (parts.length === 2) {
+      // MM:SS format
+      const minutes = parseInt(parts[0], 10)
+      const seconds = parseInt(parts[1], 10)
+      return `${minutes}m ${seconds}s`
+    } else if (parts.length === 3) {
+      // HH:MM:SS format
+      const hours = parseInt(parts[0], 10)
+      const minutes = parseInt(parts[1], 10)
+      const seconds = parseInt(parts[2], 10)
+      const totalMinutes = hours * 60 + minutes
+      return `${totalMinutes}m ${seconds}s`
+    }
+    
+    return '0m 0s'
+  }, [])
+  
   const bookmarkInProgressRef = useRef(false); // Prevent concurrent bookmark requests (race condition fix)
   
   // Ref to store the auto-submission handler to avoid circular dependency
@@ -1085,8 +1107,8 @@ useEffect(() => {
         isOpen={showSubmissionModal}
         onCancel={() => setShowSubmissionModal(false)}
         onSubmit={handleConfirmSubmission}
-        timeRemaining={testMode === 'timed' && timeLimitInMinutes ? 
-          '00m 00s' : 
+        timeRemaining={testMode === 'timed' && timeLimitInMinutes && mainTimerDisplay ? 
+          formatTimeForModal(mainTimerDisplay) : 
           undefined
         }
         statusCounts={getStatusCounts()}

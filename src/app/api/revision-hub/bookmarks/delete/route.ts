@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
 import { cookies } from 'next/headers'
+import { logStudentActivity } from '@/lib/utils/analyticsHelpers'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -58,6 +59,18 @@ export async function POST(request: Request) {
 
     console.log('Deleting bookmark:', { bookmarkId, userId: user.id })
 
+    // ============================================================================
+    // FETCH BOOKMARK DETAILS BEFORE DELETION FOR ACTIVITY LOGGING
+    // ============================================================================
+    
+    const { data: bookmarkData, error: fetchError } = await supabaseAdmin
+      .from('bookmarked_questions')
+      .select('question_id, custom_tags, user_difficulty_rating')
+      .eq('id', bookmarkId)
+      .eq('user_id', user.id)
+      .single()
+
+    // Delete the bookmark
     const { error } = await supabaseAdmin
       .from('bookmarked_questions')
       .delete()
@@ -70,6 +83,44 @@ export async function POST(request: Request) {
     }
 
     console.log('Successfully deleted bookmark:', bookmarkId)
+
+    // ============================================================================
+    // LOG ACTIVITY EVENT FOR ANALYTICS
+    // ============================================================================
+    
+    try {
+      if (!fetchError && bookmarkData) {
+        // Fetch question details from the authoritative source
+        const { data: questionData } = await supabaseAdmin
+          .from('questions')
+          .select('id, chapter_name, difficulty')
+          .eq('question_id', bookmarkData.question_id)
+          .single()
+
+        if (questionData) {
+          // Construct metadata object
+          const activityMetadata = {
+            question_id: bookmarkData.question_id,
+            bookmarked_question_id: bookmarkId,
+            question_chapter: questionData.chapter_name,
+            question_difficulty: questionData.difficulty,
+            user_difficulty_rating: bookmarkData.user_difficulty_rating,
+            custom_tags: bookmarkData.custom_tags
+          }
+
+          // Log the unbookmark activity event
+          await logStudentActivity(supabaseAdmin, {
+            user_id: user.id,
+            activity_type: 'QUESTION_UNBOOKMARKED',
+            related_entity_id: parseInt(bookmarkId),
+            metadata: activityMetadata
+          })
+        }
+      }
+    } catch (logError) {
+      // Log error but don't fail the primary operation
+      console.error('Error logging unbookmark activity:', logError)
+    }
 
     return NextResponse.json({ 
       message: 'Bookmark deleted successfully' 

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
 import { cookies } from 'next/headers'
 import { initializeSrsData } from '@/lib/srs/algorithm'
+import { logStudentActivity } from '@/lib/utils/analyticsHelpers'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -262,6 +263,48 @@ export async function POST(request: Request) {
     }
 
     console.log('✅ Successfully created new bookmark:', data[0])
+
+    // ============================================================================
+    // LOG ACTIVITY EVENT FOR ANALYTICS
+    // ============================================================================
+    
+    try {
+      // Fetch question details from the authoritative source
+      const { data: questionData, error: questionError } = await supabaseAdmin
+        .from('questions')
+        .select('id, chapter_name, difficulty, question_text')
+        .eq('question_id', questionId)
+        .single()
+
+      if (!questionError && questionData) {
+        // Construct metadata object
+        const activityMetadata = {
+          question_id: questionId,
+          bookmarked_question_id: data[0].id,
+          question_chapter: questionData.chapter_name,
+          question_difficulty: questionData.difficulty,
+          user_difficulty_rating: difficultyRating || null,
+          custom_tags: customTags || null,
+          has_personal_note: !!personalNote
+        }
+
+        // Log the bookmark activity event
+        // Note: related_entity_id expects a number (bigint), but bookmark.id is a UUID (string)
+        // We'll pass null for related_entity_id or convert if needed
+        await logStudentActivity(supabaseAdmin, {
+          user_id: userId,
+          activity_type: 'QUESTION_BOOKMARKED',
+          related_entity_id: null, // Bookmarks use UUID, not bigint
+          metadata: activityMetadata
+        })
+      } else {
+        console.warn('Could not fetch question details for activity logging:', questionError)
+      }
+    } catch (error) {
+      // Log error but don't fail the primary operation
+      console.error('Error logging bookmark activity:', error)
+    }
+
     return NextResponse.json({ 
       data: data[0],
       message: 'Bookmark created successfully' 

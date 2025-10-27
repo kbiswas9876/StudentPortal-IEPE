@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
+import { calculateChapterPerformance, logStudentActivity } from '@/lib/utils/analyticsHelpers'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -101,6 +102,67 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error('Error creating answer log entries:', error)
       return NextResponse.json({ error: 'Failed to create answer log entries' }, { status: 500 })
+    }
+
+    // ============================================================================
+    // LOG ACTIVITY EVENT FOR ANALYTICS
+    // ============================================================================
+    
+    try {
+      // Fetch the full question details to calculate chapter performance
+      const questionIds = questions.map((q: any) => q.question_id)
+      const { data: questionsData, error: questionsError } = await supabaseAdmin
+        .from('questions')
+        .select('id, chapter_name, difficulty')
+        .in('id', questionIds)
+
+      if (!questionsError && questionsData) {
+        // Calculate chapter performance
+        const chapterPerformance = await calculateChapterPerformance(questions, questionsData)
+
+        // Determine activity type based on session type
+        const activityType = session_type === 'mock_test' 
+          ? 'MOCK_TEST_COMPLETED' 
+          : 'PRACTICE_SESSION_COMPLETED'
+
+        // Fetch mock test name if applicable
+        let mockTestName = null
+        if (session_type === 'mock_test' && mock_test_id) {
+          const { data: testData } = await supabaseAdmin
+            .from('tests')
+            .select('name')
+            .eq('id', mock_test_id)
+            .single()
+          
+          mockTestName = testData?.name || null
+        }
+
+        // Construct metadata object
+        const activityMetadata = {
+          test_result_id: testResult.id,
+          test_name: mockTestName,
+          score_percentage: score,
+          total_time_taken_seconds: total_time,
+          total_questions: total_questions,
+          total_correct: correct_answers,
+          total_incorrect: incorrect_answers,
+          total_skipped: skipped_answers,
+          chapter_performance: chapterPerformance
+        }
+
+        // Log the activity event
+        await logStudentActivity(supabaseAdmin, {
+          user_id: normalizedUserId,
+          activity_type: activityType,
+          related_entity_id: testResult.id,
+          metadata: activityMetadata
+        })
+      } else {
+        console.warn('Could not fetch question details for chapter performance calculation:', questionsError)
+      }
+    } catch (error) {
+      // Log error but don't fail the primary operation
+      console.error('Error logging student activity:', error)
     }
 
     console.log(`Successfully submitted test result ${testResult.id} with ${questions.length} answers`)

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
 import { updateSrsData } from '@/lib/srs/algorithm';
 import type { PerformanceRating } from '@/lib/srs/types';
+import { logStudentActivity } from '@/lib/utils/analyticsHelpers';
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
@@ -242,6 +243,33 @@ export async function POST(request: Request) {
     } catch (historyError) {
       // Don't fail the whole request if history logging fails
       console.error('⚠️ Error logging review history (non-critical):', historyError);
+    }
+
+    // ============================================================================
+    // STEP 5.6: Log Activity Event for Analytics
+    // ============================================================================
+    
+    try {
+      const activityMetadata = {
+        bookmarked_question_id: bookmark.id,
+        question_id: bookmark.question_id,
+        performance_rating: performanceRating,
+        previous_srs_interval: currentSrsData.srs_interval,
+        new_srs_interval: updatedSrsData.srs_interval,
+        previous_srs_repetitions: currentSrsData.srs_repetitions,
+        new_srs_repetitions: updatedSrsData.srs_repetitions,
+        previous_ease_factor: currentSrsData.srs_ease_factor,
+        new_ease_factor: updatedSrsData.srs_ease_factor
+      };
+
+      await logStudentActivity(supabaseAdmin, {
+        user_id: userId,
+        activity_type: 'REVIEW_SESSION_COMPLETED',
+        related_entity_id: bookmark.id,
+        metadata: activityMetadata
+      });
+    } catch (activityError) {
+      console.error('⚠️ Error logging review activity (non-critical):', activityError);
     }
 
     // ============================================================================

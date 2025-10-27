@@ -4,6 +4,7 @@ import { env } from '@/lib/env'
 import { updateSrsData } from '@/lib/srs/algorithm'
 import type { PerformanceRating } from '@/lib/srs/types'
 import type { SrsFeedbackLog } from '@/types/database'
+import { logStudentActivity } from '@/lib/utils/analyticsHelpers'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -215,6 +216,34 @@ export async function POST(
     }
 
     console.log('✅ Feedback log updated successfully')
+
+    // ============================================================================
+    // STEP 8.5: Log Activity Event for Analytics
+    // ============================================================================
+    
+    try {
+      const activityMetadata = {
+        bookmarked_question_id: bookmark.id,
+        question_id: bookmark.question_id,
+        result_id: resultId,
+        performance_rating: rating,
+        previous_srs_interval: originalState.srs_interval,
+        new_srs_interval: newSrsData.srs_interval,
+        previous_srs_repetitions: originalState.srs_repetitions,
+        new_srs_repetitions: newSrsData.srs_repetitions,
+        previous_ease_factor: originalState.srs_ease_factor,
+        new_ease_factor: newSrsData.srs_ease_factor
+      };
+
+      await logStudentActivity(supabaseAdmin, {
+        user_id: userId,
+        activity_type: 'REVIEW_SESSION_COMPLETED',
+        related_entity_id: bookmark.id,
+        metadata: activityMetadata
+      });
+    } catch (activityError) {
+      console.error('⚠️ Error logging review activity (non-critical):', activityError);
+    }
 
     // ============================================================================
     // STEP 8: Emit SRS Review Complete Event Data
