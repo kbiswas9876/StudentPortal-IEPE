@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
+import { calculateActualScore, calculateTotalMarks } from '@/lib/scoring'
 import { cookies } from 'next/headers'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -76,23 +77,9 @@ export async function GET(request: Request) {
         const test = transformedTests.find(t => t.id === attempt.mock_test_id)
         if (!test) return attempt
 
-        // Calculate Final Score
-        console.log(`Test ${attempt.mock_test_id} - Attempt data:`, {
-          total_correct: attempt.total_correct,
-          total_incorrect: attempt.total_incorrect,
-          total_questions: attempt.total_questions,
-          marks_per_correct: test.marks_per_correct,
-          negative_marks_per_incorrect: test.negative_marks_per_incorrect
-        })
-        
-        const marksObtained = (attempt.total_correct * test.marks_per_correct) - 
-                            (attempt.total_incorrect * Math.abs(test.negative_marks_per_incorrect))
-        const totalMarks = attempt.total_questions * test.marks_per_correct
-        
-        console.log(`Test ${attempt.mock_test_id} - Calculated marks:`, {
-          marksObtained,
-          totalMarks
-        })
+        // Calculate Final Score using hybrid per-question aware logic
+        const marksObtained = await calculateActualScore(supabaseAdmin as any, Number(attempt.id), Number(attempt.mock_test_id))
+        const totalMarks = await calculateTotalMarks(supabaseAdmin as any, Number(attempt.mock_test_id))
 
         // Calculate Rank for this specific test
         const { data: allTestResults, error: rankError } = await supabaseAdmin

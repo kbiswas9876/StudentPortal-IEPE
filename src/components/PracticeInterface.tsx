@@ -53,7 +53,7 @@ interface PracticeInterfaceProps {
 
 export default function PracticeInterface({ questions, testMode = 'practice', timeLimitInMinutes, mockTestData, savedSessionState, source, hideMetadata = false }: PracticeInterfaceProps) {
   // Hide metadata by default for mock tests
-  const shouldHideMetadata = hideMetadata || (testMode === 'mock' || mockTestData !== undefined)
+  const shouldHideMetadata = hideMetadata || mockTestData !== undefined
   const { user, session } = useAuth()
   const { showToast } = useToast()
   const router = useRouter()
