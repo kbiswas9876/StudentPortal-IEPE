@@ -62,6 +62,7 @@ export async function POST(request: Request) {
         total_correct: correct_answers,
         total_incorrect: incorrect_answers,
         total_skipped: skipped_answers,
+        total_time_taken: total_time, // Fix: Save the total time taken
         session_type: session_type,
         mock_test_id: mock_test_id,
         submitted_at: new Date().toISOString()
