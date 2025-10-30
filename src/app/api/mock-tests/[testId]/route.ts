@@ -31,11 +31,14 @@ export async function GET(
 
     console.log('Fetching mock test data for test ID:', testId)
 
-    // Multi-table JOIN query to get test rules and questions
+    // Multi-table JOIN query to get test rules and questions with per-question marking
     const { data: testData, error: testError } = await supabaseAdmin
       .from('test_questions')
       .select(`
         test_id,
+        question_id,
+        marks_per_correct,
+        penalty_per_incorrect,
         tests!inner(
           id,
           name,
@@ -62,6 +65,7 @@ export async function GET(
         )
       `)
       .eq('test_id', testId)
+      .order('id', { ascending: true })
 
     if (testError) {
       console.error('Error fetching mock test data:', testError)
@@ -73,10 +77,25 @@ export async function GET(
     }
 
     // Extract test information from the first row
-    const testInfo = testData[0].tests
-    const questions = testData.map(item => item.questions)
+    // testInfo might be an array or object depending on Supabase response
+    const testInfoRaw = testData[0].tests
+    const testInfo = Array.isArray(testInfoRaw) ? testInfoRaw[0] : testInfoRaw
+    // Map questions with their per-question marking (fallback to test-level if null)
+    const globalMpc = Number(testInfo?.marks_per_correct) || 0
+    const globalPpi = Math.abs(Number(testInfo?.negative_marks_per_incorrect) || 0)
+    
+    const questions = testData.map((item: any) => ({
+      ...item.questions,
+      // Include per-question marking with fallback to test-level
+      marks_per_correct: item.marks_per_correct !== null && item.marks_per_correct !== undefined 
+        ? Number(item.marks_per_correct) 
+        : globalMpc,
+      penalty_per_incorrect: item.penalty_per_incorrect !== null && item.penalty_per_incorrect !== undefined 
+        ? Math.abs(Number(item.penalty_per_incorrect)) 
+        : globalPpi
+    }))
 
-    console.log(`Successfully fetched mock test: ${testInfo?.[0]?.name} with ${questions.length} questions`)
+    console.log(`Successfully fetched mock test: ${testInfo?.name} with ${questions.length} questions`)
 
     return NextResponse.json({
       data: {

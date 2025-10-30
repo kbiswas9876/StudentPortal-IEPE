@@ -77,6 +77,55 @@ export async function GET(
       return NextResponse.json({ error: 'Questions not found' }, { status: 404 })
     }
 
+    // For mock tests, enrich questions with per-question marking
+    if (testResult.session_type === 'mock_test' && testResult.mock_test_id) {
+      const { data: testQuestions, error: testQuestionsError } = await supabaseAdmin
+        .from('test_questions')
+        .select('question_id, marks_per_correct, penalty_per_incorrect')
+        .eq('test_id', testResult.mock_test_id)
+        .in('question_id', questionIds)
+
+      if (!testQuestionsError && testQuestions) {
+        // Get global marking scheme as fallback
+        const { data: testMeta } = await supabaseAdmin
+          .from('tests')
+          .select('marks_per_correct, negative_marks_per_incorrect')
+          .eq('id', testResult.mock_test_id)
+          .single()
+
+        const globalMpc = Number(testMeta?.marks_per_correct) || 0
+        const globalPpi = Math.abs(Number(testMeta?.negative_marks_per_incorrect) || 0)
+
+        // Create a map of question_id to marking
+        const markingMap = new Map(
+          testQuestions.map((tq: any) => [
+            tq.question_id,
+            {
+              marks_per_correct: tq.marks_per_correct !== null && tq.marks_per_correct !== undefined 
+                ? Number(tq.marks_per_correct) 
+                : globalMpc,
+              penalty_per_incorrect: tq.penalty_per_incorrect !== null && tq.penalty_per_incorrect !== undefined 
+                ? Math.abs(Number(tq.penalty_per_incorrect)) 
+                : globalPpi
+            }
+          ])
+        )
+
+        // Enrich questions with per-question marking
+        const enrichedQuestions = questions.map((q: any) => {
+          const marking = markingMap.get(q.id) || { marks_per_correct: globalMpc, penalty_per_incorrect: globalPpi }
+          return {
+            ...q,
+            marks_per_correct: marking.marks_per_correct,
+            penalty_per_incorrect: marking.penalty_per_incorrect
+          }
+        })
+
+        // Use enriched questions
+        questions.splice(0, questions.length, ...enrichedQuestions)
+      }
+    }
+
     // Fetch peer performance data for benchmarking
     console.log('Fetching peer performance data for benchmarking...')
     const { data: peerPerformanceData, error: peerError } = await supabaseAdmin

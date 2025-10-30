@@ -741,9 +741,12 @@ useEffect(() => {
       const skippedAnswers = totalQuestions - evaluatedQuestions.length
 
       // Calculate score based on mock test rules or default percentage
+      // NOTE: This is client-side calculation for UI preview only. The server-side
+      // calculation using per-question marking from test_questions table is authoritative.
       let score: number
       if (mockTestData) {
-        // Mock test scoring: use actual marks
+        // Mock test scoring: use actual marks (simplified client-side calculation for preview)
+        // Actual score will be recalculated on server using per-question marking scheme
         const totalMarks = (correctAnswers * mockTestData.test.marks_per_correct) + 
                           (incorrectAnswers * mockTestData.test.negative_marks_per_incorrect)
         const maxMarks = totalQuestions * mockTestData.test.marks_per_correct
@@ -931,8 +934,8 @@ useEffect(() => {
           onSaveAndNext={handleSaveAndNext}
           onMarkForReviewAndNext={handleMarkForReviewAndNext}
           hideMetadata={shouldHideMetadata}
-          correctMarks={mockTestData?.test.marks_per_correct}
-          negativeMarks={mockTestData?.test.negative_marks_per_incorrect}
+          correctMarks={mockTestData ? (questions[currentIndex] as any)?.marks_per_correct : undefined}
+          negativeMarks={mockTestData ? (questions[currentIndex] as any)?.penalty_per_incorrect : undefined}
         />
       </div>
 

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
+import { calculateScoreForResult } from '@/lib/scoring'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -102,6 +103,43 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error('Error creating answer log entries:', error)
       return NextResponse.json({ error: 'Failed to create answer log entries' }, { status: 500 })
+    }
+
+    // For mock tests, calculate accurate score using per-question marking scheme
+    if (session_type === 'mock_test' && mock_test_id) {
+      try {
+        console.log('Calculating accurate score for mock test using per-question marking...')
+        const { actualScore, totalMarks } = await calculateScoreForResult(
+          supabaseAdmin,
+          testResult.id,
+          mock_test_id
+        )
+        
+        const scorePercentage = totalMarks > 0 
+          ? Math.round((actualScore / totalMarks) * 100 * 100) / 100
+          : 0
+
+        // Update test_results with accurate score calculated from per-question marking
+        const { error: updateError } = await supabaseAdmin
+          .from('test_results')
+          .update({ 
+            score: actualScore, 
+            score_percentage: scorePercentage 
+          })
+          .eq('id', testResult.id)
+
+        if (updateError) {
+          console.error('Error updating test result score:', updateError)
+          // Continue anyway - the initial score is saved, just log the error
+        } else {
+          console.log(`✅ Updated mock test score: ${actualScore} / ${totalMarks} (${scorePercentage}%)`)
+        }
+      } catch (error) {
+        console.error('Error calculating mock test score:', error)
+        // Continue anyway - the initial score is saved
+      }
+    } else if (session_type === 'mock_test') {
+      console.warn('⚠️ Mock test submission missing mock_test_id - unable to calculate accurate score')
     }
 
     console.log(`Successfully submitted test result ${testResult.id} with ${questions.length} answers`)

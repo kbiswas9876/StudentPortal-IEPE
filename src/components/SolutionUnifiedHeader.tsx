@@ -17,6 +17,8 @@ interface SolutionUnifiedHeaderProps {
   onReport?: () => void
   onToggleBookmark?: () => void
   showBookmark?: boolean
+  correctMarks?: number
+  negativeMarks?: number
 }
 
 const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
@@ -29,7 +31,9 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
   onBack,
   onReport,
   onToggleBookmark,
-  showBookmark = true
+  showBookmark = true,
+  correctMarks,
+  negativeMarks
 }) => {
   const getStatusPillClasses = (s: 'correct' | 'incorrect' | 'skipped') => {
     switch (s) {
@@ -205,6 +209,24 @@ const SolutionUnifiedHeader: React.FC<SolutionUnifiedHeaderProps> = ({
       </div>
 
       <div className="header-zone right">
+        {/* Scoring Information */}
+        {(correctMarks !== undefined || negativeMarks !== undefined) && (
+          <div className="flex items-center space-x-3 mr-4">
+            {correctMarks !== undefined && (
+              <div className="flex items-center space-x-1 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold shadow-md">
+                <span>+</span>
+                <span>{correctMarks}</span>
+              </div>
+            )}
+            {negativeMarks !== undefined && (
+              <div className="flex items-center space-x-1 bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold shadow-md">
+                <span>-</span>
+                <span>{Math.abs(negativeMarks)}</span>
+              </div>
+            )}
+          </div>
+        )}
+        
         {/* Premium Bookmark Button */}
         {showBookmark && onToggleBookmark && (
           <motion.button

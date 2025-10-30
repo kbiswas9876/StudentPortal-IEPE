@@ -112,6 +112,8 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
           isBookmarked={false}
           onBack={handleBack}
           onReport={handleReport}
+          correctMarks={undefined}
+          negativeMarks={undefined}
         />
         <main className={`main-content-area ${isLoaded ? 'loaded' : ''}`}>
           <div className="text-slate-600 dark:text-slate-300">No question available.</div>
@@ -134,6 +136,8 @@ const SolutionQuestionDisplayWindow: React.FC<SolutionQuestionDisplayWindowProps
         onReport={handleReport}
         onToggleBookmark={onToggleBookmark}
         showBookmark={showBookmark}
+        correctMarks={(question as any)?.marks_per_correct}
+        negativeMarks={(question as any)?.penalty_per_incorrect}
       />
 
       {/* Main Content Area - Scrollable content only */}
