@@ -8,6 +8,7 @@ import { MagnifyingGlassIcon, XMarkIcon, FunnelIcon, ClockIcon, PlayIcon, CheckC
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabaseClient'
 import TestCard from '@/components/tests/TestCard'
+import TestListItem from '@/components/tests/TestListItem'
 
 
 type Test = {
@@ -504,10 +505,10 @@ export default function MockTestHubPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.4 }}
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                    className="flex flex-col gap-3"
                   >
                     {all.length === 0 ? (
-                      <div className="col-span-full flex flex-col items-center justify-center py-24">
+                      <div className="flex flex-col items-center justify-center py-24">
                         <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
                           <ListBulletIcon className="h-8 w-8 text-slate-400" />
                         </div>
@@ -535,7 +536,7 @@ export default function MockTestHubPage() {
                         }
 
                         return (
-                          <TestCard
+                          <TestListItem
                             key={test.id}
                             test={test}
                             type={testType}
