@@ -186,8 +186,8 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
       )}
 
       {/* Header Section */}
-      <div className="p-4">
-        <h3 className="text-indigo-deep text-lg font-semibold mb-2 leading-tight">
+      <div className={`p-4 ${(type === 'live' || type === 'upcoming') ? 'pr-24' : ''}`}>
+        <h3 className={`text-indigo-deep text-lg font-semibold mb-2 leading-tight ${(type === 'live' || type === 'upcoming') ? 'pr-2' : ''}`}>
           {test.name}
         </h3>
         <div className="flex items-center text-slate-600 text-sm">
