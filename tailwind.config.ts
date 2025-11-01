@@ -11,6 +11,13 @@ const config: Config = {
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
+        'indigo-deep': '#1E293B',
+        'slate-blue': '#475569',
+        'electric-blue': '#3B82F6',
+        'violet-premium': '#8B5CF6',
+        'ghost-white': '#F8FAFC',
+        'slate-light': '#E2E8F0',
+        'gray-cool': '#94A3B8',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

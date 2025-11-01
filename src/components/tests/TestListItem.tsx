@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, FileText, Clock, CheckCircle, XCircle, TrendingUp, Award, Eye, Play } from 'lucide-react'
-import { getScoreColor, getPercentileColor } from '@/utils/colorUtils'
+import { getScoreColor, getPercentileColor, getPerformanceStyles } from '@/utils/colorUtils'
 
 type Test = {
   id: number
@@ -98,7 +98,7 @@ const TestListItem: React.FC<TestListItemProps> = ({ test, type, index, onStartT
               scale: [1, 1.05, 1],
             }}
             transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-            className="px-2 py-0.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-xs font-bold flex items-center gap-1 shadow-sm"
+            className="px-2 py-0.5 bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white rounded-full text-xs font-bold flex items-center gap-1 shadow-lg border border-white"
           >
             <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
             LIVE
@@ -139,7 +139,7 @@ const TestListItem: React.FC<TestListItemProps> = ({ test, type, index, onStartT
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onStartTest(test.id)}
-            className="bg-gradient-to-r from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 text-white rounded-lg font-bold transition-all duration-300 shadow-lg hover:shadow-xl text-sm py-2 px-4 flex items-center gap-1.5 whitespace-nowrap"
+            className="bg-gradient-to-r from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 hover:scale-105 text-white rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl text-sm py-2 px-4 flex items-center gap-1.5 whitespace-nowrap"
           >
             <Play className="w-3.5 h-3.5" />
             <span>Start Test</span>
@@ -151,7 +151,7 @@ const TestListItem: React.FC<TestListItemProps> = ({ test, type, index, onStartT
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => test.resultId && onViewResult(test.resultId)}
-            className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-sm py-2 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl flex items-center gap-1.5 whitespace-nowrap border border-indigo-800"
+            className="bg-gradient-to-r from-violet-premium via-violet-600 to-violet-700 hover:from-violet-600 hover:via-violet-700 hover:to-violet-800 hover:scale-105 text-white font-semibold text-sm py-2 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-1.5 whitespace-nowrap"
           >
             <Eye className="w-3.5 h-3.5" />
             <span>View Results</span>
@@ -167,28 +167,28 @@ const TestListItem: React.FC<TestListItemProps> = ({ test, type, index, onStartT
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
-      className="group bg-gradient-to-br from-slate-50 via-white to-slate-100 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-between px-4 py-3 gap-4"
+      className="group bg-white border border-slate-light rounded-2xl shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 ease-out flex items-center justify-between px-4 py-3 gap-4"
     >
       {/* Left Section: Test Name + Status Badge + Quick Stats */}
       <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-[#1A1C1E] truncate">
+            <h3 className="text-base sm:text-lg font-semibold text-indigo-deep truncate">
               {test.name}
             </h3>
             {getStatusBadge()}
           </div>
-          <div className="flex items-center gap-3 text-xs text-[#5F6368]">
+          <div className="flex items-center gap-3 text-xs text-slate-600">
             <div className="flex items-center gap-1">
-              <FileText className="w-3.5 h-3.5" />
+              <FileText className="w-3.5 h-3.5 text-electric-blue" />
               <span>{test.total_questions} Q</span>
             </div>
             <div className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
+              <Clock className="w-3.5 h-3.5 text-electric-blue" />
               <span>{formatTime(test.total_time_minutes)}</span>
             </div>
             <div className="flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5" />
+              <Calendar className="w-3.5 h-3.5 text-gray-cool" />
               <span>{new Date(test.start_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             </div>
           </div>
@@ -217,28 +217,35 @@ const TestListItem: React.FC<TestListItemProps> = ({ test, type, index, onStartT
         )}
 
         {/* Score Display for Completed */}
-        {type === 'completed' && test.results && (
-          <div className="flex items-center gap-3">
-            <div className="text-center">
-              <p className="text-xs text-[#5F6368] mb-0.5">Score</p>
-              <p className="text-sm font-bold" style={{ color: getScoreColor(test.results.marks_obtained, test.results.total_marks) }}>
-                {test.results.marks_obtained === 0 ? '0' : (test.results.marks_obtained % 1 === 0 ? test.results.marks_obtained.toString() : test.results.marks_obtained.toFixed(2))}/{test.results.total_marks}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" style={{ color: getPercentileColor(test.results.percentile || 0) }} />
-                <span className="font-semibold" style={{ color: getPercentileColor(test.results.percentile || 0) }}>
-                  {test.results.percentile === 0 ? '0' : (test.results.percentile % 1 === 0 ? test.results.percentile.toString() : test.results.percentile?.toFixed(1) || '0')}%
-                </span>
+        {type === 'completed' && test.results && (() => {
+          const scorePercent = (test.results.marks_obtained / test.results.total_marks) * 100
+          const performanceStyles = getPerformanceStyles(scorePercent)
+          const percentile = test.results.percentile || 0
+          const percentileStyles = getPerformanceStyles(percentile)
+          
+          return (
+            <div className="flex items-center gap-3">
+              <div className="text-center px-3 py-1.5 rounded-lg" style={{ background: performanceStyles.backgroundGradient }}>
+                <p className="text-xs text-slate-600 mb-0.5">Score</p>
+                <p className="text-sm font-bold" style={{ color: performanceStyles.textColor }}>
+                  {test.results.marks_obtained === 0 ? '0' : (test.results.marks_obtained % 1 === 0 ? test.results.marks_obtained.toString() : test.results.marks_obtained.toFixed(2))}/{test.results.total_marks}
+                </p>
               </div>
-              <div className="flex items-center gap-1">
-                <Award className="w-3 h-3 text-[#3F51B5]" />
-                <span className="font-semibold text-[#3F51B5]">#{test.results.rank || '0'}/{test.results.total_test_takers || '0'}</span>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: percentileStyles.backgroundGradient }}>
+                  <TrendingUp className="w-3 h-3" style={{ color: percentileStyles.textColor }} />
+                  <span className="font-semibold" style={{ color: percentileStyles.textColor }}>
+                    {percentile === 0 ? '0' : (percentile % 1 === 0 ? percentile.toString() : percentile?.toFixed(1) || '0')}%
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Award className="w-3 h-3 text-electric-blue" />
+                  <span className="font-semibold text-electric-blue">#{test.results.rank || '0'}/{test.results.total_test_takers || '0'}</span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
       </div>
 
       {/* Mobile Center Section: Compact metadata for smaller screens */}
@@ -248,13 +255,18 @@ const TestListItem: React.FC<TestListItemProps> = ({ test, type, index, onStartT
             {timeRemaining}
           </div>
         )}
-        {type === 'completed' && test.results && (
-          <div className="text-xs">
-            <p className="font-bold" style={{ color: getScoreColor(test.results.marks_obtained, test.results.total_marks) }}>
-              {test.results.marks_obtained === 0 ? '0' : (test.results.marks_obtained % 1 === 0 ? test.results.marks_obtained.toString() : test.results.marks_obtained.toFixed(2))}/{test.results.total_marks}
-            </p>
-          </div>
-        )}
+        {type === 'completed' && test.results && (() => {
+          const scorePercent = (test.results.marks_obtained / test.results.total_marks) * 100
+          const performanceStyles = getPerformanceStyles(scorePercent)
+          
+          return (
+            <div className="text-xs px-2 py-1 rounded" style={{ background: performanceStyles.backgroundGradient }}>
+              <p className="font-bold" style={{ color: performanceStyles.textColor }}>
+                {test.results.marks_obtained === 0 ? '0' : (test.results.marks_obtained % 1 === 0 ? test.results.marks_obtained.toString() : test.results.marks_obtained.toFixed(2))}/{test.results.total_marks}
+              </p>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Right Section: Action Button */}

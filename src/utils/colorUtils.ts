@@ -53,3 +53,49 @@ export const getPercentileColor = (percentile: number): string => {
   // The color scale will apply from the floor (40) to 100
   return getPerformanceColor(percentile, PERCENTILE_FLOOR, 100);
 };
+
+// --- Dynamic Performance Gradient System ---
+
+/**
+ * Performance styles interface for dynamic gradient backgrounds and text colors
+ */
+export interface PerformanceStyles {
+  backgroundGradient: string;
+  textColor: string;
+}
+
+/**
+ * Returns performance-based gradient background and text color based on score percentage.
+ * 
+ * Performance tiers:
+ * - 0-40%: Low performance (red range)
+ * - 41-70%: Mid performance (yellow/amber range)
+ * - 71-100%: High performance (green range)
+ * 
+ * @param scorePercentage - The performance percentage (0-100)
+ * @returns Object containing backgroundGradient and textColor
+ */
+export function getPerformanceStyles(scorePercentage: number): PerformanceStyles {
+  // Clamp percentage to 0-100 range
+  const clampedPercentage = Math.max(0, Math.min(100, scorePercentage));
+
+  if (clampedPercentage <= 40) {
+    // Low performance (0-40%): Red range
+    return {
+      backgroundGradient: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 50%, #FEF2F2 100%)',
+      textColor: '#DC2626'
+    };
+  } else if (clampedPercentage <= 70) {
+    // Mid performance (41-70%): Yellow/Amber range
+    return {
+      backgroundGradient: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 50%, #FFFBEB 100%)',
+      textColor: '#D97706'
+    };
+  } else {
+    // High performance (71-100%): Green range
+    return {
+      backgroundGradient: 'linear-gradient(135deg, #F0FDF4 0%, #D1FAE5 50%, #F0FDF4 100%)',
+      textColor: '#059669'
+    };
+  }
+}

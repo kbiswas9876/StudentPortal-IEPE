@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, FileText, Clock, CheckCircle, XCircle, TrendingUp, Award, Eye, Play, AlertCircle } from 'lucide-react'
-import { getScoreColor, getPercentileColor } from '@/utils/colorUtils'
+import { getScoreColor, getPercentileColor, getPerformanceStyles } from '@/utils/colorUtils'
 
 type Test = {
   id: number
@@ -121,7 +121,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onStartTest(test.id)}
-            className="w-full bg-gradient-to-r from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 text-white rounded-xl font-bold transition-all duration-300 shadow-xl hover:shadow-2xl text-sm py-3.5 px-4 flex items-center justify-center gap-2"
+            className="w-full bg-gradient-to-r from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 hover:scale-105 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl text-sm py-3.5 px-4 flex items-center justify-center gap-2"
           >
             <Play className="w-4 h-4" />
             <span>Start Test</span>
@@ -133,7 +133,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => test.resultId && onViewResult(test.resultId)}
-            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-sm py-2.5 px-4 rounded-xl transition-all duration-200 shadow-xl hover:shadow-2xl flex items-center justify-center gap-2 border border-indigo-800"
+            className="w-full bg-gradient-to-r from-violet-premium via-violet-600 to-violet-700 hover:from-violet-600 hover:via-violet-700 hover:to-violet-800 hover:scale-105 text-white font-semibold text-sm py-2.5 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
           >
             <Eye className="w-4 h-4" />
             <span>View Results</span>
@@ -149,7 +149,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="group relative bg-gradient-to-br from-slate-50 via-white to-slate-100 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 h-full flex flex-col"
+      className="group relative bg-white border border-slate-light rounded-2xl shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-all duration-300 ease-out h-full flex flex-col"
     >
       {/* Live Status Badge */}
       {type === 'live' && (
@@ -159,7 +159,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
               scale: [1, 1.05, 1],
             }}
             transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-            className="px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full text-xs font-bold flex items-center gap-1.5 shadow-xl border-2 border-white"
+            className="px-3 py-1.5 bg-gradient-to-r from-red-500 via-red-600 to-red-700 text-white rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg border border-white"
             style={{ zIndex: 9999 }}
           >
             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
@@ -186,12 +186,12 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
       )}
 
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-200 p-4 shadow-lg">
-        <h3 className="text-[#1A1C1E] text-lg font-bold mb-2 leading-tight">
+      <div className="p-4">
+        <h3 className="text-indigo-deep text-lg font-semibold mb-2 leading-tight">
           {test.name}
         </h3>
-        <div className="flex items-center text-[#5F6368] text-xs">
-          <Calendar className="w-3.5 h-3.5 mr-1.5" />
+        <div className="flex items-center text-slate-600 text-sm">
+          <Calendar className="w-3.5 h-3.5 mr-1.5 text-gray-cool" />
           <span>Taken on: {formatDate(test.start_time)}</span>
         </div>
       </div>
@@ -201,25 +201,25 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
         
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-2 mb-2">
-          <div className="flex items-start bg-gradient-to-r from-blue-50 to-cyan-50 p-1.5 rounded-lg shadow-sm">
-            <FileText className="w-4 h-4 text-[#5F6368] mr-2 mt-0.5" />
+          <div className="flex items-start bg-gradient-to-br from-ghost-white to-slate-100 p-1.5 rounded-lg shadow-sm">
+            <FileText className="w-4 h-4 text-electric-blue mr-2 mt-0.5" />
             <div>
-              <p className="text-xs text-[#5F6368]">Questions</p>
-              <p className="text-sm font-semibold text-[#1A1C1E]">{test.total_questions}</p>
+              <p className="text-xs text-slate-600">Questions</p>
+              <p className="text-sm font-semibold text-indigo-deep">{test.total_questions}</p>
             </div>
           </div>
-          <div className="flex items-start bg-gradient-to-r from-emerald-50 to-teal-50 p-1.5 rounded-lg shadow-sm">
-            <Clock className="w-4 h-4 text-[#5F6368] mr-2 mt-0.5" />
+          <div className="flex items-start bg-gradient-to-br from-ghost-white to-slate-100 p-1.5 rounded-lg shadow-sm">
+            <Clock className="w-4 h-4 text-electric-blue mr-2 mt-0.5" />
             <div>
-              <p className="text-xs text-[#5F6368]">Duration</p>
-              <p className="text-sm font-semibold text-[#1A1C1E]">{formatTime(test.total_time_minutes)}</p>
+              <p className="text-xs text-slate-600">Duration</p>
+              <p className="text-sm font-semibold text-indigo-deep">{formatTime(test.total_time_minutes)}</p>
             </div>
           </div>
         </div>
 
         {/* Marking Scheme Pills */}
         <div className="mb-2">
-                   <p className="text-xs text-[#5F6368] mb-2">Marking</p>
+                   <p className="text-xs text-slate-600 mb-2">Marking</p>
                    <div className="flex gap-2">
                      <div className="inline-flex items-center bg-green-600 rounded-full px-2.5 py-1">
                        <CheckCircle className="w-3 h-3 text-white mr-1" />
@@ -233,21 +233,26 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
                  </div>
 
         {/* Score Display - Only for completed tests */}
-        {type === 'completed' && test.results && (
-          <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg p-2.5 mb-2 shadow-lg text-center">
-            <p className="text-xs text-[#5F6368] mb-2 uppercase tracking-wide">Final Score</p>
-            <div className="font-bold tracking-tight">
-               <span 
-                 className="text-4xl"
-                 style={{ color: getScoreColor(test.results.marks_obtained, test.results.total_marks) }}
-               >
-                 {test.results.marks_obtained === 0 ? '0' : (test.results.marks_obtained % 1 === 0 ? test.results.marks_obtained.toString() : test.results.marks_obtained.toFixed(2))}
-               </span>
-              <span className="text-4xl text-[#5F6368] mx-1.5">/</span>
-              <span className="text-4xl text-[#5F6368]">{test.results.total_marks}</span>
+        {type === 'completed' && test.results && (() => {
+          const scorePercent = (test.results.marks_obtained / test.results.total_marks) * 100
+          const performanceStyles = getPerformanceStyles(scorePercent)
+          
+          return (
+            <div className="rounded-lg p-2.5 mb-2 shadow-lg text-center" style={{ background: performanceStyles.backgroundGradient }}>
+              <p className="text-xs text-slate-600 mb-2 uppercase tracking-wide">Final Score</p>
+              <div className="font-bold tracking-tight">
+                <span 
+                  className="text-4xl"
+                  style={{ color: performanceStyles.textColor }}
+                >
+                  {test.results.marks_obtained === 0 ? '0' : (test.results.marks_obtained % 1 === 0 ? test.results.marks_obtained.toString() : test.results.marks_obtained.toFixed(2))}
+                </span>
+                <span className="text-4xl text-slate-600 mx-1.5">/</span>
+                <span className="text-4xl text-slate-600">{test.results.total_marks}</span>
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Status Display for upcoming tests only */}
         {type === 'upcoming' && (
@@ -277,37 +282,42 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
         )}
 
         {/* Percentile and Rank - Only for completed tests */}
-        {type === 'completed' && test.results && (
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            <div className="bg-gradient-to-br from-purple-50 to-violet-100 rounded-lg p-2.5 shadow-lg text-center">
-              <div className="flex items-center justify-center mb-1">
-                <TrendingUp className="w-3.5 h-3.5 text-[#1E8E3E] mr-1" />
-                <p className="text-xs text-[#5F6368] font-medium">Percentile</p>
+        {type === 'completed' && test.results && (() => {
+          const percentile = test.results.percentile || 0
+          const performanceStyles = getPerformanceStyles(percentile)
+          
+          return (
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <div className="rounded-lg p-2.5 shadow-lg text-center" style={{ background: performanceStyles.backgroundGradient }}>
+                <div className="flex items-center justify-center mb-1">
+                  <TrendingUp className="w-3.5 h-3.5 mr-1" style={{ color: performanceStyles.textColor }} />
+                  <p className="text-xs text-slate-600 font-medium">Percentile</p>
+                </div>
+                <p 
+                  className="text-2xl font-bold"
+                  style={{ color: performanceStyles.textColor }}
+                >
+                  {percentile === 0 ? '0' : (percentile % 1 === 0 ? percentile.toString() : percentile?.toFixed(1) || '0')}
+                </p>
               </div>
-               <p 
-                 className="text-2xl font-bold"
-                 style={{ color: getPercentileColor(test.results.percentile || 0) }}
-               >
-                 {test.results.percentile === 0 ? '0' : (test.results.percentile % 1 === 0 ? test.results.percentile.toString() : test.results.percentile?.toFixed(1) || '0')}
-               </p>
+              <div className="bg-gradient-to-br from-ghost-white to-slate-100 rounded-lg p-2.5 shadow-lg text-center">
+                <div className="flex items-center justify-center mb-1">
+                  <Award className="w-3.5 h-3.5 text-electric-blue mr-1" />
+                  <p className="text-xs text-slate-600 font-medium">Rank</p>
+                </div>
+                <div className="flex items-baseline justify-center space-x-1">
+                  <span className="text-2xl font-bold text-electric-blue">#{test.results.rank || '0'}</span>
+                  <span className="text-2xl font-medium text-slate-600">/ {test.results.total_test_takers || '0'}</span>
+                </div>
+              </div>
             </div>
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-2.5 shadow-lg text-center">
-              <div className="flex items-center justify-center mb-1">
-                <Award className="w-3.5 h-3.5 text-[#3F51B5] mr-1" />
-                <p className="text-xs text-[#5F6368] font-medium">Rank</p>
-              </div>
-              <div className="flex items-baseline justify-center space-x-1">
-                <span className="text-2xl font-bold text-[#3F51B5]">#{test.results.rank || '0'}</span>
-                <span className="text-2xl font-medium text-[#5F6368]">/ {test.results.total_test_takers || '0'}</span>
-              </div>
-            </div>
-          </div>
-        )}
+          )
+        })()}
 
       </div>
 
       {/* Action Button - Fixed at Bottom */}
-      <div className="px-3 pb-3 bg-gradient-to-t from-slate-100 to-transparent shadow-xl">
+      <div className="px-3 pb-3">
         {getActionButton()}
       </div>
     </motion.div>
