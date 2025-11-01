@@ -105,12 +105,14 @@ function PracticePageContent() {
       console.log('Fetching mock test data for test ID:', mockTestId)
 
       const response = await fetch(`/api/mock-tests/${mockTestId}`)
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch mock test data')
+      const text = await response.text()
+      let result: any = null
+      try { result = JSON.parse(text) } catch {
+        throw new Error(`Failed to fetch mock test data (${response.status})`)
       }
-
+      if (!response.ok) {
+        throw new Error(result?.error || `Failed to fetch mock test data (${response.status})`)
+      }
       console.log('Mock test data fetched successfully:', result.data)
       setMockTestData(result.data)
       setQuestions(result.data.questions)

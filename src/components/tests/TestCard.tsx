@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, FileText, Clock, CheckCircle, XCircle, TrendingUp, Award, Eye, Play, AlertCircle } from 'lucide-react'
 import { getScoreColor, getPercentileColor } from '@/utils/colorUtils'
@@ -33,13 +33,18 @@ interface TestCardProps {
   index: number
   onStartTest: (testId: number) => void
   onViewResult: (resultId: number) => void
+  onCountdownComplete?: (testId: number) => void
 }
 
-const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onViewResult }) => {
+const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onViewResult, onCountdownComplete }) => {
   const [timeRemaining, setTimeRemaining] = useState<string>('')
+  const countdownCompleteCalledRef = useRef(false)
 
   useEffect(() => {
     if (type === 'upcoming' && test.start_time) {
+      // Reset the ref when the test or type changes
+      countdownCompleteCalledRef.current = false
+
       const updateTimeRemaining = () => {
         const now = new Date().getTime()
         const startTime = new Date(test.start_time).getTime()
@@ -47,6 +52,12 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
 
         if (diff <= 0) {
           setTimeRemaining('Starting now')
+          
+          // Trigger callback only once when countdown hits zero
+          if (onCountdownComplete && !countdownCompleteCalledRef.current) {
+            countdownCompleteCalledRef.current = true
+            onCountdownComplete(test.id)
+          }
           return
         }
 
@@ -67,7 +78,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
       const interval = setInterval(updateTimeRemaining, 1000) // Update every second
       return () => clearInterval(interval)
     }
-  }, [test.start_time, type])
+  }, [test.start_time, test.id, type, onCountdownComplete])
 
   const formatTime = (minutes: number) => {
     if (minutes < 60) {

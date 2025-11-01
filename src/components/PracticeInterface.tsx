@@ -798,7 +798,10 @@ useEffect(() => {
           skipped_answers: skippedAnswers,
           // Mock test specific fields
           session_type: mockTestData ? 'mock_test' : 'practice',
-          mock_test_id: mockTestData ? mockTestData.test.id : null
+          mock_test_id: mockTestData ? mockTestData.test.id : null,
+          // Include per-attempt order if available from mock test payload
+          question_order: (mockTestData as any)?.question_order || undefined,
+          option_order: (mockTestData as any)?.option_order || undefined
         })
       })
 

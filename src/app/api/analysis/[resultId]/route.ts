@@ -126,6 +126,24 @@ export async function GET(
       }
     }
 
+    // If mock test: try to load attempt-specific order for deterministic rendering
+    let orderedQuestions = questions
+    if (testResult.session_type === 'mock_test') {
+      const { data: orderRow } = await supabaseAdmin
+        .from('test_attempt_order_log')
+        .select('question_order_json, option_order_json')
+        .eq('test_result_id', resultId)
+        .single()
+
+      if (orderRow && Array.isArray(orderRow.question_order_json)) {
+        const byId: Record<number, any> = {}
+        for (const q of questions as any[]) byId[q.id] = q
+        orderedQuestions = orderRow.question_order_json
+          .map((qid: number) => byId[qid])
+          .filter((q: any) => q)
+      }
+    }
+
     // Fetch peer performance data for benchmarking
     console.log('Fetching peer performance data for benchmarking...')
     const { data: peerPerformanceData, error: peerError } = await supabaseAdmin
@@ -168,7 +186,7 @@ export async function GET(
     }> = {}
 
     // Create a map of question_id to question data for quick lookup
-    const questionMap = new Map(questions.map(q => [q.id, q]))
+    const questionMap = new Map(orderedQuestions.map(q => [q.id, q]))
 
     answerLog.forEach(answer => {
       const question = questionMap.get(answer.question_id)
@@ -213,7 +231,7 @@ export async function GET(
       stats.avgTime = chapterAnswers.length > 0 ? Math.round(totalTime / chapterAnswers.length) : 0
     })
 
-    console.log('Fetched questions:', questions)
+    console.log('Fetched questions:', orderedQuestions)
     console.log('Peer averages calculated:', peerAverages)
     console.log('Sectional performance calculated:', sectionalPerformance)
     console.log(`Successfully fetched analysis data: ${testResult ? '1' : '0'} test result, ${answerLog.length} answers, ${questions.length} questions`)
@@ -222,7 +240,7 @@ export async function GET(
       data: {
         testResult,
         answerLog,
-        questions,
+        questions: orderedQuestions,
         peerAverages,
         sectionalPerformance
       }

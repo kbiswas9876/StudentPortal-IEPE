@@ -46,7 +46,8 @@ export async function GET(
           total_time_minutes,
           marks_per_correct,
           negative_marks_per_incorrect,
-          status
+          status,
+          is_dynamically_shuffled
         ),
         questions!inner(
           id,
@@ -84,7 +85,7 @@ export async function GET(
     const globalMpc = Number(testInfo?.marks_per_correct) || 0
     const globalPpi = Math.abs(Number(testInfo?.negative_marks_per_incorrect) || 0)
     
-    const questions = testData.map((item: any) => ({
+    const baseQuestions = testData.map((item: any) => ({
       ...item.questions,
       // Include per-question marking with fallback to test-level
       marks_per_correct: item.marks_per_correct !== null && item.marks_per_correct !== undefined 
@@ -95,12 +96,67 @@ export async function GET(
         : globalPpi
     }))
 
+    // Dynamic per-user shuffling
+    const isDynamicallyShuffled = Boolean(testInfo?.is_dynamically_shuffled)
+
+    // Seeded RNG helpers
+    const mulberry32 = (seed: number) => {
+      return function() {
+        let t = (seed += 0x6d2b79f5)
+        t = Math.imul(t ^ (t >>> 15), t | 1)
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+      }
+    }
+    const hashString = (s: string) => {
+      let h = 2166136261
+      for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i)
+        h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24)
+      }
+      return h >>> 0
+    }
+    const shuffleWith = <T,>(arr: T[], rnd: () => number) => {
+      const a = [...arr]
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(rnd() * (i + 1))
+        ;[a[i], a[j]] = [a[j], a[i]]
+      }
+      return a
+    }
+
+    let questions = baseQuestions
+    let question_order: number[] = baseQuestions.map(q => q.id)
+    const option_order: Record<string, string[]> = {}
+
+    if (isDynamicallyShuffled) {
+      // Derive a deterministic seed using cookies (best-effort) + test id
+      const cookiesHeader = request.headers.get('cookie') || ''
+      const anonToken = (cookiesHeader.match(/sb:token=([^;]+)/)?.[1]) || 'anon'
+      const seedStr = `${anonToken}:${testId}`
+      const rnd = mulberry32(hashString(seedStr))
+
+      questions = shuffleWith(baseQuestions, rnd)
+      question_order = questions.map(q => q.id)
+
+      for (const q of questions) {
+        const keys = Object.keys(q.options || {})
+        option_order[String(q.id)] = shuffleWith(keys, rnd)
+      }
+    } else {
+      for (const q of baseQuestions) {
+        option_order[String(q.id)] = Object.keys(q.options || {})
+      }
+    }
+
     console.log(`Successfully fetched mock test: ${testInfo?.name} with ${questions.length} questions`)
 
     return NextResponse.json({
       data: {
         test: testInfo,
-        questions: questions
+        questions,
+        question_order,
+        option_order
       }
     })
   } catch (error) {

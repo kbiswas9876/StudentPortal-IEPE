@@ -31,7 +31,10 @@ export async function POST(request: Request) {
       incorrect_answers,
       skipped_answers,
       session_type = 'practice',
-      mock_test_id = null
+      mock_test_id = null,
+      // Optional: orders for dynamically shuffled mock tests
+      question_order,
+      option_order
     } = body
   
     // Allow anonymous submissions for local verification and testing
@@ -74,6 +77,21 @@ export async function POST(request: Request) {
     if (testError) {
       console.error('Error creating test result:', testError)
       return NextResponse.json({ error: testError.message }, { status: 500 })
+    }
+
+    // If this was a mock test and orders are provided, log them for deterministic solution rendering
+    if (session_type === 'mock_test' && mock_test_id && Array.isArray(question_order) && option_order && typeof option_order === 'object') {
+      try {
+        await supabaseAdmin
+          .from('test_attempt_order_log')
+          .insert({
+            test_result_id: testResult.id,
+            question_order_json: question_order,
+            option_order_json: option_order
+          })
+      } catch (e) {
+        console.error('Failed to write test_attempt_order_log:', e)
+      }
     }
 
     // Create answer log entries with correct schema

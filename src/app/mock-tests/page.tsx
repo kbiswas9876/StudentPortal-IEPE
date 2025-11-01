@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Tab } from '@headlessui/react'
-import { MagnifyingGlassIcon, XMarkIcon, FunnelIcon, ClockIcon, PlayIcon, CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, XMarkIcon, FunnelIcon, ClockIcon, PlayIcon, CheckCircleIcon, ArrowPathIcon, ListBulletIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabaseClient'
 import TestCard from '@/components/tests/TestCard'
@@ -246,7 +246,7 @@ export default function MockTestHubPage() {
     userAttempts: UserAttempt[],
     searchQuery: string,
     sortBy: 'date' | 'score' | 'name'
-  ): { upcoming: Test[], live: Test[], completed: (Test & { userScore?: number; resultId?: number; results?: UserAttempt['results'] })[] } {
+  ): { all: (Test | (Test & { userScore?: number; resultId?: number; results?: UserAttempt['results'] }))[], upcoming: Test[], live: Test[], completed: (Test & { userScore?: number; resultId?: number; results?: UserAttempt['results'] })[] } {
     const userAttemptMap = new Map(userAttempts.map(attempt => [attempt.mock_test_id, attempt]))
 
     const upcoming: Test[] = []
@@ -319,10 +319,30 @@ export default function MockTestHubPage() {
     }
 
     // Apply filtering and sorting to each category
+    const filteredUpcoming = filterAndSortTests(upcoming, 'upcoming')
+    const filteredLive = filterAndSortTests(live, 'live')
+    const filteredCompleted = filterAndSortTests(completed, 'completed')
+
+    // Create "All" array with proper sort order: Live → Upcoming → Completed
+    const allTests: (Test | (Test & { userScore?: number; resultId?: number; results?: UserAttempt['results'] }))[] = [
+      // Live tests first (sorted by start_time ascending)
+      ...filteredLive.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()),
+      // Upcoming tests next (sorted by start_time ascending)
+      ...filteredUpcoming.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()),
+      // Completed tests last (sorted by most recent first - using resultId or id descending)
+      ...filteredCompleted.sort((a, b) => {
+        // Sort by submission date if available, otherwise by test ID (most recent first)
+        const aResultId = (a as any).resultId || a.id
+        const bResultId = (b as any).resultId || b.id
+        return bResultId - aResultId
+      })
+    ]
+
     return {
-      upcoming: filterAndSortTests(upcoming, 'upcoming'),
-      live: filterAndSortTests(live, 'live'),
-      completed: filterAndSortTests(completed, 'completed')
+      all: allTests,
+      upcoming: filteredUpcoming,
+      live: filteredLive,
+      completed: filteredCompleted
     }
   }
 
@@ -339,10 +359,34 @@ export default function MockTestHubPage() {
     fetchMockTestData(true) // Force refresh
   }
 
+  const handleCountdownComplete = useCallback((testId: number) => {
+    console.log('⏱️ Countdown completed for test:', testId)
+    
+    setMockTestData((currentData) => {
+      if (!currentData) return currentData
+
+      const updatedTests = currentData.tests.map((test) => {
+        if (test.id === testId && test.status === 'scheduled') {
+          console.log(`🔄 Client-side transition: test ${test.id} from 'scheduled' to 'live'`)
+          return {
+            ...test,
+            status: 'live' as const
+          }
+        }
+        return test
+      })
+
+      return {
+        ...currentData,
+        tests: updatedTests,
+      }
+    })
+  }, [])
+
   // Compute categorized tests using useMemo (must be before early returns)
-  const { upcoming, live, completed } = useMemo(() => {
+  const { all, upcoming, live, completed } = useMemo(() => {
     if (!mockTestData) {
-      return { upcoming: [], live: [], completed: [] }
+      return { all: [], upcoming: [], live: [], completed: [] }
     }
     return categorizeTests(mockTestData.tests, mockTestData.userAttempts, searchQuery, sortBy)
   }, [mockTestData, searchQuery, sortBy])
@@ -422,9 +466,10 @@ export default function MockTestHubPage() {
               <span className="hidden sm:inline">Refresh</span>
             </motion.button>
           </div>
-          <Tab.Group>
-            <Tab.List className="flex space-x-1 bg-slate-100 dark:bg-slate-900 rounded-2xl p-1.5 max-w-lg shadow-sm">
+          <Tab.Group defaultIndex={0}>
+            <Tab.List className="flex space-x-1 bg-slate-100 dark:bg-slate-900 rounded-2xl p-1.5 shadow-sm w-full max-w-2xl">
               {[
+                { key: 'all', label: 'All', count: all.length, icon: ListBulletIcon },
                 { key: 'upcoming', label: 'Upcoming', count: upcoming.length, icon: ClockIcon },
                 { key: 'live', label: 'Live', count: live.length, icon: PlayIcon },
                 { key: 'completed', label: 'Completed', count: completed.length, icon: CheckCircleIcon }
@@ -432,17 +477,17 @@ export default function MockTestHubPage() {
                 <Tab
                   key={tab.key}
                   className={({ selected }) =>
-                    `flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    `flex-1 flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap overflow-hidden ${
                       selected
                         ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm'
                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                     }`
                   }
                 >
-                  <tab.icon className="h-4 w-4" />
-                  <span className="tracking-wide">{tab.label}</span>
+                  <tab.icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="tracking-wide truncate">{tab.label}</span>
                   {tab.count > 0 && (
-                    <span className="ml-1 px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-medium">
+                    <span className="ml-0.5 px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-medium flex-shrink-0">
                       {tab.count}
                     </span>
                   )}
@@ -451,6 +496,61 @@ export default function MockTestHubPage() {
             </Tab.List>
 
             <Tab.Panels className="mt-12">
+              <Tab.Panel>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key="all"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.4 }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                  >
+                    {all.length === 0 ? (
+                      <div className="col-span-full flex flex-col items-center justify-center py-24">
+                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                          <ListBulletIcon className="h-8 w-8 text-slate-400" />
+                        </div>
+                        <h3 className="text-xl font-light text-slate-800 dark:text-slate-200 mb-3 tracking-wide">
+                          No Tests Found
+                        </h3>
+                        <p className="text-slate-500 dark:text-slate-400 text-center max-w-md font-light leading-relaxed">
+                          {searchQuery 
+                            ? `No tests match "${searchQuery}". Try a different search term.`
+                            : "No mock tests are available at this time."}
+                        </p>
+                      </div>
+                    ) : (
+                      all.map((test, index) => {
+                        // Determine the type based on test status and user attempts
+                        const userAttempt = mockTestData?.userAttempts.find(a => a.mock_test_id === test.id)
+                        let testType: 'upcoming' | 'live' | 'completed' = 'live'
+                        
+                        if (userAttempt) {
+                          testType = 'completed'
+                        } else if (test.status === 'live' || (test.status === 'scheduled' && new Date().getTime() >= new Date(test.start_time).getTime())) {
+                          testType = 'live'
+                        } else if (test.status === 'scheduled') {
+                          testType = 'upcoming'
+                        }
+
+                        return (
+                          <TestCard
+                            key={test.id}
+                            test={test}
+                            type={testType}
+                            onStartTest={handleStartTest}
+                            onViewResult={handleViewResult}
+                            index={index}
+                            onCountdownComplete={testType === 'upcoming' ? handleCountdownComplete : undefined}
+                          />
+                        )
+                      })
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </Tab.Panel>
+
               <Tab.Panel>
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -484,6 +584,7 @@ export default function MockTestHubPage() {
                           onStartTest={handleStartTest}
                           onViewResult={handleViewResult}
                           index={index}
+                          onCountdownComplete={handleCountdownComplete}
                         />
                       ))
                     )}
