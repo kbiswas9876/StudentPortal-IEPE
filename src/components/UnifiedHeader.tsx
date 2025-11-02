@@ -17,6 +17,7 @@ interface UnifiedHeaderProps {
   // Scoring information
   correctMarks?: number
   negativeMarks?: number
+  testName?: string // Test name to display in header
 }
 
 const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
@@ -29,7 +30,8 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   isPaused = false,
   onTogglePause,
   correctMarks,
-  negativeMarks
+  negativeMarks,
+  testName
 }) => {
   return (
     <header className="unified-header">
@@ -46,7 +48,12 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
         </div>
       </div>
 
-      <div className="header-zone center">
+      <div className="header-zone center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {testName && (
+          <div className="test-name-header text-sm font-medium text-gray-600 dark:text-gray-400 mb-1 text-center" style={{ maxWidth: '400px', lineHeight: '1.3' }}>
+            {testName}
+          </div>
+        )}
         <div className="premium-timer-container">
           <Clock size={18} className="premium-timer-icon" />
           <span

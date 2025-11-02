@@ -48,6 +48,8 @@ interface QuestionDisplayWindowProps {
   // Scoring information
   correctMarks?: number
   negativeMarks?: number
+  // Test name for header
+  testName?: string
 }
 
 const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({ 
@@ -73,7 +75,9 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   hideMetadata = false,
   // Scoring information
   correctMarks,
-  negativeMarks
+  negativeMarks,
+  // Test name
+  testName
 }) => {
   // FOUC Fix: State to control fade-in animation
   const [isLoaded, setIsLoaded] = useState(false)
@@ -163,6 +167,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
         onTogglePause={onTogglePause}
         correctMarks={correctMarks}
         negativeMarks={negativeMarks}
+        testName={testName}
       />
 
       {/* 

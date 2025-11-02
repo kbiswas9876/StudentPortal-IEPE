@@ -1285,6 +1285,7 @@ useEffect(() => {
           hideMetadata={shouldHideMetadata}
           correctMarks={mockTestData ? (questions[currentIndex] as any)?.marks_per_correct : undefined}
           negativeMarks={mockTestData ? (questions[currentIndex] as any)?.penalty_per_incorrect : undefined}
+          testName={mockTestData?.test.name}
         />
       </div>
 
