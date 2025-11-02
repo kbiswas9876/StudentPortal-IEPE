@@ -66,16 +66,16 @@ export function useSecureExamEnvironment({ isEnabled, onViolation }: UseSecureEx
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
     
-    // 'blur' is a fallback for older browsers or specific cases
+    // 4. Monitor for Window Focus Loss (backup for visibilitychange)
     const handleWindowBlur = () => {
-      // Only trigger if the page is actually hidden (not just losing focus temporarily)
-      if (document.visibilityState === 'hidden') {
-        onViolation('window_blur')
-      }
+      // This is a great backup. If the window loses focus for any reason
+      // (bookmarks bar, address bar, etc.), we treat it the same as a tab switch.
+      // Use the same violation type as fullscreen exit to reuse the proven working logic
+      onViolation('fullscreen_exit')
     }
     window.addEventListener('blur', handleWindowBlur)
 
-    // 4. Monitor for Prohibited Keyboard Shortcuts
+    // 5. Monitor for Prohibited Keyboard Shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
       // Developer Tools
       if (
