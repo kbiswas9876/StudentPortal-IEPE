@@ -60,7 +60,8 @@ export function useSecureExamEnvironment({ isEnabled, onViolation }: UseSecureEx
     // 3. Monitor for Losing Focus (Tab/App Switch)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        onViolation('visibility_change')
+        // THE FIX: Use the same violation type as fullscreen exit to reuse the proven working logic
+        onViolation('fullscreen_exit')
       }
     }
     document.addEventListener('visibilitychange', handleVisibilityChange)
