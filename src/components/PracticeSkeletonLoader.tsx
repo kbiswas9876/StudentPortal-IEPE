@@ -2,7 +2,13 @@
 
 import { motion } from 'framer-motion'
 
-export default function PracticeSkeletonLoader() {
+interface PracticeSkeletonLoaderProps {
+  loadingText?: string
+}
+
+export default function PracticeSkeletonLoader({
+  loadingText = "Loading practice session..."
+}: PracticeSkeletonLoaderProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       {/* Main Layout Container */}
@@ -209,7 +215,7 @@ export default function PracticeSkeletonLoader() {
           <div className="flex items-center space-x-3">
             <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
             <span className="text-slate-600 dark:text-slate-300 font-medium">
-              Loading practice session...
+              {loadingText}
             </span>
           </div>
         </div>

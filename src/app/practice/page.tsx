@@ -47,7 +47,16 @@ function PracticePageContent() {
         restoreSavedSession()
       }
     } else if (mockTestId) {
-      // Mock test mode
+      // Mock test mode - verify consent
+      const agreedToInstructions = searchParams.get('agreedToInstructions')
+
+      if (agreedToInstructions !== 'true') {
+        // User bypassed instructions screen - redirect back
+        console.warn('Instructions consent missing - redirecting')
+        router.push(`/mock-tests/${mockTestId}/instructions`)
+        return
+      }
+
       if (!questionsFetchedRef.current) {
         questionsFetchedRef.current = true
         fetchMockTestData()
@@ -232,7 +241,16 @@ function PracticePageContent() {
   }
 
   if (authLoading || loading) {
-    return <PracticeSkeletonLoader />
+    // Determine appropriate loading text
+    const loadingText = mockTestId
+      ? (mockTestData?.test.name
+          ? `Loading ${mockTestData.test.name}...`
+          : "Loading mock test...")
+      : testMode === 'timed'
+        ? "Loading timed practice..."
+        : "Loading practice session..."
+
+    return <PracticeSkeletonLoader loadingText={loadingText} />
   }
 
   if (error) {
@@ -290,7 +308,7 @@ function PracticePageContent() {
 
 export default function PracticePage() {
   return (
-    <Suspense fallback={<PracticeSkeletonLoader />}>
+    <Suspense fallback={<PracticeSkeletonLoader loadingText="Initializing session..." />}>
       <PracticePageContent />
     </Suspense>
   )

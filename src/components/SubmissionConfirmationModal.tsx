@@ -17,6 +17,8 @@ interface SubmissionConfirmationModalProps {
     bookmarkedCount: number
   }
   isSubmitting?: boolean
+  testType?: 'mock' | 'practice' | 'timed'
+  testName?: string
 }
 
 export default function SubmissionConfirmationModal({ 
@@ -25,7 +27,9 @@ export default function SubmissionConfirmationModal({
   onSubmit, 
   timeRemaining,
   statusCounts,
-  isSubmitting = false
+  isSubmitting = false,
+  testType = 'practice',
+  testName
 }: SubmissionConfirmationModalProps) {
   if (!isOpen) return null
 
@@ -65,8 +69,15 @@ export default function SubmissionConfirmationModal({
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            Submit Test?
+            {testType === 'mock' ? 'Submit Mock Test?' :
+             testType === 'timed' ? 'Submit Timed Practice?' :
+             'Submit Practice Session?'}
           </h2>
+          {testName && (
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+              {testName}
+            </p>
+          )}
           <p className="text-slate-600 dark:text-slate-400">
             Are you sure you want to submit your test? This action cannot be undone.
           </p>
@@ -158,8 +169,12 @@ export default function SubmissionConfirmationModal({
         {/* Warning Text */}
         <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
           <p className="text-sm text-red-800 dark:text-red-300 text-center">
-            <strong>Warning:</strong> Once you submit, you cannot make any changes to your answers. 
-            Make sure you have reviewed all questions before proceeding.
+            <strong>Warning:</strong> Once you submit, you cannot make any changes to your answers.
+            {statusCounts.notAnsweredCount > 0 || statusCounts.notVisitedCount > 0 ? (
+              <> You have <strong>{statusCounts.notAnsweredCount + statusCounts.notVisitedCount} unanswered question(s)</strong>. </>
+            ) : (
+              <> Make sure you have reviewed all questions before proceeding. </>
+            )}
           </p>
         </div>
       </motion.div>

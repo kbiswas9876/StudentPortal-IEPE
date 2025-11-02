@@ -348,7 +348,8 @@ export default function MockTestHubPage() {
   }
 
   const handleStartTest = (testId: number) => {
-    router.push(`/practice?mockTestId=${testId}&testMode=mock`)
+    // Redirect to instructions page first
+    router.push(`/mock-tests/${testId}/instructions`)
   }
 
   const handleViewResult = (resultId: number) => {

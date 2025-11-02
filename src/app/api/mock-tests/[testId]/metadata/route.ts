@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { env } from '@/lib/env'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -17,7 +17,7 @@ const supabaseAdmin = createClient(
   }
 )
 
-// GET - Fetch mock test metadata and result policy
+// GET - Fetch mock test metadata
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ testId: string }> }
@@ -34,7 +34,7 @@ export async function GET(
     // Fetch test metadata including result policy
     const { data: testMetadata, error: testError } = await supabaseAdmin
       .from('tests')
-      .select('id, name, result_policy, result_release_at, status')
+      .select('id, name, description, total_time_minutes, marks_per_correct, negative_marks_per_incorrect, total_questions, result_policy, result_release_at, status')
       .eq('id', testId)
       .single()
 
@@ -49,9 +49,9 @@ export async function GET(
 
     // Check if results should be available
     const now = new Date()
-    const isResultsAvailable = testMetadata.result_policy === 'instant' || 
-      (testMetadata.result_policy === 'scheduled' && 
-       testMetadata.result_release_at && 
+    const isResultsAvailable = testMetadata.result_policy === 'instant' ||
+      (testMetadata.result_policy === 'scheduled' &&
+       testMetadata.result_release_at &&
        new Date(testMetadata.result_release_at) <= now)
 
     console.log('Test metadata fetched:', {

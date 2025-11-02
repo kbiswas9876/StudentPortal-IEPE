@@ -1060,11 +1060,13 @@ useEffect(() => {
         onCancel={() => setShowSubmissionModal(false)}
         onSubmit={handleConfirmSubmission}
         timeRemaining={testMode === 'timed' && timeLimitInMinutes ? 
-          '00m 00s' : 
+          mainTimerDisplay : 
           undefined
         }
         statusCounts={getStatusCounts()}
         isSubmitting={isSubmitting}
+        testType={mockTestData ? 'mock' : testMode}
+        testName={mockTestData?.test.name}
       />
 
       {/* Auto Submission Overlay */}
