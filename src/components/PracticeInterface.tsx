@@ -7,6 +7,8 @@ import { Database } from '@/types/database'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/lib/toast-context'
 import { useTimerSystem } from '@/hooks/useTimerSystem'
+import { useSecureExamEnvironment } from '@/hooks/useSecureExamEnvironment'
+import { getDeviceContext } from '@/lib/device-context'
 // Removed TimerDisplay - now using QuestionDisplayWindow
 import QuestionPalette from './QuestionPalette'
 import PremiumStatusPanel from './PremiumStatusPanel'
@@ -20,6 +22,7 @@ import PauseOverlay from './PauseOverlay'
 import PauseModal from './PauseModal'
 import SubmissionConfirmationModal from './SubmissionConfirmationModal'
 import AutoSubmissionOverlay from './AutoSubmissionOverlay'
+import SecurityViolationModal from './SecurityViolationModal'
 import KatexRenderer from './ui/KatexRenderer'
 import { FlagIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline'
 
@@ -87,6 +90,11 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [showSubmissionModal, setShowSubmissionModal] = useState(false)
   const [showAutoSubmissionOverlay, setShowAutoSubmissionOverlay] = useState(false)
   
+  // Security monitoring state
+  const [showViolationModal, setShowViolationModal] = useState(false)
+  const [currentViolationType, setCurrentViolationType] = useState<string | null>(null)
+  const [currentTestResultId, setCurrentTestResultId] = useState<number | null>(null)
+  
   // C-1: Track saved session ID for updates (not duplicates)
   const [savedSessionId, setSavedSessionId] = useState<number | null>(
     savedSessionState?.savedSessionId || null
@@ -144,6 +152,156 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     initialQuestionTimeMap: initialTimerState.initialQuestionTimeMap
   })
   
+  // === SECURITY MONITORING (Mock Tests Only) ===
+  // Check if this is a mock test
+  const isMockTest = mockTestData !== undefined
+
+  // Function to log a violation to the API
+  const logViolation = useCallback(async (
+    violationType: string, 
+    outcome: 'cancelled' | 'submitted'
+  ) => {
+    if (!userId || !isMockTest) return
+
+    try {
+      const deviceContext = getDeviceContext()
+      
+      const response = await fetch('/api/security-violations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken || ''}`,
+        },
+        body: JSON.stringify({
+          userId,
+          testResultId: currentTestResultId,
+          mockTestId: mockTestData?.test.id,
+          violationType,
+          outcome,
+          deviceType: deviceContext.deviceType,
+          browserName: deviceContext.browserName,
+          osName: deviceContext.osName,
+          userAgentString: deviceContext.userAgentString,
+        }),
+      })
+
+      if (!response.ok) {
+        console.error('Failed to log security violation:', await response.text())
+      }
+    } catch (error) {
+      console.error('Error logging security violation:', error)
+    }
+  }, [userId, sessionToken, isMockTest, mockTestData, currentTestResultId])
+
+  // Handler for when the hook detects a violation
+  const handleViolation = useCallback((violationType: string) => {
+    // To avoid multiple modals opening at once from different events (e.g., blur and visibilitychange)
+    if (showViolationModal) return
+    
+    setCurrentViolationType(violationType)
+    setShowViolationModal(true)
+  }, [showViolationModal])
+
+  // Use the security hook (only for mock tests, when initialized and not submitting)
+  useSecureExamEnvironment({
+    isEnabled: isMockTest && isInitialized && !isSubmitting,
+    onViolation: handleViolation,
+  })
+
+  // Handler for the "Return to Test" button in the violation modal
+  // CRITICAL REFINEMENT: Forces re-entry to fullscreen for fullscreen_exit violations
+  // STABILIZED: Decouples modal closing from fullscreen request to prevent race conditions
+  const handleViolationCancel = useCallback(async () => {
+    // Log the violation as before.
+    if (currentViolationType) {
+      await logViolation(currentViolationType, 'cancelled')
+    }
+
+    // Check if the specific violation was exiting fullscreen.
+    if (currentViolationType === 'fullscreen_exit') {
+      // Capture values before async operations to avoid stale closures
+      const violationType = currentViolationType
+      const currentSessionStates = sessionStates
+
+      // --- STABILIZATION LOGIC ---
+      // STEP 1: Immediately close the modal.
+      // This allows React to re-render the UI to a stable, non-modal state.
+      setShowViolationModal(false)
+      setCurrentViolationType(null)
+
+      // STEP 2: Use requestAnimationFrame to schedule the fullscreen request.
+      // This tells the browser: "As soon as you are ready to draw the next frame
+      // (i.e., after the modal has been removed from the DOM), execute this function."
+      // This is virtually instantaneous and happens before the user can perceive a delay.
+      // It's more performant than setTimeout and provides the micro-delay needed to
+      // decouple the UI update from the sensitive API call, preventing race conditions.
+      requestAnimationFrame(() => {
+        // Determine which fullscreen API to use (cross-browser support)
+        const requestFullscreen = () => {
+          if (document.documentElement.requestFullscreen) {
+            // Standard API - Chrome, Firefox, Edge
+            return document.documentElement.requestFullscreen()
+          } else if ((document.documentElement as any).webkitRequestFullscreen) {
+            // Safari support
+            return (document.documentElement as any).webkitRequestFullscreen()
+          } else if ((document.documentElement as any).mozRequestFullScreen) {
+            // Firefox support (legacy)
+            return (document.documentElement as any).mozRequestFullScreen()
+          } else if ((document.documentElement as any).msRequestFullscreen) {
+            // IE/Edge support (legacy)
+            return (document.documentElement as any).msRequestFullscreen()
+          } else {
+            // No fullscreen support
+            return Promise.reject(new Error('Fullscreen API not supported in this browser'))
+          }
+        }
+
+        // Attempt to force the browser back into fullscreen.
+        // This request now happens on a stable UI, which Chrome will trust.
+        requestFullscreen()
+          .then(() => {
+            // SUCCESS: The user allowed re-entry.
+            // The modal is already closed, so we just need to log success.
+            console.log('Successfully re-entered fullscreen after violation.')
+          })
+          .catch((err: unknown) => {
+            // If the request fails, it means the user actively denied the permission prompt.
+            // This is a definitive action - they refused to re-enter fullscreen.
+            console.error('User denied re-entry to fullscreen. Forcing submission.', err)
+            
+            // We must treat this refusal as a final decision to submit the test.
+            // Use a toast notification to inform the user of this automatic action.
+            showToast({
+              type: 'error',
+              title: 'Fullscreen Required',
+              message: 'You must remain in fullscreen to continue. The test will now be submitted.',
+              duration: 5000,
+            })
+            
+            // Immediately submit the test (same logic as handleViolationSubmit)
+            if (violationType) {
+              logViolation(violationType, 'submitted').catch(console.error)
+            }
+            
+            // Submit the test
+            if (currentSessionStates.length > 0) {
+              setIsSubmitting(true)
+              setShowSubmissionModal(false)
+              submitTest(currentSessionStates).catch((error) => {
+                console.error('Error submitting test after fullscreen denial:', error)
+                setIsSubmitting(false)
+              })
+            }
+          })
+      }) // Executes on the next animation frame (~16ms at 60fps) - feels instant
+    } else {
+      // For any OTHER violation (e.g., a blocked key press), the user is already in fullscreen.
+      // We can simply close the modal without any extra steps.
+      setShowViolationModal(false)
+      setCurrentViolationType(null)
+    }
+  }, [currentViolationType, logViolation, showToast, sessionStates])
+
   // Pause functionality
   const handlePauseSession = () => {
     togglePause();
@@ -868,6 +1026,10 @@ useEffect(() => {
       if (response.ok) {
         const result = await response.json()
         console.log('Test submitted successfully:', result)
+        // Store test_result_id for security violation logging
+        if (result.test_id) {
+          setCurrentTestResultId(result.test_id)
+        }
         // Clear sessionStorage since session is complete
         clearSessionStorage()
         // Redirect to analysis report with source parameter
@@ -900,6 +1062,22 @@ useEffect(() => {
   
   // Set the ref so the timer hook can call it
   handleAutoSubmissionRef.current = handleAutoSubmission
+
+  // Handler for the "Submit My Test" button in the violation modal
+  // This is defined after submitTest so it can access it directly
+  const handleViolationSubmit = useCallback(async () => {
+    if (currentViolationType) {
+      await logViolation(currentViolationType, 'submitted')
+    }
+    setShowViolationModal(false)
+    setCurrentViolationType(null)
+    // Submit the test
+    if (sessionStates.length > 0) {
+      setIsSubmitting(true)
+      setShowSubmissionModal(false)
+      await submitTest(sessionStates)
+    }
+  }, [currentViolationType, logViolation, sessionStates])
 
   const handleQuestionNavigation = (index: number) => {
     // CRITICAL: Discard temporary selections when navigating away without saving
@@ -1147,6 +1325,14 @@ useEffect(() => {
 
       {/* Auto Submission Overlay */}
       <AutoSubmissionOverlay isVisible={showAutoSubmissionOverlay} />
+
+      {/* Security Violation Modal */}
+      <SecurityViolationModal
+        isOpen={showViolationModal}
+        violationType={currentViolationType}
+        onCancel={handleViolationCancel}
+        onSubmit={handleViolationSubmit}
+      />
 
     </div>
   )

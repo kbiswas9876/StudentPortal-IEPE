@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fullscreen Baseline Test</title>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            display: grid; 
+            place-content: center; 
+            height: 100vh; 
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        button { 
+            font-size: 2rem; 
+            padding: 1rem 2rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background-color: #3b82f6;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #2563eb;
+        }
+        #status { 
+            margin-top: 1rem; 
+            font-size: 1.5rem;
+            min-height: 2rem;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        .info {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pure JavaScript Fullscreen Test</h1>
+    <p class="info">This is a baseline test to verify fullscreen API works in your browser environment.</p>
+    <button id="fs-button">Enter Fullscreen</button>
+    <div id="status" class="info">Click the button above to test fullscreen</div>
+
+    <script>
+        const button = document.getElementById('fs-button');
+        const status = document.getElementById('status');
+
+        // Check if fullscreen API is available
+        if (!document.documentElement.requestFullscreen) {
+            status.textContent = 'ERROR: Fullscreen API not supported in this browser.';
+            status.className = 'error';
+            button.disabled = true;
+        } else {
+            button.onclick = function() {
+                status.textContent = 'Requesting fullscreen...';
+                status.className = 'info';
+                
+                document.documentElement.requestFullscreen()
+                    .then(() => {
+                        status.textContent = 'SUCCESS! Fullscreen entered successfully.';
+                        status.className = 'success';
+                        button.textContent = 'Exit Fullscreen';
+                        
+                        // Listen for exit
+                        document.addEventListener('fullscreenchange', function() {
+                            if (!document.fullscreenElement) {
+                                status.textContent = 'Fullscreen exited. Click button to try again.';
+                                status.className = 'info';
+                                button.textContent = 'Enter Fullscreen';
+                            }
+                        }, { once: true });
+                    })
+                    .catch(err => {
+                        status.textContent = 'ERROR: ' + err.name + ' - ' + err.message;
+                        status.className = 'error';
+                        console.error('Fullscreen error details:', err);
+                    });
+            };
+        }
+    </script>
+</body>
+</html>
+

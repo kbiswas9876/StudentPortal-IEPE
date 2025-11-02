@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { ShieldCheck, AlertTriangle, Info } from 'lucide-react'
 
 interface SecureAgreementPageProps {
@@ -15,10 +14,18 @@ interface SecureAgreementPageProps {
     total_questions: number
   }
   hasMixedMarking?: boolean
+  fullscreenError?: string | null
+  onStartTest: () => void
+  onCancel: () => void
 }
 
-export default function SecureAgreementPage({ test, hasMixedMarking = false }: SecureAgreementPageProps) {
-  const router = useRouter()
+export default function SecureAgreementPage({ 
+  test, 
+  hasMixedMarking = false, 
+  fullscreenError = null,
+  onStartTest,
+  onCancel
+}: SecureAgreementPageProps) {
   const [hasAgreed, setHasAgreed] = useState(false)
 
   // Debug: Log the test data to see what we're getting
@@ -30,14 +37,24 @@ export default function SecureAgreementPage({ test, hasMixedMarking = false }: S
 
   const handleStartTest = () => {
     if (!hasAgreed) return
-
-    // Navigate with consent flag and timestamp
-    router.push(`/practice?mockTestId=${test.id}&testMode=mock&agreedToInstructions=true&sessionStart=${Date.now()}`)
+    onStartTest()
   }
 
-  const handleCancel = () => {
-    router.push('/mock-tests')
-  }
+  // PART 2 DEBUGGING: Minimal React Test Handler (uncomment to test)
+  // This is a simplified handler to test if React's event system itself is the issue.
+  // const handleMinimalTestClick = () => {
+  //   console.log('Button clicked. Requesting fullscreen synchronously...');
+  //   
+  //   document.documentElement.requestFullscreen()
+  //     .then(() => {
+  //       console.log('SUCCESS: Fullscreen entered via minimal React handler.');
+  //       // In a real scenario, we would set state here.
+  //       // For now, we do nothing else.
+  //     })
+  //     .catch(err => {
+  //       console.error('FAILURE: Fullscreen failed in minimal React handler.', err);
+  //     });
+  // };
 
   return (
     // Main container - Full screen layout for fixed header and footer
@@ -182,9 +199,28 @@ export default function SecureAgreementPage({ test, hasMixedMarking = false }: S
             </label>
           </div>
 
+          {/* Fullscreen Error Display */}
+          {fullscreenError && (
+            <div className="text-center text-red-600 dark:text-red-400 font-semibold my-4 p-3 bg-red-50 dark:bg-red-900/20 rounded-md border border-red-200 dark:border-red-800">
+              {fullscreenError}
+            </div>
+          )}
+
+          {/* PART 2 DEBUGGING: Uncomment this test button to verify minimal React handler works */}
+          {/* 
+          <div className="mb-4 text-center">
+            <button
+              onClick={handleMinimalTestClick}
+              className="bg-yellow-500 hover:bg-yellow-600 p-4 text-xl text-white rounded-md font-semibold"
+            >
+              Minimal React Fullscreen Test
+            </button>
+          </div>
+          */}
+
           <div className="flex items-center justify-center gap-4 mt-6">
             <button
-              onClick={handleCancel}
+              onClick={onCancel}
               className="px-8 py-3 font-semibold text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
             >
               Cancel
