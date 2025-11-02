@@ -43,13 +43,45 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: testsError.message }, { status: 500 })
     }
 
-    // Transform response to flatten question count
-    const transformedTests = (tests || []).map((test: any) => ({
-      ...test,
-      total_questions: test.test_questions?.[0]?.count || 0,
-      // Remove the nested test_questions object
-      test_questions: undefined
-    }))
+    // Transform response to flatten question count and check for mixed marking
+    const transformedTests = await Promise.all(
+      (tests || []).map(async (test: any) => {
+        // Check for per-question marking overrides
+        const { data: testQuestions, error: questionsError } = await supabaseAdmin
+          .from('test_questions')
+          .select('marks_per_correct, penalty_per_incorrect')
+          .eq('test_id', test.id)
+
+        let hasMixedMarking = false
+        if (!questionsError && testQuestions && testQuestions.length > 0) {
+          const globalMarksPerCorrect = test.marks_per_correct
+          const globalNegativeMarks = test.negative_marks_per_incorrect || 0
+          
+          // Check if any question has a different marking scheme
+          hasMixedMarking = testQuestions.some((tq: any) => {
+            const questionMarksPerCorrect = tq.marks_per_correct
+            const questionPenalty = tq.penalty_per_incorrect
+            
+            // If the question has override values that differ from global
+            if (questionMarksPerCorrect != null && questionMarksPerCorrect !== globalMarksPerCorrect) {
+              return true
+            }
+            if (questionPenalty != null && Math.abs(Number(questionPenalty || 0)) !== Math.abs(Number(globalNegativeMarks || 0))) {
+              return true
+            }
+            return false
+          })
+        }
+
+        return {
+          ...test,
+          total_questions: test.test_questions?.[0]?.count || 0,
+          hasMixedMarking,
+          // Remove the nested test_questions object
+          test_questions: undefined
+        }
+      })
+    )
 
     // Query 2: Fetch user's attempts with detailed results
     const { data: userAttempts, error: attemptsError } = await supabaseAdmin

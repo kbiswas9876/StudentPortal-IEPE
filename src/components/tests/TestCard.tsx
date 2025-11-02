@@ -18,6 +18,7 @@ type Test = {
   total_questions: number
   userScore?: number
   resultId?: number
+  hasMixedMarking?: boolean
   results?: {
     marks_obtained: number
     total_marks: number
@@ -219,18 +220,24 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
 
         {/* Marking Scheme Pills */}
         <div className="mb-2">
-                   <p className="text-xs text-slate-600 mb-2">Marking</p>
-                   <div className="flex gap-2">
-                     <div className="inline-flex items-center bg-green-600 rounded-full px-2.5 py-1">
-                       <CheckCircle className="w-3 h-3 text-white mr-1" />
-                       <span className="text-white font-semibold text-xs">+{test.marks_per_correct}</span>
-                     </div>
-                     <div className="inline-flex items-center bg-red-600 rounded-full px-2.5 py-1">
-                       <XCircle className="w-3 h-3 text-white mr-1" />
-                       <span className="text-white font-semibold text-xs">{test.negative_marks_per_incorrect}</span>
-                     </div>
-                   </div>
-                 </div>
+          <p className="text-xs text-slate-600 mb-2">Marking</p>
+          <div className="flex gap-2">
+            <div className="inline-flex items-center bg-green-600 rounded-full px-2.5 py-1">
+              <CheckCircle className="w-3 h-3 text-white mr-1" />
+              <span className="text-white font-semibold text-xs">+{test.marks_per_correct}</span>
+            </div>
+            <div className="inline-flex items-center bg-red-600 rounded-full px-2.5 py-1">
+              <XCircle className="w-3 h-3 text-white mr-1" />
+              <span className="text-white font-semibold text-xs">{test.negative_marks_per_incorrect}</span>
+            </div>
+          </div>
+          {/* Mixed Marking Hint */}
+          {test.hasMixedMarking && (
+            <div className="mt-2 px-2 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-xs rounded-md">
+              * Includes questions with special marking
+            </div>
+          )}
+        </div>
 
         {/* Score Display - Only for completed tests */}
         {type === 'completed' && test.results && (() => {

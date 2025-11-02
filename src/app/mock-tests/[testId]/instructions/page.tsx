@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import PreTestInstructions from '@/components/PreTestInstructions'
+import SecureAgreementPage from '@/components/SecureAgreementPage'
 
 export default function InstructionsPage() {
   const params = useParams()
@@ -10,6 +10,7 @@ export default function InstructionsPage() {
   const testId = params.testId as string
 
   const [test, setTest] = useState<any>(null)
+  const [hasMixedMarking, setHasMixedMarking] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -23,7 +24,13 @@ export default function InstructionsPage() {
           throw new Error(result.error || 'Failed to load test')
         }
 
-        setTest(result.data.test)
+        const testData = result.data.test
+        const mixedMarking = result.data.hasMixedMarking || false
+        console.log('Test metadata received:', testData)
+        console.log('Negative marking value:', testData.negative_marks_per_incorrect)
+        console.log('Has mixed marking:', mixedMarking)
+        setTest(testData)
+        setHasMixedMarking(mixedMarking)
       } catch (err) {
         console.error('Error loading test:', err)
         setError(err instanceof Error ? err.message : 'Failed to load test')
@@ -39,10 +46,10 @@ export default function InstructionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
+      <div className="w-full min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-300">Loading test instructions...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Loading test instructions...</p>
         </div>
       </div>
     )
@@ -50,12 +57,12 @@ export default function InstructionsPage() {
 
   if (error || !test) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
+      <div className="w-full min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 dark:text-red-400 mb-4">{error || 'Test not found'}</p>
+          <p className="text-red-600 dark:text-red-400 mb-4 text-lg">{error || 'Test not found'}</p>
           <button
             onClick={() => router.push('/mock-tests')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
           >
             Back to Tests
           </button>
@@ -64,5 +71,5 @@ export default function InstructionsPage() {
     )
   }
 
-  return <PreTestInstructions test={test} />
+  return <SecureAgreementPage test={test} hasMixedMarking={hasMixedMarking} />
 }

@@ -47,6 +47,33 @@ export async function GET(
       return NextResponse.json({ error: 'Test not found' }, { status: 404 })
     }
 
+    // Check for per-question marking overrides
+    const { data: testQuestions, error: questionsError } = await supabaseAdmin
+      .from('test_questions')
+      .select('marks_per_correct, penalty_per_incorrect')
+      .eq('test_id', testId)
+
+    let hasMixedMarking = false
+    if (!questionsError && testQuestions && testQuestions.length > 0) {
+      const globalMarksPerCorrect = testMetadata.marks_per_correct
+      const globalNegativeMarks = testMetadata.negative_marks_per_incorrect || 0
+      
+      // Check if any question has a different marking scheme
+      hasMixedMarking = testQuestions.some((tq: any) => {
+        const questionMarksPerCorrect = tq.marks_per_correct
+        const questionPenalty = tq.penalty_per_incorrect
+        
+        // If the question has override values that differ from global
+        if (questionMarksPerCorrect != null && questionMarksPerCorrect !== globalMarksPerCorrect) {
+          return true
+        }
+        if (questionPenalty != null && Math.abs(Number(questionPenalty || 0)) !== Math.abs(Number(globalNegativeMarks || 0))) {
+          return true
+        }
+        return false
+      })
+    }
+
     // Check if results should be available
     const now = new Date()
     const isResultsAvailable = testMetadata.result_policy === 'instant' ||
@@ -57,14 +84,18 @@ export async function GET(
     console.log('Test metadata fetched:', {
       name: testMetadata.name,
       result_policy: testMetadata.result_policy,
-      isResultsAvailable
+      isResultsAvailable,
+      negative_marks_per_incorrect: testMetadata.negative_marks_per_incorrect,
+      marks_per_correct: testMetadata.marks_per_correct,
+      hasMixedMarking
     })
 
     return NextResponse.json({
       data: {
         test: testMetadata,
         isResultsAvailable,
-        resultReleaseAt: testMetadata.result_release_at
+        resultReleaseAt: testMetadata.result_release_at,
+        hasMixedMarking
       }
     })
   } catch (error) {

@@ -18,6 +18,7 @@ type Test = {
   total_questions: number
   userScore?: number
   resultId?: number
+  hasMixedMarking?: boolean
   results?: {
     marks_obtained: number
     total_marks: number
@@ -178,7 +179,7 @@ const TestListItem: React.FC<TestListItemProps> = ({ test, type, index, onStartT
             </h3>
             {getStatusBadge()}
           </div>
-          <div className="flex items-center gap-3 text-xs text-slate-600">
+          <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap">
             <div className="flex items-center gap-1">
               <FileText className="w-3.5 h-3.5 text-electric-blue" />
               <span>{test.total_questions} Q</span>
@@ -191,6 +192,12 @@ const TestListItem: React.FC<TestListItemProps> = ({ test, type, index, onStartT
               <Calendar className="w-3.5 h-3.5 text-gray-cool" />
               <span>{new Date(test.start_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             </div>
+            {/* Mixed Marking Hint */}
+            {test.hasMixedMarking && (
+              <div className="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 text-xs rounded-md">
+                * Includes questions with special marking
+              </div>
+            )}
           </div>
         </div>
       </div>
