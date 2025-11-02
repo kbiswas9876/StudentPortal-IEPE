@@ -50,7 +50,7 @@
 
 /* Progress Indicator */
 .progress-indicator {
-  font-size: var(--font-size-sm); /* 14px */
+  font-size: var(--font-size-base); /* 16px */
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
 }

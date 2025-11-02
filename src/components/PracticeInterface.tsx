@@ -49,6 +49,7 @@ interface PracticeInterfaceProps {
       negative_marks_per_incorrect: number
       allow_pausing?: boolean
       show_in_question_timer?: boolean
+      is_proctored?: boolean
     }
   }
   savedSessionState?: any
@@ -162,6 +163,11 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   // Check if this is a mock test
   const isMockTest = mockTestData !== undefined
   
+  // === PROCTORING MASTER SETTING ===
+  // If proctoring is enabled, all security features are active
+  // If disabled, test runs in relaxed mode with no restrictions
+  const isProctoringEnabled = isMockTest && (mockTestData?.test.is_proctored ?? false)
+  
   // === TEST SETTINGS - Conditional Feature Visibility ===
   // For practice sessions: always show pause and timer
   // For mock tests: respect admin settings
@@ -173,8 +179,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     console.log('🔍 Test Settings Debug:', {
       testId: mockTestData.test.id,
       testName: mockTestData.test.name,
+      is_proctored: mockTestData.test.is_proctored,
       allow_pausing: mockTestData.test.allow_pausing,
       show_in_question_timer: mockTestData.test.show_in_question_timer,
+      isProctoringEnabled,
       shouldShowPauseButton,
       shouldShowInQuestionTimer
     })
@@ -250,11 +258,40 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     }, 1000)
   }, [showViolationModal])
 
-  // Use the security hook (only for mock tests, when initialized and not submitting)
+  // Use the security hook (only when proctoring is enabled, when initialized and not submitting)
   useSecureExamEnvironment({
-    isEnabled: isMockTest && isInitialized && !isSubmitting,
+    isEnabled: isProctoringEnabled && isInitialized && !isSubmitting,
     onViolation: handleViolation,
   })
+
+  // === DISABLE BROWSER BACK BUTTON (Proctoring Only) ===
+  // When proctoring is enabled, prevent users from leaving the test page
+  useEffect(() => {
+    if (!isProctoringEnabled || !isInitialized || isSubmitting) return
+
+    // Push a new state to history when component mounts
+    window.history.pushState(null, '', window.location.href)
+
+    // Handle the user trying to go back
+    const handlePopState = (event: PopStateEvent) => {
+      // Push them forward again, trapping them on the test page
+      window.history.pushState(null, '', window.location.href)
+      
+      showToast({
+        type: 'warning',
+        title: 'Navigation Blocked',
+        message: 'The back button is disabled during a proctored exam.',
+        duration: 3000,
+      })
+    }
+
+    window.addEventListener('popstate', handlePopState)
+
+    // Cleanup: remove the event listener when test is over
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [isProctoringEnabled, isInitialized, isSubmitting, showToast])
 
   // Handler for the "Return to Test" button in the violation modal
   // CRITICAL REFINEMENT: Forces re-entry to fullscreen for fullscreen_exit violations
@@ -1306,6 +1343,7 @@ useEffect(() => {
           correctMarks={mockTestData ? (questions[currentIndex] as any)?.marks_per_correct : undefined}
           negativeMarks={mockTestData ? (questions[currentIndex] as any)?.penalty_per_incorrect : undefined}
           testName={mockTestData?.test.name}
+          hideBackButton={isProctoringEnabled}
         />
       </div>
 

@@ -18,6 +18,7 @@ interface UnifiedHeaderProps {
   correctMarks?: number
   negativeMarks?: number
   testName?: string // Test name to display in header
+  hideBackButton?: boolean // Hide back button when proctoring is enabled
 }
 
 const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
@@ -31,26 +32,29 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   onTogglePause,
   correctMarks,
   negativeMarks,
-  testName
+  testName,
+  hideBackButton = false
 }) => {
   return (
     <header className="unified-header">
       <div className="header-zone left">
-        <button 
-          className="icon-button back-button" 
-          aria-label="Back to question list"
-          onClick={onBack}
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <div className="progress-indicator">
+        {!hideBackButton && onBack && (
+          <button 
+            className="icon-button back-button" 
+            aria-label="Back to question list"
+            onClick={onBack}
+          >
+            <ChevronLeft size={20} />
+          </button>
+        )}
+        <div className="progress-indicator" style={{ fontSize: '16px' }}>
           Question {currentQuestion} of {totalQuestions}
         </div>
       </div>
 
       <div className="header-zone center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {testName && (
-          <div className="test-name-header text-sm font-medium text-gray-600 dark:text-gray-400 mb-1 text-center" style={{ maxWidth: '400px', lineHeight: '1.3' }}>
+          <div className="test-name-header text-base font-medium text-gray-600 dark:text-gray-400 mb-1 text-center" style={{ maxWidth: '400px', lineHeight: '1.3' }}>
             {testName}
           </div>
         )}

@@ -50,6 +50,7 @@ interface QuestionDisplayWindowProps {
   negativeMarks?: number
   // Test name for header
   testName?: string
+  hideBackButton?: boolean // Hide back button when proctoring is enabled
 }
 
 const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({ 
@@ -77,7 +78,8 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   correctMarks,
   negativeMarks,
   // Test name
-  testName
+  testName,
+  hideBackButton = false
 }) => {
   // FOUC Fix: State to control fade-in animation
   const [isLoaded, setIsLoaded] = useState(false)
@@ -168,6 +170,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
         correctMarks={correctMarks}
         negativeMarks={negativeMarks}
         testName={testName}
+        hideBackButton={hideBackButton}
       />
 
       {/* 

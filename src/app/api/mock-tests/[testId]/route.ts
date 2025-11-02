@@ -49,7 +49,8 @@ export async function GET(
           status,
           is_dynamically_shuffled,
           allow_pausing,
-          show_in_question_timer
+          show_in_question_timer,
+          is_proctored
         ),
         questions!inner(
           id,
