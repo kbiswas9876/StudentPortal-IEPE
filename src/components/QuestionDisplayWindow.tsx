@@ -65,7 +65,7 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
   onExit,
   mainTimer = '00:00',
   isLowTime = false,
-  inQuestionTime = 0,
+  inQuestionTime,
   isPaused = false,
   showBookmark,
   onTogglePause,

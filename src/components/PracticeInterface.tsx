@@ -47,6 +47,8 @@ interface PracticeInterfaceProps {
       total_time_minutes: number
       marks_per_correct: number
       negative_marks_per_incorrect: number
+      allow_pausing?: boolean
+      show_in_question_timer?: boolean
     }
   }
   savedSessionState?: any
@@ -159,6 +161,24 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   // === SECURITY MONITORING (Mock Tests Only) ===
   // Check if this is a mock test
   const isMockTest = mockTestData !== undefined
+  
+  // === TEST SETTINGS - Conditional Feature Visibility ===
+  // For practice sessions: always show pause and timer
+  // For mock tests: respect admin settings
+  const shouldShowPauseButton = !isMockTest || (mockTestData?.test.allow_pausing ?? false)
+  const shouldShowInQuestionTimer = !isMockTest || (mockTestData?.test.show_in_question_timer ?? false)
+  
+  // Debug logging for test settings
+  if (isMockTest && mockTestData?.test) {
+    console.log('🔍 Test Settings Debug:', {
+      testId: mockTestData.test.id,
+      testName: mockTestData.test.name,
+      allow_pausing: mockTestData.test.allow_pausing,
+      show_in_question_timer: mockTestData.test.show_in_question_timer,
+      shouldShowPauseButton,
+      shouldShowInQuestionTimer
+    })
+  }
 
   // Function to log a violation to the API
   const logViolation = useCallback(async (
@@ -1275,10 +1295,10 @@ useEffect(() => {
           onExit={handleOpenExitModal}
           mainTimer={mainTimerDisplay}
           isLowTime={isLowTime}
-          inQuestionTime={inQuestionTime}
+          inQuestionTime={shouldShowInQuestionTimer ? inQuestionTime : undefined}
           isPaused={isPaused}
           showBookmark={false} // Disable bookmarking in practice interface
-          onTogglePause={handlePauseSession}
+          onTogglePause={shouldShowPauseButton ? handlePauseSession : undefined}
           // CRITICAL: Pass the real button handlers from PracticeInterface
           onSaveAndNext={handleSaveAndNext}
           onMarkForReviewAndNext={handleMarkForReviewAndNext}

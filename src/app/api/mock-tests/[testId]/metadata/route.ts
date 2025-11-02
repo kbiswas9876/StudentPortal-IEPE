@@ -31,10 +31,10 @@ export async function GET(
 
     console.log('Fetching mock test metadata for test ID:', testId)
 
-    // Fetch test metadata including result policy
+    // Fetch test metadata including result policy and test control settings
     const { data: testMetadata, error: testError } = await supabaseAdmin
       .from('tests')
-      .select('id, name, description, total_time_minutes, marks_per_correct, negative_marks_per_incorrect, total_questions, result_policy, result_release_at, status')
+      .select('id, name, description, total_time_minutes, marks_per_correct, negative_marks_per_incorrect, total_questions, result_policy, result_release_at, status, allow_pausing, show_in_question_timer')
       .eq('id', testId)
       .single()
 

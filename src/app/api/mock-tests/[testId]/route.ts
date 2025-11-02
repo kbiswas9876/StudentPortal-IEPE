@@ -47,7 +47,9 @@ export async function GET(
           marks_per_correct,
           negative_marks_per_incorrect,
           status,
-          is_dynamically_shuffled
+          is_dynamically_shuffled,
+          allow_pausing,
+          show_in_question_timer
         ),
         questions!inner(
           id,
