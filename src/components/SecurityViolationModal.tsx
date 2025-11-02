@@ -18,9 +18,10 @@ interface SecurityViolationModalProps {
   violationType: string | null
   onCancel: () => void
   onSubmit: () => void
+  countdown?: number
 }
 
-export default function SecurityViolationModal({ isOpen, violationType, onCancel, onSubmit }: SecurityViolationModalProps) {
+export default function SecurityViolationModal({ isOpen, violationType, onCancel, onSubmit, countdown }: SecurityViolationModalProps) {
   if (!isOpen || !violationType) return null
 
   const message = violationMessages[violationType] || violationMessages.default
@@ -32,6 +33,27 @@ export default function SecurityViolationModal({ isOpen, violationType, onCancel
         <AlertTriangle className="mx-auto h-14 w-14 text-red-500" />
         <h2 className="mt-4 text-2xl font-bold text-gray-800 dark:text-gray-100">Security Violation Detected</h2>
         <p className="mt-2 text-gray-600 dark:text-gray-300">{message}</p>
+        
+        {/* Zero-Tolerance Countdown Display */}
+        {countdown !== undefined && countdown > 0 && (
+          <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border-2 border-red-500">
+            <p className="text-lg font-semibold text-red-800 dark:text-red-200">
+              Auto-submitting in: <span className="text-3xl font-bold text-red-600 dark:text-red-400">{countdown}</span>
+            </p>
+            <p className="mt-2 text-sm text-red-700 dark:text-red-300">
+              Click "Return to Test" immediately to prevent automatic submission.
+            </p>
+          </div>
+        )}
+        
+        {countdown === 0 && (
+          <div className="mt-4 p-4 bg-red-100 dark:bg-red-900/30 rounded-lg border-2 border-red-600">
+            <p className="text-xl font-bold text-red-800 dark:text-red-200">
+              Time Expired - Submitting Test...
+            </p>
+          </div>
+        )}
+        
         <p className="mt-4 text-sm font-bold text-red-700 dark:text-red-400">
           Continuing will IMMEDIATELY SUBMIT your test and your session will end. This action cannot be undone.
         </p>

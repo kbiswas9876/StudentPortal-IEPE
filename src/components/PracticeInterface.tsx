@@ -95,6 +95,10 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [currentViolationType, setCurrentViolationType] = useState<string | null>(null)
   const [currentTestResultId, setCurrentTestResultId] = useState<number | null>(null)
   
+  // Zero-tolerance countdown state
+  const [countdown, setCountdown] = useState(5)
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null)
+  
   // C-1: Track saved session ID for updates (not duplicates)
   const [savedSessionId, setSavedSessionId] = useState<number | null>(
     savedSessionState?.savedSessionId || null
@@ -200,6 +204,30 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     
     setCurrentViolationType(violationType)
     setShowViolationModal(true)
+    
+    // --- START THE ZERO-TOLERANCE COUNTDOWN ---
+    setCountdown(5) // Reset countdown to 5 seconds
+    
+    // Clear any previous timer
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current)
+      countdownTimerRef.current = null
+    }
+
+    // Start a new timer that ticks every second
+    countdownTimerRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        const newCount = prev - 1
+        if (newCount <= 0) {
+          // Clear timer when reaching 0 (the useEffect will handle submission)
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current)
+            countdownTimerRef.current = null
+          }
+        }
+        return newCount
+      })
+    }, 1000)
   }, [showViolationModal])
 
   // Use the security hook (only for mock tests, when initialized and not submitting)
@@ -212,6 +240,12 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   // CRITICAL REFINEMENT: Forces re-entry to fullscreen for fullscreen_exit violations
   // STABILIZED: Decouples modal closing from fullscreen request to prevent race conditions
   const handleViolationCancel = useCallback(async () => {
+    // --- STOP THE COUNTDOWN ON SUCCESS ---
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current)
+      countdownTimerRef.current = null
+    }
+    
     // Log the violation as before.
     if (currentViolationType) {
       await logViolation(currentViolationType, 'cancelled')
@@ -1066,6 +1100,12 @@ useEffect(() => {
   // Handler for the "Submit My Test" button in the violation modal
   // This is defined after submitTest so it can access it directly
   const handleViolationSubmit = useCallback(async () => {
+    // Stop the countdown timer
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current)
+      countdownTimerRef.current = null
+    }
+    
     if (currentViolationType) {
       await logViolation(currentViolationType, 'submitted')
     }
@@ -1078,6 +1118,58 @@ useEffect(() => {
       await submitTest(sessionStates)
     }
   }, [currentViolationType, logViolation, sessionStates])
+
+  // Auto-submit when countdown reaches zero
+  useEffect(() => {
+    if (countdown <= 0 && showViolationModal && !isSubmitting && currentViolationType) {
+      // Stop the timer
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current)
+        countdownTimerRef.current = null
+      }
+      
+      console.log('Countdown reached zero. AUTO-SUBMITTING TEST.')
+      
+      // Close the modal
+      setShowViolationModal(false)
+      setCurrentViolationType(null)
+      
+      // Log the violation and submit the test
+      const autoSubmit = async () => {
+        if (currentViolationType) {
+          await logViolation(currentViolationType, 'submitted')
+        }
+        
+        showToast({
+          type: 'error',
+          title: 'Time Expired',
+          message: 'You failed to return to the test in time. Your test has been submitted.',
+        })
+        
+        // Submit the test
+        if (sessionStates.length > 0) {
+          setIsSubmitting(true)
+          setShowSubmissionModal(false)
+          await submitTest(sessionStates)
+        }
+      }
+      
+      autoSubmit().catch((error) => {
+        console.error('Error during auto-submission:', error)
+        setIsSubmitting(false)
+      })
+    }
+  }, [countdown, showViolationModal, isSubmitting, currentViolationType, logViolation, sessionStates, submitTest, showToast])
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current)
+        countdownTimerRef.current = null
+      }
+    }
+  }, [])
 
   const handleQuestionNavigation = (index: number) => {
     // CRITICAL: Discard temporary selections when navigating away without saving
@@ -1332,6 +1424,7 @@ useEffect(() => {
         violationType={currentViolationType}
         onCancel={handleViolationCancel}
         onSubmit={handleViolationSubmit}
+        countdown={showViolationModal ? countdown : undefined}
       />
 
     </div>
