@@ -398,6 +398,66 @@ useEffect(() => {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  // CRITICAL: Prevent accidental refresh/close during mock test
+  useEffect(() => {
+    // Only enable refresh warning for mock tests
+    if (!mockTestData || !isInitialized || isSubmitting) return
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Standard way to show confirmation dialog
+      e.preventDefault()
+      // For Chrome/Edge
+      e.returnValue = ''
+      // Custom message (most browsers show their own)
+      return ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [mockTestData, isInitialized, isSubmitting])
+
+  // Also disable keyboard shortcuts for refresh (F5, Ctrl+R, Ctrl+Shift+R)
+  useEffect(() => {
+    // Only for mock tests
+    if (!mockTestData || !isInitialized) return
+
+    const handleRefreshShortcuts = (e: KeyboardEvent) => {
+      // F5
+      if (e.key === 'F5') {
+        e.preventDefault()
+        e.stopPropagation()
+        
+        // Show custom confirmation modal instead of browser's
+        if (window.confirm('Are you sure you want to refresh? Your test progress will be saved, but the timer will continue running.')) {
+          window.location.reload()
+        }
+        return false
+      }
+      
+      // Ctrl+R or Ctrl+Shift+R
+      if (e.key === 'r' || e.key === 'R') {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault()
+          e.stopPropagation()
+          
+          if (window.confirm('Are you sure you want to refresh? Your test progress will be saved, but the timer will continue running.')) {
+            window.location.reload()
+          }
+          return false
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleRefreshShortcuts, true) // Use capture phase
+    
+    return () => {
+      window.removeEventListener('keydown', handleRefreshShortcuts, true)
+    }
+  }, [mockTestData, isInitialized])
+
   const updateSessionState = useCallback((index: number, updates: Partial<SessionState>) => {
     setSessionStates(prev => {
       const newStates = [...prev]
@@ -864,22 +924,38 @@ useEffect(() => {
     setShowMobileSidebar(false) // Close mobile sidebar
   }
 
-  const currentQuestion = questions[currentIndex];
+  // CRITICAL: Enhanced initialization guards to prevent style breaks
+  // Ensure ALL data is fully loaded before rendering
+  const currentQuestion = questions[currentIndex]
 
-  if (!currentQuestion) {
+  // Guard 1: Questions array must be populated
+  if (questions.length === 0 || currentIndex >= questions.length) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-300">Loading question...</p>
+          <p className="text-slate-600 dark:text-slate-300">Loading questions...</p>
         </div>
       </div>
     )
   }
 
-  if (!isInitialized || sessionStates.length === 0) {
+  // Guard 2: Current question must exist and have valid structure
+  if (!currentQuestion || !currentQuestion.id || !currentQuestion.question_text) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-300">Loading question data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Guard 3: Session must be fully initialized
+  if (!isInitialized || sessionStates.length === 0 || sessionStates.length !== questions.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-slate-600 dark:text-slate-300">Initializing practice session...</p>

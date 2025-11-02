@@ -82,10 +82,26 @@ const QuestionDisplayWindow: React.FC<QuestionDisplayWindowProps> = ({
     // This runs only once after the component has mounted
     setIsLoaded(true)
   }, []) // Empty dependency array ensures it runs once
-  // Use props from PracticeInterface if available, otherwise use mock data
+  // CRITICAL: Don't fallback to mock data if question is provided but invalid
+  // This prevents style breaks from rendering partial/invalid data
+  // If question prop is provided, it MUST be valid before rendering
+  if (question !== undefined && (!question || !question.question_text || !question.id)) {
+    // Question prop was provided but is invalid - show loading
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-300">Loading question data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Use props from PracticeInterface if available (guaranteed valid if provided)
+  // Fallback to mock data ONLY if question prop is completely undefined (children mode)
   const currentQuestion = question || mockQuestion
-  const currentQuestionNumber = questionNumber || 2
-  const currentTotalQuestions = totalQuestions || 5
+  const currentQuestionNumber = questionNumber || (question ? 1 : 2)
+  const currentTotalQuestions = totalQuestions || (question ? 1 : 5)
   const currentUserAnswer = userAnswer || null
   const currentIsBookmarked = isBookmarked || false
 
