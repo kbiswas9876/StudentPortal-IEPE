@@ -74,7 +74,10 @@ interface ToastContainerProps {
 
 function ToastContainer({ toasts, onHide }: ToastContainerProps) {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div 
+      className="fixed top-4 right-4 space-y-2"
+      style={{ zIndex: 99999, position: 'fixed' }}
+    >
       <AnimatePresence>
         {toasts.map((toast) => (
           <ToastItem

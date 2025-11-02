@@ -102,6 +102,12 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [countdown, setCountdown] = useState(5)
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null)
   
+  // Secure lockout state - prevents interactions during auto-submission
+  const [isSubmittingLocked, setIsSubmittingLocked] = useState(false)
+  
+  // Store submission reason for display on lockout screen
+  const [submissionReason, setSubmissionReason] = useState<string>('')
+  
   // C-1: Track saved session ID for updates (not duplicates)
   const [savedSessionId, setSavedSessionId] = useState<number | null>(
     savedSessionState?.savedSessionId || null
@@ -1178,7 +1184,7 @@ useEffect(() => {
 
   // Auto-submit when countdown reaches zero
   useEffect(() => {
-    if (countdown <= 0 && showViolationModal && !isSubmitting && currentViolationType) {
+    if (countdown <= 0 && showViolationModal && !isSubmitting && currentViolationType && !isSubmittingLocked) {
       // Stop the timer
       if (countdownTimerRef.current) {
         clearInterval(countdownTimerRef.current)
@@ -1187,36 +1193,48 @@ useEffect(() => {
       
       console.log('Countdown reached zero. AUTO-SUBMITTING TEST.')
       
-      // Close the modal
+      // === STEP 1: CAPTURE REASON BEFORE CLEARING STATE ===
+      // Store the violation reason for display on lockout screen
+      const reason = currentViolationType || 'Violation detected'
+      setSubmissionReason(reason)
+      
+      // === STEP 2: IMMEDIATELY HIDE MODAL AND LOCK THE SCREEN ===
+      // Hide the violation modal and lock the screen simultaneously
+      // This prevents any last-second interactions while submission is in progress
       setShowViolationModal(false)
+      setIsSubmittingLocked(true)
       setCurrentViolationType(null)
       
       // Log the violation and submit the test
       const autoSubmit = async () => {
-        if (currentViolationType) {
-          await logViolation(currentViolationType, 'submitted')
-        }
-        
-        showToast({
-          type: 'error',
-          title: 'Time Expired',
-          message: 'You failed to return to the test in time. Your test has been submitted.',
-        })
-        
-        // Submit the test
-        if (sessionStates.length > 0) {
-          setIsSubmitting(true)
-          setShowSubmissionModal(false)
-          await submitTest(sessionStates)
+        try {
+          // Use the stored reason for logging
+          if (reason) {
+            await logViolation(reason, 'submitted')
+          }
+          
+          showToast({
+            type: 'error',
+            title: 'Time Expired',
+            message: 'You failed to return to the test in time. Your test has been submitted.',
+          })
+          
+          // Submit the test
+          if (sessionStates.length > 0) {
+            setIsSubmitting(true)
+            setShowSubmissionModal(false)
+            await submitTest(sessionStates)
+          }
+        } catch (error) {
+          console.error('Error during auto-submission:', error)
+          setIsSubmitting(false)
+          // Keep the lockout screen active even on error to prevent further interactions
         }
       }
       
-      autoSubmit().catch((error) => {
-        console.error('Error during auto-submission:', error)
-        setIsSubmitting(false)
-      })
+      autoSubmit()
     }
-  }, [countdown, showViolationModal, isSubmitting, currentViolationType, logViolation, sessionStates, submitTest, showToast])
+  }, [countdown, showViolationModal, isSubmitting, currentViolationType, isSubmittingLocked, logViolation, sessionStates, submitTest, showToast])
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -1486,6 +1504,47 @@ useEffect(() => {
         countdown={showViolationModal ? countdown : undefined}
       />
 
+      {/* Secure Lockout Overlay - Prevents interactions during auto-submission */}
+      {isSubmittingLocked && (() => {
+        // Format the violation reason for display
+        const formatViolationReason = (reason: string): string => {
+          const reasons: Record<string, string> = {
+            'fullscreen_exit': 'Left Fullscreen Mode',
+            'visibility_change': 'Switched to Another Window',
+            'window_blur': 'Lost Window Focus',
+            'refresh_attempt_ctrl_r': 'Attempted to Refresh Page',
+            'refresh_attempt_f5': 'Attempted to Refresh Page',
+            'Violation detected': 'Security Violation Detected'
+          }
+          return reasons[reason] || reason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+        }
+        
+        const formattedReason = formatViolationReason(submissionReason)
+        
+        return (
+          <div 
+            className="fixed inset-0 bg-white/50 backdrop-blur-md flex flex-col items-center justify-center z-[9999]"
+            style={{
+              zIndex: 9999,
+            }}
+          >
+            <div className="text-center p-8 bg-white/90 dark:bg-slate-800/90 rounded-xl shadow-2xl border border-gray-200 dark:border-slate-700 max-w-md mx-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <h2 className="mt-4 text-2xl font-semibold text-gray-800 dark:text-gray-200">
+                Auto-Submitting Test
+              </h2>
+              {submissionReason && (
+                <p className="mt-3 text-sm text-red-600 dark:text-red-400 font-semibold bg-red-50 dark:bg-red-900/20 px-4 py-2 rounded-md">
+                  Reason: {formattedReason}
+                </p>
+              )}
+              <p className="mt-4 text-gray-600 dark:text-gray-400">
+                Please wait, do not close this window.
+              </p>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
