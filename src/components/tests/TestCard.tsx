@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { Calendar, FileText, Clock, CheckCircle, XCircle, TrendingUp, Award, Eye, Play, AlertCircle } from 'lucide-react'
+import { Calendar, FileText, Clock, CheckCircle, XCircle, TrendingUp, Award, Eye, Play, AlertCircle, Loader2 } from 'lucide-react'
 import { getScoreColor, getPercentileColor, getPerformanceStyles } from '@/utils/colorUtils'
 
 type Test = {
@@ -35,11 +35,13 @@ interface TestCardProps {
   onStartTest: (testId: number) => void
   onViewResult: (resultId: number) => void
   onCountdownComplete?: (testId: number) => void
+  isLoading?: boolean // Loading state for the button
 }
 
-const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onViewResult, onCountdownComplete }) => {
+const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onViewResult, onCountdownComplete, isLoading = false }) => {
   const [timeRemaining, setTimeRemaining] = useState<string>('')
   const countdownCompleteCalledRef = useRef(false)
+  const [isStarting, setIsStarting] = useState(false)
 
   useEffect(() => {
     if (type === 'upcoming' && test.start_time) {
@@ -112,20 +114,41 @@ const TestCard: React.FC<TestCardProps> = ({ test, type, index, onStartTest, onV
     }
   }
 
+  const handleStartTest = () => {
+    if (isStarting || isLoading) return
+    setIsStarting(true)
+    onStartTest(test.id)
+    // Reset loading state after navigation (timeout fallback)
+    setTimeout(() => setIsStarting(false), 3000)
+  }
+
   const getActionButton = () => {
     switch (type) {
       case 'upcoming':
         return null
       case 'live':
+        const buttonLoading = isStarting || isLoading
         return (
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onStartTest(test.id)}
-            className="w-full bg-gradient-to-r from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 hover:scale-105 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl text-sm py-3.5 px-4 flex items-center justify-center gap-2"
+            whileHover={!buttonLoading ? { scale: 1.02 } : {}}
+            whileTap={!buttonLoading ? { scale: 0.98 } : {}}
+            onClick={handleStartTest}
+            disabled={buttonLoading}
+            className={`w-full bg-gradient-to-r from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 hover:scale-105 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl text-sm py-3.5 px-4 flex items-center justify-center gap-2 ${
+              buttonLoading ? 'opacity-75 cursor-not-allowed' : ''
+            }`}
           >
-            <Play className="w-4 h-4" />
-            <span>Start Test</span>
+            {buttonLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Starting...</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4" />
+                <span>Start Test</span>
+              </>
+            )}
           </motion.button>
         )
       case 'completed':

@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabaseClient'
 import TestCard from '@/components/tests/TestCard'
 import TestListItem from '@/components/tests/TestListItem'
+import MockTestPageSkeleton from '@/components/tests/MockTestPageSkeleton'
 
 
 type Test = {
@@ -394,14 +395,7 @@ export default function MockTestHubPage() {
   }, [mockTestData, searchQuery, sortBy])
 
   if (authLoading || loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-300">Loading mock tests...</p>
-        </div>
-      </div>
-    )
+    return <MockTestPageSkeleton view="list" count={5} />
   }
 
   if (error) {

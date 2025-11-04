@@ -52,11 +52,11 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
         </div>
       </div>
 
-      <div className="header-zone center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div className="header-zone center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         {testName && (
-          <div className="test-name-header text-base font-medium text-gray-600 dark:text-gray-400 mb-1 text-center" style={{ maxWidth: '400px', lineHeight: '1.3' }}>
+          <h1 className="test-name-header text-base font-semibold text-gray-800 dark:text-gray-100 mb-2 text-center" style={{ maxWidth: '400px', lineHeight: '1.3', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {testName}
-          </div>
+          </h1>
         )}
         <div className="premium-timer-container">
           <Clock size={18} className="premium-timer-icon" />

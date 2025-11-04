@@ -4,9 +4,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 64px;
+  min-height: 72px; /* Increased to accommodate test name and timer with proper spacing */
+  height: auto; /* Allow header to grow if needed */
   width: 100%;
-  padding: 0 var(--spacing-6); /* 24px horizontal padding - keep for content alignment */
+  padding: 8px var(--spacing-6); /* 8px vertical padding, 24px horizontal padding */
   border-bottom: 1px solid var(--color-border-primary);
   background-color: var(--color-background-card); /* White background for the header */
   margin: 0; /* Remove any margins for edge-to-edge design */
