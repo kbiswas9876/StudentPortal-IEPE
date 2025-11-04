@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
+import { createServerClient } from '@/lib/supabase-server'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -30,6 +31,49 @@ export async function GET(
     }
 
     console.log('Fetching mock test data for test ID:', testId)
+
+    // CRITICAL SECURITY CHECK: Verify if user has already submitted this test
+    // Get authenticated user from request
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
+    
+    // Try to get user from cookies if no token in header
+    // createServerClient reads from cookies automatically, so we can always call it
+    const supabase = await createServerClient(token)
+    const { data: { user }, error: getUserError } = await supabase.auth.getUser()
+
+    if (user && !getUserError) {
+      // Check if user has already submitted this test
+      const { data: existingResult, error: checkError } = await supabaseAdmin
+        .from('test_results')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('mock_test_id', parseInt(testId))
+        .eq('session_type', 'mock_test')
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (checkError) {
+        console.error('Error checking existing test result:', checkError)
+        // Continue anyway - don't block access due to check error
+      } else if (existingResult) {
+        // User has already submitted this test - deny access
+        console.log(`⚠️ Access denied: User ${user.id} has already submitted test ${testId}`)
+        return NextResponse.json({
+          status: 'already_submitted',
+          message: 'You have already submitted this test',
+          result_id: existingResult.id,
+          result_url: `/analysis/${existingResult.id}`
+        }, { status: 403 })
+      }
+    } else {
+      // User not authenticated - allow access (anonymous users can take practice tests)
+      // But log it for monitoring
+      if (getUserError) {
+        console.warn('Could not authenticate user for test access check:', getUserError.message)
+      }
+    }
 
     // Multi-table JOIN query to get test rules and questions with per-question marking
     const { data: testData, error: testError } = await supabaseAdmin

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import SecureAgreementPage from '@/components/SecureAgreementPage'
 import InstructionsPageSkeleton from '@/components/InstructionsPageSkeleton'
+import { useAuth } from '@/lib/auth-context'
 import nextDynamic from 'next/dynamic'
 
 // Dynamically import PracticeInterface to avoid SSR issues
@@ -12,6 +13,7 @@ const DynamicPracticeInterface = nextDynamic(() => import('@/components/Practice
 export default function InstructionsPage() {
   const params = useParams()
   const router = useRouter()
+  const { session, loading: authLoading } = useAuth()
   const testId = params.testId as string
 
   const [test, setTest] = useState<any>(null)
@@ -22,9 +24,72 @@ export default function InstructionsPage() {
   const [fullscreenError, setFullscreenError] = useState<string | null>(null)
   const [mockTestData, setMockTestData] = useState<any>(null)
   const [questions, setQuestions] = useState<any[]>([])
+  const [accessDenied, setAccessDenied] = useState(false)
 
-  // Fetch test metadata
+  // CRITICAL SECURITY CHECK: Verify test submission status before rendering
+  // This runs immediately on mount to prevent showing instructions page for submitted tests
   useEffect(() => {
+    if (!testId || authLoading) return
+
+    const checkTestStatus = async () => {
+      try {
+        // Include auth headers if available
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        }
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`
+        }
+
+        // Check if test is already submitted by attempting to fetch test data
+        // The API endpoint will return 403 if already submitted
+        const response = await fetch(`/api/mock-tests/${testId}`, {
+          headers,
+          credentials: 'same-origin'
+        })
+
+        const text = await response.text()
+        let result: any = null
+        try {
+          result = JSON.parse(text)
+        } catch {
+          // If parsing fails, continue to metadata fetch
+          console.warn('Could not parse response, continuing...')
+        }
+
+        // CRITICAL SECURITY CHECK: Handle already submitted status
+        if (response.status === 403 && result?.status === 'already_submitted') {
+          console.warn('⚠️ Test already submitted. Redirecting to results page.')
+          setAccessDenied(true)
+          
+          // Redirect immediately - don't show instructions page
+          if (result.result_url) {
+            router.replace(result.result_url)
+          } else if (result.result_id) {
+            router.replace(`/analysis/${result.result_id}`)
+          } else {
+            // Fallback: redirect to mock tests hub
+            router.replace('/mock-tests')
+          }
+          return
+        }
+
+        // If check passes, continue with normal metadata fetch
+        // (This will be handled by the next useEffect)
+      } catch (error) {
+        console.error('Error checking test status:', error)
+        // Continue anyway - don't block access due to check error
+        // The metadata fetch will handle actual errors
+      }
+    }
+
+    checkTestStatus()
+  }, [testId, session, router, authLoading])
+
+  // Fetch test metadata (only if access is not denied)
+  useEffect(() => {
+    if (accessDenied || !testId) return
+
     const fetchTestMetadata = async () => {
       try {
         const response = await fetch(`/api/mock-tests/${testId}/metadata`)
@@ -49,10 +114,8 @@ export default function InstructionsPage() {
       }
     }
 
-    if (testId) {
-      fetchTestMetadata()
-    }
-  }, [testId])
+    fetchTestMetadata()
+  }, [testId, accessDenied])
 
   // Fetch mock test data and questions when test is activated
   useEffect(() => {
@@ -61,13 +124,39 @@ export default function InstructionsPage() {
     const fetchMockTestData = async () => {
       try {
         console.log('Fetching mock test data for test ID:', testId)
-        const response = await fetch(`/api/mock-tests/${testId}`)
+        
+        // Include auth headers if available
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+        }
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`
+        }
+        
+        const response = await fetch(`/api/mock-tests/${testId}`, {
+          headers,
+          credentials: 'same-origin'
+        })
+        
         const text = await response.text()
         let result: any = null
         try { 
           result = JSON.parse(text) 
         } catch {
           throw new Error(`Failed to fetch mock test data (${response.status})`)
+        }
+        
+        // CRITICAL SECURITY CHECK: Handle already submitted status
+        if (response.status === 403 && result.status === 'already_submitted') {
+          console.warn('⚠️ Test already submitted. Redirecting to results page.')
+          if (result.result_url) {
+            router.push(result.result_url)
+          } else if (result.result_id) {
+            router.push(`/analysis/${result.result_id}`)
+          } else {
+            router.push('/mock-tests')
+          }
+          return
         }
         
         if (!response.ok) {
@@ -85,7 +174,7 @@ export default function InstructionsPage() {
     }
 
     fetchMockTestData()
-  }, [isTestActive, testId])
+  }, [isTestActive, testId, session, router])
 
   // DEFINITIVE SOLUTION: Promise-based pattern (not async/await)
   // The request is fired immediately and synchronously within the click handler.
@@ -138,7 +227,9 @@ export default function InstructionsPage() {
     router.push('/mock-tests')
   }, [router])
 
-  if (loading) {
+  // Show loading skeleton while checking access or loading metadata
+  // If access is denied, the redirect will happen during this loading state
+  if (loading || accessDenied) {
     return <InstructionsPageSkeleton />
   }
 

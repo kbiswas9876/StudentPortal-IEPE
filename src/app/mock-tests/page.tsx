@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react'
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Tab } from '@headlessui/react'
@@ -56,6 +56,8 @@ export default function MockTestHubPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'score' | 'name'>('date')
   const [lastRefreshTime, setLastRefreshTime] = useState<number>(0)
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const isRealtimeActiveRef = useRef<boolean>(false)
 
   // State persistence - load from localStorage on mount
   useEffect(() => {
@@ -129,6 +131,39 @@ export default function MockTestHubPage() {
       setLoading(false)
     }
   }, [user?.id, lastRefreshTime])
+
+  // Function to start polling fallback when Realtime fails
+  const startPolling = useCallback(() => {
+    // Don't start polling if Realtime is already active
+    if (isRealtimeActiveRef.current) {
+      console.log('⏭️ Skipping polling - Realtime is active')
+      return
+    }
+
+    // Ensure we don't start multiple intervals
+    if (pollingIntervalRef.current) {
+      console.log('⏭️ Polling already active')
+      return
+    }
+
+    console.log('🔄 Starting polling fallback (30s interval)')
+    
+    // Fetch immediately once, then start the interval
+    fetchMockTestData(true)
+    pollingIntervalRef.current = setInterval(() => {
+      console.log('🔄 Polling for test updates...')
+      fetchMockTestData(true)
+    }, 30000) // Poll every 30 seconds
+  }, [fetchMockTestData])
+
+  // Function to stop polling (when Realtime becomes active)
+  const stopPolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      console.log('🛑 Stopping polling fallback')
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     if (authLoading) return
@@ -223,15 +258,20 @@ export default function MockTestHubPage() {
       .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
           console.log('✅ Real-time subscription active for test status changes')
+          isRealtimeActiveRef.current = true
+          // Stop polling if it was active
+          stopPolling()
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Real-time subscription error. This may be due to:')
-          console.error('  1. Supabase Realtime not enabled for the tests table')
-          console.error('  2. Database replication not configured')
-          console.error('  3. RLS policies blocking subscription')
-          console.error('Error details:', err)
-          console.warn('⚠️ Falling back to manual refresh mode. Tests will still work but won\'t update automatically.')
+          // Use a single, clear warning instead of multiple errors
+          console.warn('⚠️ Supabase Realtime subscription failed. This is expected if not configured. Falling back to polling.', err)
+          isRealtimeActiveRef.current = false
+          // Activate polling fallback
+          startPolling()
         } else if (status === 'TIMED_OUT') {
-          console.warn('⚠️ Real-time subscription timed out. Retrying...')
+          console.warn('⚠️ Real-time subscription timed out. Falling back to polling.')
+          isRealtimeActiveRef.current = false
+          // Activate polling fallback on timeout
+          startPolling()
         }
       })
 
@@ -239,8 +279,11 @@ export default function MockTestHubPage() {
     return () => {
       console.log('Cleaning up real-time subscription...')
       channel.unsubscribe()
+      // Also cleanup polling interval
+      stopPolling()
+      isRealtimeActiveRef.current = false
     }
-  }, [mockTestData, user])
+  }, [mockTestData, user, startPolling, stopPolling])
 
   // Pure function to categorize and filter tests
   function categorizeTests(

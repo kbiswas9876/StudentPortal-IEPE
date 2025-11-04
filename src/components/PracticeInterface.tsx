@@ -98,6 +98,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   const [currentViolationType, setCurrentViolationType] = useState<string | null>(null)
   const [currentTestResultId, setCurrentTestResultId] = useState<number | null>(null)
   
+  // Back button interception state
+  const [backButtonWarning, setBackButtonWarning] = useState(false)
+  
   // Zero-tolerance countdown state
   const [countdown, setCountdown] = useState(5)
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -120,6 +123,9 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
   
   // Ref to store the auto-submission handler to avoid circular dependency
   const handleAutoSubmissionRef = useRef<(() => void) | null>(null)
+  
+  // Ref to store submitTest function to avoid circular dependency in back button handler
+  const submitTestRef = useRef<((finalSessionStates: SessionState[]) => Promise<void>) | null>(null)
   
   // FR-3.1: Extract timer restoration data from savedSessionState
   const initialTimerState = useMemo(() => {
@@ -270,25 +276,62 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     onViolation: handleViolation,
   })
 
-  // === DISABLE BROWSER BACK BUTTON (Proctoring Only) ===
-  // When proctoring is enabled, prevent users from leaving the test page
+  // === INTERCEPT BROWSER BACK BUTTON (Proctoring Only) ===
+  // When proctoring is enabled, intercept back button to trigger two-step submission
   useEffect(() => {
     if (!isProctoringEnabled || !isInitialized || isSubmitting) return
 
-    // Push a new state to history when component mounts
+    // Push a new state to history when component mounts to trap the user
     window.history.pushState(null, '', window.location.href)
 
     // Handle the user trying to go back
     const handlePopState = (event: PopStateEvent) => {
-      // Push them forward again, trapping them on the test page
+      // Re-trap them immediately by pushing state again
       window.history.pushState(null, '', window.location.href)
       
-      showToast({
-        type: 'warning',
-        title: 'Navigation Blocked',
-        message: 'The back button is disabled during a proctored exam.',
-        duration: 3000,
-      })
+      if (!backButtonWarning) {
+        // First attempt: Show a warning
+        setBackButtonWarning(true)
+        showToast({
+          type: 'warning',
+          title: 'Back Button Pressed',
+          message: 'Pressing "Back" again will submit your test immediately.',
+          duration: 5000,
+        })
+      } else {
+        // Second attempt: Trigger auto-submission
+        console.log('Back button pressed twice. AUTO-SUBMITTING TEST.')
+        
+        // Use the same auto-submission logic as other violations
+        const reason = 'BACK_BUTTON_VIOLATION'
+        setSubmissionReason(reason)
+        setIsSubmittingLocked(true)
+        
+        // Log the violation and submit the test
+        const autoSubmit = async () => {
+          try {
+            await logViolation(reason, 'submitted')
+            
+            showToast({
+              type: 'error',
+              title: 'Test Submitted',
+              message: 'You pressed the back button twice. Your test has been submitted.',
+            })
+            
+            // Submit the test using ref to avoid dependency issues
+            if (sessionStates.length > 0 && submitTestRef.current) {
+              setIsSubmitting(true)
+              setShowSubmissionModal(false)
+              await submitTestRef.current(sessionStates)
+            }
+          } catch (error) {
+            console.error('Error during auto-submission from back button:', error)
+            setIsSubmitting(false)
+          }
+        }
+        
+        autoSubmit()
+      }
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -296,8 +339,86 @@ export default function PracticeInterface({ questions, testMode = 'practice', ti
     // Cleanup: remove the event listener when test is over
     return () => {
       window.removeEventListener('popstate', handlePopState)
+      // Reset warning state on cleanup
+      setBackButtonWarning(false)
     }
-  }, [isProctoringEnabled, isInitialized, isSubmitting, showToast])
+  }, [isProctoringEnabled, isInitialized, isSubmitting, backButtonWarning, showToast, logViolation, sessionStates])
+
+  // === AUTO-SUBMIT ON TAB/BROWSER CLOSE (Proctoring Only) ===
+  // When proctoring is enabled, submit test immediately when user closes tab/browser
+  useEffect(() => {
+    if (!isProctoringEnabled || !isInitialized || isSubmitting) return
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      // This is the final moment before the tab closes
+      // We must send the data synchronously using navigator.sendBeacon
+      
+      // Only proceed if we have session data to save
+      if (!sessionStates || sessionStates.length === 0) {
+        return
+      }
+
+      // Get device context for logging
+      const deviceContext = getDeviceContext()
+
+      // Prepare the payload with all necessary data for submission
+      // This must be available synchronously, so we capture the current state
+      const finalAnswersPayload = {
+        testId: mockTestData?.test.id,
+        userId: userId,
+        questions: questions.map((question, index) => ({
+          question_id: question.id,
+          user_answer: sessionStates[index]?.user_answer || null,
+          status: sessionStates[index]?.user_answer ? 
+            (sessionStates[index]?.user_answer === question.correct_option ? 'correct' : 'incorrect') : 
+            'skipped',
+          time_taken: 0 // Will be recalculated on server if needed
+        })),
+        sessionStates: sessionStates,
+        violation: 'BROWSER_CLOSE_VIOLATION',
+        totalTime: Math.floor(getTotalSessionTime() / 1000), // Total time in seconds
+        // Include per-attempt order if available
+        question_order: (mockTestData as any)?.question_order || undefined,
+        option_order: (mockTestData as any)?.option_order || undefined,
+        // Include device context for violation logging
+        deviceContext: deviceContext
+      }
+
+      // Convert to JSON string and create a Blob for sendBeacon
+      const payloadString = JSON.stringify(finalAnswersPayload)
+      const blob = new Blob([payloadString], { type: 'application/json' })
+
+      // Use navigator.sendBeacon to send the data
+      // This is a non-blocking request that continues even after the page has closed
+      const sent = navigator.sendBeacon('/api/tests/submit-on-close', blob)
+
+      if (sent) {
+        console.log('✅ Test data sent via beacon before browser close')
+      } else {
+        console.error('❌ Failed to send test data via beacon')
+        // Fallback: try to send via fetch (less reliable but better than nothing)
+        // Note: This may not complete before the page closes
+        fetch('/api/tests/submit-on-close', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payloadString,
+          keepalive: true // This helps ensure the request completes
+        }).catch(err => console.error('Fallback beacon failed:', err))
+      }
+
+      // Show browser's default confirmation dialog (optional)
+      // Some browsers may ignore this, but it's worth trying
+      event.preventDefault()
+      event.returnValue = '' // Required by some browsers to show confirmation
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    // Cleanup: remove the event listener when test is over
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [isProctoringEnabled, isInitialized, isSubmitting, sessionStates, questions, userId, mockTestData, getTotalSessionTime])
 
   // Handler for the "Return to Test" button in the violation modal
   // CRITICAL REFINEMENT: Forces re-entry to fullscreen for fullscreen_exit violations
@@ -1159,6 +1280,9 @@ useEffect(() => {
   
   // Set the ref so the timer hook can call it
   handleAutoSubmissionRef.current = handleAutoSubmission
+  
+  // Set the ref so the back button handler can call it
+  submitTestRef.current = submitTest
 
   // Handler for the "Submit My Test" button in the violation modal
   // This is defined after submitTest so it can access it directly

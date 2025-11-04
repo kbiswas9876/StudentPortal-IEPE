@@ -69,6 +69,45 @@ export default function AnalysisReportPage() {
     }
   }, [authLoading, resultId])
 
+  // CRITICAL UX FIX: Proactive history management to prevent flickering
+  // This prevents the browser back button from navigating to instructions page
+  // for submitted mock tests by manipulating the history stack
+  useEffect(() => {
+    // Only apply this fix for mock tests (not practice sessions)
+    if (!analysisData?.isMockTest || !resultId) return
+
+    // Get the current URL of the results page
+    const currentUrl = window.location.href
+    
+    // The safe destination when going "back" from results
+    const mockTestsHubUrl = '/mock-tests'
+
+    // Step 1: Replace the current history entry with the mock tests hub URL
+    // This makes the browser think the previous page was the hub, not instructions
+    window.history.replaceState(null, '', mockTestsHubUrl)
+
+    // Step 2: Push the actual results page URL back on top
+    // This traps the user - history stack now looks like:
+    // TOP -> Results Page URL
+    // MIDDLE -> Mock Test Hub URL (where "back" will go)
+    // BOTTOM -> ... (previous history)
+    window.history.pushState(null, '', currentUrl)
+
+    // Step 3: Handle popstate event (when user clicks back button)
+    const handlePopState = (event: PopStateEvent) => {
+      // When user clicks back, they'll pop from Results Page to Mock Test Hub
+      // Force navigation to ensure clean transition
+      router.replace(mockTestsHubUrl)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+
+    // Cleanup: remove event listener when component unmounts
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [analysisData?.isMockTest, resultId, router])
+
   // Reset loading state on component mount
   useEffect(() => {
     setLoading(false)
@@ -400,6 +439,25 @@ export default function AnalysisReportPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="max-w-6xl mx-auto px-4 py-8 pb-16">
+        {/* Back Button - Controlled navigation to prevent back button issues */}
+        {analysisData?.isMockTest && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mb-6"
+          >
+            <button
+              onClick={() => router.push('/mock-tests')}
+              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="font-medium">Back to All Tests</span>
+            </button>
+          </motion.div>
+        )}
 
         {/* Post-Revision Feedback Loop: Revision Performance Insights */}
         {source === 'revision' && analysisData && (

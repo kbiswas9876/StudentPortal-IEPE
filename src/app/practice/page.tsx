@@ -11,7 +11,7 @@ import PracticeSkeletonLoader from '@/components/PracticeSkeletonLoader'
 type Question = Database['public']['Tables']['questions']['Row']
 
 function PracticePageContent() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, session, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [questions, setQuestions] = useState<Question[]>([])
@@ -113,12 +113,38 @@ function PracticePageContent() {
       setLoading(true)
       console.log('Fetching mock test data for test ID:', mockTestId)
 
-      const response = await fetch(`/api/mock-tests/${mockTestId}`)
+      // Include auth headers if available
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+      if (user?.id && session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      
+      const response = await fetch(`/api/mock-tests/${mockTestId}`, {
+        headers,
+        credentials: 'same-origin'
+      })
+      
       const text = await response.text()
       let result: any = null
       try { result = JSON.parse(text) } catch {
         throw new Error(`Failed to fetch mock test data (${response.status})`)
       }
+      
+      // CRITICAL SECURITY CHECK: Handle already submitted status
+      if (response.status === 403 && result.status === 'already_submitted') {
+        console.warn('⚠️ Test already submitted. Redirecting to results page.')
+        if (result.result_url) {
+          router.push(result.result_url)
+        } else if (result.result_id) {
+          router.push(`/analysis/${result.result_id}`)
+        } else {
+          router.push('/mock-tests')
+        }
+        return
+      }
+      
       if (!response.ok) {
         throw new Error(result?.error || `Failed to fetch mock test data (${response.status})`)
       }
