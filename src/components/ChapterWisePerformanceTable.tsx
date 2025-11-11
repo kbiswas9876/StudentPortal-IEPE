@@ -1,6 +1,11 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
+import { SessionResult } from './PerformanceAnalysisDashboard'
+import { Database } from '@/types/database'
+
+type Question = Database['public']['Tables']['questions']['Row']
 
 export interface ChapterPerformance {
   chapterName: string;
@@ -8,94 +13,111 @@ export interface ChapterPerformance {
   attempted: number;
   correct: number;
   incorrect: number;
-  accuracy: number; // percentage (0-100)
-  timePerQuestion: number; // seconds per question
+  accuracy: number;
+  timePerQuestion: number;
 }
 
 export interface ChapterWisePerformanceTableProps {
-  chapters: ChapterPerformance[];
+  sessionResult: SessionResult;
   className?: string;
 }
 
-const formatAccuracy = (value: number) => `${Math.round(value)}%`;
+function calculateChapterPerformance(session: SessionResult): ChapterPerformance[] {
+  const { answerLog, questions } = session
+  if (!answerLog || !questions) return []
 
-const formatTimePerQuestion = (seconds: number) => {
-  if (seconds < 60) return `${Math.round(seconds)}s`;
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return `${m}m ${s}s`;
-};
+  const questionById = new Map<number, Question>()
+  questions.forEach(q => questionById.set(q.id, q))
+
+  const chapterMap = new Map<string, { totalQuestions: number; attempted: number; correct: number; incorrect: number; timeSum: number }>()
+  questions.forEach(q => {
+    const chapterName = q.chapter_name || 'Unknown'
+    if (!chapterMap.has(chapterName)) {
+      chapterMap.set(chapterName, { totalQuestions: 0, attempted: 0, correct: 0, incorrect: 0, timeSum: 0 })
+    }
+    chapterMap.get(chapterName)!.totalQuestions += 1
+  })
+
+  answerLog.forEach(a => {
+    const q = questionById.get(a.question_id)
+    if (!q) return
+    const chapterName = q.chapter_name || 'Unknown'
+    const agg = chapterMap.get(chapterName)!
+    if (a.status !== 'skipped') {
+      agg.attempted += 1
+      agg.timeSum += a.time_taken || 0
+    }
+    if (a.status === 'correct') agg.correct += 1
+    if (a.status === 'incorrect') agg.incorrect += 1
+  })
+
+  const result: ChapterPerformance[] = Array.from(chapterMap.entries()).map(([chapterName, agg]) => ({
+    chapterName,
+    totalQuestions: agg.totalQuestions,
+    attempted: agg.attempted,
+    correct: agg.correct,
+    incorrect: agg.incorrect,
+    accuracy: agg.attempted > 0 ? (agg.correct / agg.attempted) * 100 : 0,
+    timePerQuestion: agg.attempted > 0 ? agg.timeSum / agg.attempted : 0,
+  }))
+
+  return result.sort((a, b) => b.accuracy - a.accuracy)
+}
 
 const getAccuracyColor = (accuracy: number) => {
-  if (accuracy >= 70) return 'text-green-600 dark:text-green-400';
-  if (accuracy >= 40) return 'text-yellow-600 dark:text-yellow-400';
-  return 'text-red-600 dark:text-red-400';
+  if (accuracy >= 70) return '#22c55e'; // green-500
+  if (accuracy >= 40) return '#f59e0b'; // amber-500
+  return '#ef4444'; // red-500
 };
 
-export default function ChapterWisePerformanceTable({ chapters, className }: ChapterWisePerformanceTableProps) {
+export default function ChapterWisePerformanceTable({ sessionResult, className }: ChapterWisePerformanceTableProps) {
+  const chapters = useMemo(() => calculateChapterPerformance(sessionResult), [sessionResult])
+
   return (
-    <div className={`bg-white dark:bg-slate-800 rounded-2xl shadow-xl border-0 backdrop-blur-xl ${className || ''}`}>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chapter-wise Performance</h2>
-          <div className="w-12 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+    <div className={className || ''}>
+      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Chapter-wise Performance</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="lg:col-span-1 h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chapters} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />
+              <XAxis type="number" domain={[0, 100]} unit="%" />
+              <YAxis type="category" dataKey="chapterName" width={80} tick={{ fontSize: 12 }} />
+              <Tooltip
+                cursor={{ fill: 'rgba(240, 240, 240, 0.1)' }}
+                contentStyle={{ background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(5px)', borderRadius: '0.5rem' }}
+                formatter={(value: number) => [`${value.toFixed(1)}%`, 'Accuracy']}
+              />
+              <Bar dataKey="accuracy">
+                {chapters.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={getAccuracyColor(entry.accuracy)} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-        <div className="overflow-x-auto rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-          <table className="min-w-full divide-y divide-slate-200/50 dark:divide-slate-700/50">
-            <thead className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-700 dark:to-slate-800">
+        <div className="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-700/80">
+          <table className="min-w-full divide-y divide-slate-200/80 dark:divide-slate-700/80">
+            <thead className="bg-slate-50 dark:bg-slate-700/50">
               <tr>
-                <th scope="col" className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Chapter Name</th>
-                <th scope="col" className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Total</th>
-                <th scope="col" className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Attempted</th>
-                <th scope="col" className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Correct</th>
-                <th scope="col" className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Incorrect</th>
-                <th scope="col" className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Accuracy</th>
-                <th scope="col" className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Time/Question</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Chapter</th>
+                <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Accuracy</th>
+                <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Correct</th>
+                <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Incorrect</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {chapters && chapters.length > 0 ? (
-                chapters.map((item, idx) => (
-                  <tr
-                    key={`${item.chapterName}-${idx}`}
-                    className="odd:bg-white even:bg-slate-50 dark:odd:bg-slate-800 dark:even:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors duration-200"
-                  >
-                    <td className="px-4 py-4 text-sm font-semibold text-slate-900 dark:text-slate-100 text-center">
-                      {item.chapterName}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-slate-700 dark:text-slate-300 text-center font-medium">
-                      {item.totalQuestions}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-slate-700 dark:text-slate-300 text-center font-medium">
-                      {item.attempted}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-green-600 dark:text-green-400 text-center font-bold">
-                      {item.correct}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-red-600 dark:text-red-400 text-center font-bold">
-                      {item.incorrect}
-                    </td>
-                    <td className="px-4 py-4 text-sm text-center">
-                      <span className={`font-bold text-lg ${getAccuracyColor(item.accuracy)}`}>
-                        {formatAccuracy(item.accuracy)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-slate-700 dark:text-slate-300 text-center font-medium whitespace-nowrap">
-                      {formatTimePerQuestion(item.timePerQuestion)}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                    No chapter performance data available.
-                  </td>
+              {chapters.map((item, idx) => (
+                <tr key={idx} className="odd:bg-white even:bg-slate-50/80 dark:odd:bg-slate-800 dark:even:bg-slate-800/50">
+                  <td className="px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100">{item.chapterName}</td>
+                  <td className="px-4 py-3 text-center text-sm font-bold" style={{ color: getAccuracyColor(item.accuracy) }}>{item.accuracy.toFixed(1)}%</td>
+                  <td className="px-4 py-3 text-center text-sm text-green-600">{item.correct}</td>
+                  <td className="px-4 py-3 text-center text-sm text-red-600">{item.incorrect}</td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
-        {/* Footer note showing attempted/correct totals could be added if needed */}
       </div>
     </div>
   );

@@ -1,596 +1,107 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
-import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { useAuth } from '@/lib/auth-context'
-import { useToast } from '@/lib/toast-context'
-import { Database } from '@/types/database'
-import PerformanceAnalysisDashboard from '@/components/PerformanceAnalysisDashboard'
-import Leaderboard from '@/components/Leaderboard'
+import React, { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import PerformanceAnalysisDashboard, { SessionResult } from '@/components/PerformanceAnalysisDashboard'
 import AnalysisSkeletonLoader from '@/components/AnalysisSkeletonLoader'
-import RevisionPerformanceInsights from '@/components/RevisionPerformanceInsights'
-import SectionalPerformance from '@/components/SectionalPerformance'
-import ActionableInsights from '@/components/ActionableInsights'
-import { Tab } from '@headlessui/react'
+import { Database } from '@/types/database'
 
-type TestResult = Database['public']['Tables']['test_results']['Row']
-type AnswerLog = Database['public']['Tables']['answer_log']['Row']
-type Question = Database['public']['Tables']['questions']['Row']
-
-interface SectionalStats {
-  total: number
-  correct: number
-  incorrect: number
-  skipped: number
-  accuracy: number
-  avgTime: number
+// The API now returns a `results` object directly on testResult,
+// so we can expect the fetched data to conform to our SessionResult structure.
+type FetchedSessionData = Omit<SessionResult, 'topperResult' | 'leaderboard'> & {
+    testResult: {
+        results: {
+            marks_obtained: number;
+            total_marks: number;
+            percentile: number;
+            rank: number;
+            total_test_takers: number;
+        }
+    } & Database['public']['Tables']['test_results']['Row']
 }
 
-interface AnalysisData {
-  testResult: TestResult
-  answerLog: AnswerLog[]
-  questions: Question[]
-  peerAverages: Record<number, number>
-  sectionalPerformance?: Record<string, SectionalStats>
-  isMockTest?: boolean
-  mockTestId?: number
-}
 
 export default function AnalysisReportPage() {
-  const { resultId } = useParams()
-  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  
-  // Track session origin for conditional rendering
-  const source = searchParams.get('source')
-  
-  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null)
+  const { resultId } = useParams()
+
+  const [sessionResult, setSessionResult] = useState<SessionResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [retryCount, setRetryCount] = useState(0)
-  const [filter, setFilter] = useState<'all' | 'correct' | 'incorrect' | 'skipped'>('all')
-  const [timeFilter, setTimeFilter] = useState<'all' | 'fast' | 'slow'>('all')
-  const [matrixFilter, setMatrixFilter] = useState<'strengths' | 'needs_speed' | 'careless_errors' | 'weaknesses' | 'all'>('all')
-  const [mockTestMetadata, setMockTestMetadata] = useState<any>(null)
-  const [isResultsAvailable, setIsResultsAvailable] = useState(true)
-  const [resultReleaseAt, setResultReleaseAt] = useState<string | null>(null)
-  
-  // Add ref to prevent duplicate fetching
-  const dataFetchedRef = useRef(false)
 
   useEffect(() => {
-    if (authLoading) return
-    // Anonymous viewing permitted for verification; login not required
-    if (resultId && !dataFetchedRef.current) {
-      dataFetchedRef.current = true
-      fetchAnalysisData()
+    if (resultId) {
+      fetchData()
     }
-  }, [authLoading, resultId])
+  }, [resultId])
 
-  // CRITICAL UX FIX: Proactive history management to prevent flickering
-  // This prevents the browser back button from navigating to instructions page
-  // for submitted mock tests by manipulating the history stack
-  useEffect(() => {
-    // Only apply this fix for mock tests (not practice sessions)
-    if (!analysisData?.isMockTest || !resultId) return
-
-    // Get the current URL of the results page
-    const currentUrl = window.location.href
-    
-    // The safe destination when going "back" from results
-    const mockTestsHubUrl = '/mock-tests'
-
-    // Step 1: Replace the current history entry with the mock tests hub URL
-    // This makes the browser think the previous page was the hub, not instructions
-    window.history.replaceState(null, '', mockTestsHubUrl)
-
-    // Step 2: Push the actual results page URL back on top
-    // This traps the user - history stack now looks like:
-    // TOP -> Results Page URL
-    // MIDDLE -> Mock Test Hub URL (where "back" will go)
-    // BOTTOM -> ... (previous history)
-    window.history.pushState(null, '', currentUrl)
-
-    // Step 3: Handle popstate event (when user clicks back button)
-    const handlePopState = (event: PopStateEvent) => {
-      // When user clicks back, they'll pop from Results Page to Mock Test Hub
-      // Force navigation to ensure clean transition
-      router.replace(mockTestsHubUrl)
-    }
-
-    window.addEventListener('popstate', handlePopState)
-
-    // Cleanup: remove event listener when component unmounts
-    return () => {
-      window.removeEventListener('popstate', handlePopState)
-    }
-  }, [analysisData?.isMockTest, resultId, router])
-
-  // Reset loading state on component mount
-  useEffect(() => {
-    setLoading(false)
-  }, [])
-
-  // Add timeout fallback to prevent infinite loading
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.log('Analysis page loading timeout - resetting loading state')
-        setLoading(false)
-      }
-    }, 10000) // 10 second timeout
-
-    return () => clearTimeout(timeout)
-  }, [loading])
-
-  const fetchAnalysisData = async (isRetry = false) => {
+  const fetchData = async () => {
+    setLoading(true)
+    setError(null)
     try {
-      setLoading(true)
-      if (isRetry) {
-        setError(null)
-        setRetryCount(prev => prev + 1)
+      const analysisResponse = await fetch(`/api/analysis/${resultId}`)
+      const analysisResult = await analysisResponse.json()
+      if (!analysisResponse.ok) {
+        throw new Error(analysisResult.error || 'Failed to fetch analysis data')
       }
-      console.log('Fetching analysis data for result ID:', resultId, isRetry ? `(retry ${retryCount + 1})` : '')
+      
+      // The API now provides the correct structure, so no major transformation is needed.
+      // We just need to ensure the object conforms to the SessionResult type.
+      const fetchedData: FetchedSessionData = analysisResult.data
+      const finalSessionResult: SessionResult = {
+          ...fetchedData,
+          topperResult: undefined, // This would be fetched if needed
+          leaderboard: undefined, // This is fetched by the Leaderboard component itself
+      }
 
-      const response = await fetch(`/api/analysis/${resultId}`)
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch analysis data')
-      }
-
-      console.log('Analysis data fetched successfully:', result.data)
-      
-      // Check if this is a mock test
-      const isMockTest = result.data.testResult.session_type === 'mock_test'
-      const mockTestId = result.data.testResult.mock_test_id
-      
-      if (isMockTest && mockTestId) {
-        // Fetch mock test metadata to check result policy
-        await fetchMockTestMetadata(mockTestId)
-      }
-      
-      setAnalysisData({
-        ...result.data,
-        isMockTest,
-        mockTestId
-      })
-    } catch (error) {
-      console.error('Error fetching analysis data:', error)
-      setError(error instanceof Error ? error.message : 'Failed to fetch analysis data')
-      
-      // Auto-retry for certain errors (like data not ready yet)
-      if (retryCount < 3 && (error instanceof Error && error.message.includes('not found'))) {
-        console.log('Auto-retrying in 2 seconds...')
-        setTimeout(() => {
-          fetchAnalysisData(true)
-        }, 2000)
-        return
-      }
+      setSessionResult(finalSessionResult)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred.')
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchMockTestMetadata = async (mockTestId: number) => {
-    try {
-      console.log('Fetching mock test metadata for test ID:', mockTestId)
-      
-      const response = await fetch(`/api/mock-tests/${mockTestId}/metadata`)
-      const result = await response.json()
-
-      if (response.ok) {
-        console.log('Mock test metadata fetched successfully:', result.data)
-        setMockTestMetadata(result.data.test)
-        setIsResultsAvailable(result.data.isResultsAvailable)
-        setResultReleaseAt(result.data.resultReleaseAt)
-      }
-    } catch (error) {
-      console.error('Error fetching mock test metadata:', error)
-      // Don't fail the entire page if metadata fetch fails
-    }
+  const handleNavigateToSolutions = () => {
+    router.push(`/analysis/${resultId}/solutions`)
   }
 
-  const handleBookmark = async (questionId: string) => {
-    if (!user) return
-  
-    try {
-      const response = await fetch('/api/practice/bookmark', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          questionId: questionId
-        })
-      })
-
-      if (response.ok) {
-        console.log('Question bookmarked successfully')
-        // You could add a toast notification here
-      }
-    } catch (error) {
-      console.error('Error bookmarking question:', error)
-    }
-  }
-
-  const handleReportError = async (questionId: string) => {
-    if (!user) return
-
-    try {
-      const response = await fetch('/api/error-reports', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question_id: questionId,
-          reported_by_user_id: user.id,
-          report_description: 'Error reported from analysis page'
-        })
-      })
-
-      if (response.ok) {
-        console.log('Error reported successfully')
-        // You could add a toast notification here
-      }
-    } catch (error) {
-      console.error('Error reporting question:', error)
-    }
-  }
-
-  const { showToast } = useToast()
-
-  const handleGenerateRevisionPack = async () => {
-    try {
-      showToast({ title: 'Generating...', message: 'Creating your revision pack...', type: 'info' })
-      
-      const response = await fetch(`/api/analysis/${resultId}/generate-revision-pack`)
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to generate revision pack')
-      }
-
-      if (result.questionIds.length === 0) {
-        showToast({ title: 'All Correct!', message: 'No incorrect answers found. Great job!', type: 'success' })
-        return
-      }
-
-      // Create practice session URL with incorrect questions
-      const questionIdsParam = result.questionIds.join(',')
-      const url = `/practice?questionIds=${questionIdsParam}&testMode=practice&source=revision-pack`
-      
-      showToast({ title: 'Success', message: `Revision pack created with ${result.count} questions!`, type: 'success' })
-      
-      // Navigate to practice with these questions
-      router.push(url)
-    } catch (error) {
-      console.error('Error generating revision pack:', error)
-      showToast({ title: 'Error', message: 'Failed to generate revision pack. Please try again.', type: 'error' })
-    }
-  }
-
-  const getFilteredQuestions = () => {
-    if (!analysisData) return []
-
-    // If no answer log data, return empty array
-    if (!analysisData?.answerLog || analysisData?.answerLog.length === 0) {
-      return []
-    }
-
-    const combinedData = analysisData?.answerLog.map(answer => {
-      const question = analysisData?.questions.find(q => q.id === answer.question_id)
-      return {
-        ...answer,
-        question
-      }
-    }).filter(item => item.question) as any // Only include items with valid questions
-
-    let filteredData = combinedData
-
-    // Apply status filter
-    switch (filter) {
-      case 'correct':
-        filteredData = filteredData.filter((item: any) => item.status === 'correct')
-        break
-      case 'incorrect':
-        filteredData = filteredData.filter((item: any) => item.status === 'incorrect')
-        break
-      case 'skipped':
-        filteredData = filteredData.filter((item: any) => item.status === 'skipped')
-        break
-      default:
-        // 'all' - no status filtering
-        break
-    }
-
-    // Apply time filter
-    if (timeFilter !== 'all') {
-      filteredData = filteredData.filter((item: any) => {
-        const peerAverage = analysisData?.peerAverages[item.question_id]
-        if (!peerAverage) return true // Include if no peer data
-
-        const timeRatio = item.time_taken / peerAverage
-        if (timeFilter === 'fast') {
-          return timeRatio <= 0.8 // 20% faster than peer average
-        } else if (timeFilter === 'slow') {
-          return timeRatio >= 1.2 // 20% slower than peer average
-        }
-        return true
-      })
-    }
-
-    // Apply matrix filter
-    if (matrixFilter !== 'all') {
-      filteredData = filteredData.filter((item: any) => {
-        const peerAverage = analysisData?.peerAverages[item.question_id]
-        if (!peerAverage) return true // Include if no peer data
-
-        const timeRatio = item.time_taken / peerAverage
-        const isFast = timeRatio <= 0.8
-        const isSlow = timeRatio >= 1.2
-        const isCorrect = item.status === 'correct'
-        const isIncorrect = item.status === 'incorrect'
-
-        switch (matrixFilter) {
-          case 'strengths':
-            return isCorrect && isFast
-          case 'needs_speed':
-            return isCorrect && isSlow
-          case 'careless_errors':
-            return isIncorrect && isFast
-          case 'weaknesses':
-            return isIncorrect && isSlow
-          default:
-            return true
-        }
-      })
-    }
-
-    return filteredData
-  }
-
-  if (authLoading || loading) {
-    return <AnalysisSkeletonLoader retryCount={retryCount} showRetryMessage={retryCount > 0} isMockTest={analysisData?.isMockTest} />
+  if (loading) {
+    return <AnalysisSkeletonLoader />
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 text-red-800 dark:text-red-200 p-4 rounded-lg mb-4">
-            <h2 className="font-bold text-lg mb-2">Analysis Report Error</h2>
-            <p>{error}</p>
-          </div>
-          <div className="space-x-3">
-            <button
-              onClick={() => fetchAnalysisData(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition-colors"
-            >
-              Retry Loading
-            </button>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-            >
-              Return to Dashboard
-            </button>
-          </div>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-center p-4">
+        <div>
+          <h2 className="text-xl font-bold text-red-600 mb-2">Failed to load analysis</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">{error}</p>
+          <button
+            onClick={fetchData}
+            className="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700"
+          >
+            Retry
+          </button>
         </div>
       </div>
     )
   }
 
-  if (!analysisData && !loading) {
-    return <AnalysisSkeletonLoader retryCount={retryCount} showRetryMessage={true} isMockTest={false} />
-  }
-
-  const filteredQuestions = getFilteredQuestions()
-
-  // Show result declaration message if results are not yet available
-  if (analysisData?.isMockTest && !isResultsAvailable) {
+  if (!sessionResult) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
-            <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
-              <div className="text-6xl mb-4">⏰</div>
-              <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-                Results Will Be Declared Soon
-              </h1>
-              <p className="text-slate-600 dark:text-slate-400 mb-6">
-                Your test has been submitted successfully. Results and leaderboard will be available at:
-              </p>
-              {resultReleaseAt && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6">
-                  <div className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                    {new Date(resultReleaseAt).toLocaleString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </div>
-                </div>
-              )}
-              <button
-                onClick={() => router.push('/mock-tests')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                Return to Mock Tests
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </div>
+       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-center p-4">
+          <p className="text-slate-600 dark:text-slate-400">No analysis data found for this result.</p>
+       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="max-w-6xl mx-auto px-4 py-8 pb-16">
-        {/* Back Button - Controlled navigation to prevent back button issues */}
-        {analysisData?.isMockTest && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mb-6"
-          >
-            <button
-              onClick={() => router.push('/mock-tests')}
-              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="font-medium">Back to All Tests</span>
-            </button>
-          </motion.div>
-        )}
-
-        {/* Post-Revision Feedback Loop: Revision Performance Insights */}
-        {source === 'revision' && analysisData && (
-          <RevisionPerformanceInsights analysisData={analysisData} />
-        )}
-
-        {/* Tabbed Interface for Mock Tests */}
-        {analysisData?.isMockTest ? (
-          <Tab.Group>
-            <Tab.List className="flex space-x-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 mb-8">
-              {[
-                { key: 'analysis', label: 'My Analysis', icon: '📊' },
-                { key: 'sectional', label: 'Chapter-wise', icon: '📚' },
-                { key: 'leaderboard', label: 'Leaderboard', icon: '🏆' }
-              ].map((tab) => (
-                <Tab
-                  key={tab.key}
-                  className={({ selected }) =>
-                    `w-full rounded-lg py-2.5 text-sm font-medium leading-5 transition-all duration-200 ${
-                      selected
-                        ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-lg'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50'
-                    }`
-                  }
-                >
-                  <div className="flex items-center justify-center space-x-2">
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </div>
-                </Tab>
-              ))}
-            </Tab.List>
-
-            <Tab.Panels>
-              <Tab.Panel>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {analysisData && (
-                    <>
-                      <PerformanceAnalysisDashboard
-                        sessionResult={{
-                          testResult: analysisData.testResult,
-                          answerLog: analysisData.answerLog,
-                          questions: analysisData.questions
-                        }}
-                        onNavigateToSolutions={() => {
-                          const source = searchParams.get('source')
-                          let url = `/analysis/${resultId}/solutions`
-                          if (source === 'revision') {
-                            url += `?source=revision`
-                          }
-                          router.push(url)
-                        }}
-                      />
-                      
-                      {/* Actionable Insights */}
-                      {analysisData.sectionalPerformance && (
-                        <div className="mt-8">
-                          <ActionableInsights
-                            answerLog={analysisData.answerLog}
-                            sectionalPerformance={analysisData.sectionalPerformance}
-                            peerAverages={analysisData.peerAverages}
-                            onGenerateRevisionPack={handleGenerateRevisionPack}
-                          />
-                        </div>
-                      )}
-                    </>
-                  )}
-                </motion.div>
-              </Tab.Panel>
-
-              <Tab.Panel>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {analysisData?.sectionalPerformance && (
-                    <SectionalPerformance sectionalPerformance={analysisData.sectionalPerformance} />
-                  )}
-                  {!analysisData?.sectionalPerformance && (
-                    <div className="text-center py-12">
-                      <p className="text-slate-600 dark:text-slate-400">
-                        No sectional performance data available for this test.
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
-              </Tab.Panel>
-
-              <Tab.Panel>
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Leaderboard 
-                    testId={analysisData?.mockTestId!} 
-                    currentUserId={user?.id || ''} 
-                  />
-                </motion.div>
-              </Tab.Panel>
-            </Tab.Panels>
-          </Tab.Group>
-        ) : (
-          // Regular practice session analysis (no tabs)
-          <>
-            {analysisData && (
-              <PerformanceAnalysisDashboard
-                sessionResult={{
-                  testResult: analysisData.testResult,
-                  answerLog: analysisData.answerLog,
-                  questions: analysisData.questions
-                }}
-                onNavigateToSolutions={() => {
-                  const source = searchParams.get('source')
-                  let url = `/analysis/${resultId}/solutions`
-                  if (source === 'revision') {
-                    url += `?source=revision`
-                  } else if (source === 'srs-daily-review') {
-                    url += `?source=srs-daily-review`
-                  }
-                  console.log('📍 [Analysis] Navigating to solutions with source:', source, '→', url)
-                  router.push(url)
-                }}
-              />
-            )}
-          </>
-        )}
-
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PerformanceAnalysisDashboard
+          sessionResult={sessionResult}
+          onNavigateToSolutions={handleNavigateToSolutions}
+        />
       </div>
     </div>
   )

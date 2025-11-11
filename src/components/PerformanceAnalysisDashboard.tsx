@@ -2,19 +2,45 @@
 
 import React, { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import KPICards, { KPIMetrics } from './KPICards'
-import ChapterWisePerformanceTable, { ChapterPerformance } from './ChapterWisePerformanceTable'
-import PrimaryActionButton from './PrimaryActionButton'
+import * as Tabs from '@radix-ui/react-tabs'
 import { Database } from '@/types/database'
+import PrimaryActionButton from './PrimaryActionButton'
+import GlobalPerformanceHeader from './GlobalPerformanceHeader'
+import ChapterWisePerformanceTable, { ChapterPerformance } from './ChapterWisePerformanceTable'
+import DifficultyBreakdown from './DifficultyBreakdown'
+import TopperComparison from './TopperComparison'
+import Leaderboard from './Leaderboard'
+import ActionableInsights from './ActionableInsights'
+import { Eye } from 'lucide-react'
 
-type TestResult = Database['public']['Tables']['test_results']['Row']
-type AnswerLog = Database['public']['Tables']['answer_log']['Row']
-type Question = Database['public']['Tables']['questions']['Row']
+// --- Type Definitions based on the new Blueprint ---
 
+type TestResultRow = Database['public']['Tables']['test_results']['Row'] & {
+  rank?: number; // Added for consistency with TestCard logic
+  total_test_takers?: number; // Added for consistency with TestCard logic
+}
+type AnswerLogRow = Database['public']['Tables']['answer_log']['Row']
+type QuestionRow = Database['public']['Tables']['questions']['Row']
+
+// This is the new "source of truth" object, consistent with TestCard.tsx
+export interface PerformanceMetrics {
+  marks_obtained: number
+  total_marks: number
+  percentile: number
+  rank: number
+  total_test_takers: number
+}
+
+// The comprehensive data structure for the new dashboard
 export interface SessionResult {
-  testResult: TestResult
-  answerLog: AnswerLog[]
-  questions: Question[]
+  testResult: TestResultRow & { results: PerformanceMetrics } // Enforce the results object
+  answerLog: AnswerLogRow[]
+  questions: QuestionRow[]
+  topperResult?: { // Topper data is optional
+    testResult: TestResultRow & { results: PerformanceMetrics }
+    answerLog: AnswerLogRow[]
+  }
+  leaderboard?: any[] // Placeholder for leaderboard data (will be fetched by Leaderboard component)
 }
 
 export interface PerformanceAnalysisDashboardProps {
@@ -23,187 +49,13 @@ export interface PerformanceAnalysisDashboardProps {
   className?: string
 }
 
-/**
- * Utility: format seconds into MM:SS (or HH:MM:SS if >= 1h), as expected by KPICards timeTaken
- */
-function formatTimeMMSS(totalSeconds: number | null | undefined): string {
-  if (!totalSeconds || totalSeconds <= 0) return '00:00'
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = Math.floor(totalSeconds % 60)
+// --- Main Dashboard Component ---
 
-  if (hours > 0) {
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds
-      .toString()
-      .padStart(2, '0')}`
-  }
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-}
-
-/**
- * Calculate KPI metrics:
- * - score: prefer testResult.score; fallback to total_correct
- * - attempted: total_correct + total_incorrect (exclude skipped). Fallback to derived from answerLog
- * - accuracy: correct / attempted * 100
- * - percentage: prefer testResult.score_percentage; fallback to correct / total_questions * 100
- * - timeTaken: MM:SS from total_time_taken; fallback to sum(answerLog.time_taken)
- */
-function calculateKPIMetrics(session: SessionResult): KPIMetrics {
-  const { testResult, answerLog } = session
-
-  const derivedAttemptedFromAnswers =
-    (answerLog?.filter(a => a.status !== 'skipped').length) || 0
-
-  const attempted =
-    (testResult.total_correct ?? 0) +
-    (testResult.total_incorrect ?? 0)
-
-  const attemptedFinal = attempted || derivedAttemptedFromAnswers
-
-  const correctFinal = (testResult.total_correct ?? 0) ||
-    (answerLog?.filter(a => a.status === 'correct').length ?? 0)
-
-  const incorrectFinal = (testResult.total_incorrect ?? 0) ||
-    (answerLog?.filter(a => a.status === 'incorrect').length ?? 0)
-
-  const totalQuestionsFinal = (testResult.total_questions ?? 0) || (answerLog?.length ?? 0)
-
-  const accuracy =
-    attemptedFinal > 0 ? (correctFinal / attemptedFinal) * 100 : 0
-
-  const percentage =
-    (testResult.score_percentage ?? (
-      totalQuestionsFinal > 0 ? (correctFinal / totalQuestionsFinal) * 100 : 0
-    ))
-
-  const totalTime =
-    (testResult.total_time_taken ?? 0) ||
-    (answerLog?.reduce((sum, a) => sum + (a.time_taken || 0), 0) ?? 0)
-
-  const score =
-    (testResult.score ?? null) !== null
-      ? (testResult.score as number)
-      : correctFinal
-
-  return {
-    score,
-    totalQuestions: totalQuestionsFinal,
-    attempted: attemptedFinal,
-    correct: correctFinal,
-    incorrect: incorrectFinal,
-    accuracy,
-    percentage,
-    timeTaken: formatTimeMMSS(totalTime)
-  }
-}
-
-/**
- * Calculate chapter-wise performance:
- * Group by question.chapter_name. For each chapter:
- * - attempted: count of non-skipped answers
- * - correct: count of correct answers
- * - accuracy: correct / attempted * 100
- * - timePerQuestion: average time (sum time_taken of attempted) / attempted
- */
-function calculateChapterPerformance(session: SessionResult): ChapterPerformance[] {
-  const { answerLog, questions } = session
-  if (!answerLog || !questions) return []
-
-  // Build quick lookup for question by id
-  const questionById = new Map<number, Question>()
-  for (const q of questions) {
-    questionById.set(q.id, q)
-  }
-
-  // Accumulate per-chapter stats
-  const chapterMap = new Map<string, { 
-    totalQuestions: number; 
-    attempted: number; 
-    correct: number; 
-    incorrect: number; 
-    timeSum: number 
-  }>()
-
-  // First pass: count total questions per chapter
-  for (const q of questions) {
-    const chapterName = q.chapter_name || 'Unknown'
-    if (!chapterMap.has(chapterName)) {
-      chapterMap.set(chapterName, { 
-        totalQuestions: 0, 
-        attempted: 0, 
-        correct: 0, 
-        incorrect: 0, 
-        timeSum: 0 
-      })
-    }
-    chapterMap.get(chapterName)!.totalQuestions += 1
-  }
-
-  // Second pass: process answer log
-  for (const a of answerLog) {
-    const q = questionById.get(a.question_id)
-    if (!q) continue
-    const chapterName = q.chapter_name || 'Unknown'
-
-    const wasAttempted = a.status !== 'skipped'
-    const wasCorrect = a.status === 'correct'
-    const wasIncorrect = a.status === 'incorrect'
-    const time = a.time_taken || 0
-
-    const agg = chapterMap.get(chapterName)!
-    if (wasAttempted) {
-      agg.attempted += 1
-      agg.timeSum += time
-    }
-    if (wasCorrect) {
-      agg.correct += 1
-    }
-    if (wasIncorrect) {
-      agg.incorrect += 1
-    }
-  }
-
-  const result: ChapterPerformance[] = []
-  for (const [chapterName, agg] of chapterMap.entries()) {
-    const accuracy = agg.attempted > 0 ? (agg.correct / agg.attempted) * 100 : 0
-    const timePerQuestion = agg.attempted > 0 ? agg.timeSum / agg.attempted : 0
-    result.push({
-      chapterName,
-      totalQuestions: agg.totalQuestions,
-      attempted: agg.attempted,
-      correct: agg.correct,
-      incorrect: agg.incorrect,
-      accuracy,
-      timePerQuestion
-    })
-  }
-
-  // Sort descending by accuracy, then by timePerQuestion ascending as a sensible default
-  result.sort((a, b) => {
-    const accDiff = Math.round(b.accuracy) - Math.round(a.accuracy)
-    if (accDiff !== 0) return accDiff
-    return a.timePerQuestion - b.timePerQuestion
-  })
-
-  return result
-}
-
-/**
- * Calculate strategic matrix counts:
- * Use user's average time across attempted (non-skipped) questions as baseline.
- * Fast: time_taken <= average
- * Slow: time_taken > average
- * Quadrants:
- * - strengths: correct & fast
- * - needsSpeed: correct & slow
- * - carelessErrors: incorrect & fast
- * - weaknesses: incorrect & slow
- */
-
-export default function PerformanceAnalysisDashboard({ sessionResult, onNavigateToSolutions, className = '' }: PerformanceAnalysisDashboardProps) {
-  const kpi = useMemo(() => calculateKPIMetrics(sessionResult), [sessionResult])
-  const chapters = useMemo(() => calculateChapterPerformance(sessionResult), [sessionResult])
-
+export default function PerformanceAnalysisDashboard({
+  sessionResult,
+  onNavigateToSolutions,
+  className = '',
+}: PerformanceAnalysisDashboardProps) {
   const submittedAt = sessionResult?.testResult?.submitted_at
   const timestamp = useMemo(() => {
     const date = submittedAt ? new Date(submittedAt) : new Date()
@@ -213,17 +65,19 @@ export default function PerformanceAnalysisDashboard({ sessionResult, onNavigate
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     })
   }, [submittedAt])
 
+  const tabStyle = "px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 rounded-t-lg transition-colors duration-200 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 data-[state=active]:shadow-sm"
+  const tabContentStyle = "p-4 md:p-6 bg-white dark:bg-slate-800 rounded-b-lg rounded-tr-lg shadow-md"
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
-      className={`min-h-[60vh] ${className}`}
+      className={`min-h-[60vh] relative pb-24 ${className}`} // Added padding-bottom for the sticky footer
     >
       {/* Header */}
       <div className="mb-6">
@@ -235,23 +89,55 @@ export default function PerformanceAnalysisDashboard({ sessionResult, onNavigate
         </p>
       </div>
 
-      {/* KPI cards */}
+      {/* Global Performance Header (New Component) */}
       <div className="mb-8">
-        <KPICards metrics={kpi} />
+        <GlobalPerformanceHeader sessionResult={sessionResult} />
       </div>
 
-      {/* Chapter-wise table */}
-      <ChapterWisePerformanceTable chapters={chapters} className="mb-8" />
+      {/* Tabbed Interface for Detailed Analysis */}
+      <Tabs.Root defaultValue="performance" className="w-full">
+        <Tabs.List className="flex border-b border-slate-200 dark:border-slate-700">
+          <Tabs.Trigger value="performance" className={tabStyle}>Performance Breakdown</Tabs.Trigger>
+          <Tabs.Trigger value="comparison" className={tabStyle}>Topper Comparison</Tabs.Trigger>
+          <Tabs.Trigger value="leaderboard" className={tabStyle}>Full Leaderboard</Tabs.Trigger>
+        </Tabs.List>
 
+        {/* Performance Breakdown Tab */}
+        <Tabs.Content value="performance" className={tabContentStyle}>
+            <div className="space-y-8">
+                <ChapterWisePerformanceTable sessionResult={sessionResult} />
+                <DifficultyBreakdown sessionResult={sessionResult} />
+            </div>
+        </Tabs.Content>
 
-      {/* Primary Action Button */}
-      <PrimaryActionButton
-        onClick={(e) => {
-          // Allow external navigation hook
-          onNavigateToSolutions?.()
-        }}
-        label="View Solutions"
-      />
+        {/* Topper Comparison Tab */}
+        <Tabs.Content value="comparison" className={tabContentStyle}>
+          <TopperComparison sessionResult={sessionResult} />
+        </Tabs.Content>
+
+        {/* Leaderboard Tab */}
+        <Tabs.Content value="leaderboard" className={tabContentStyle}>
+          <Leaderboard
+            testId={sessionResult.testResult.mock_test_id}
+            currentUserId={sessionResult.testResult.user_id}
+          />
+        </Tabs.Content>
+      </Tabs.Root>
+
+      {/* Actionable Insights (New Component) */}
+      <div className="mt-8">
+        <ActionableInsights sessionResult={sessionResult} />
+      </div>
+
+      {/* Sticky Footer for "View Solutions" Button */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-4 border-t border-slate-200 dark:border-slate-700 shadow-lg z-50 flex justify-center">
+        <PrimaryActionButton
+          onClick={() => onNavigateToSolutions?.()}
+          label="View Detailed Solutions"
+          icon={<Eye className="w-4 h-4" />}
+          className="w-full max-w-md"
+        />
+      </div>
     </motion.div>
   )
 }

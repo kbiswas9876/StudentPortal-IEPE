@@ -1,165 +1,130 @@
 'use client'
 
-import React from 'react'
-import { motion } from 'framer-motion'
-import { StarRatingDisplay } from './ui/StarRating'
+import React, { useMemo } from 'react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { SessionResult } from './PerformanceAnalysisDashboard'
+import { Database } from '@/types/database'
 
-interface BookmarkedQuestion {
-  id: string
-  user_id: string
-  question_id: string
-  personal_note: string | null
-  custom_tags: string[] | null
-  user_difficulty_rating: number | null
-  created_at: string
-  updated_at: string
-  questions: any
-  performance: {
-    total_attempts: number
-    correct_attempts: number
-    success_rate: number
-    last_attempt_status: string
-    last_attempt_time: number | null
-    last_attempt_date: string | null
-    time_trend: 'faster' | 'slower' | 'none' | null
-  }
-}
+type Question = Database['public']['Tables']['questions']['Row'] & { difficulty?: 'Easy' | 'Medium' | 'Hard' }
 
 interface DifficultyBreakdownProps {
-  questions: BookmarkedQuestion[]
+  sessionResult: SessionResult
   className?: string
-  onRatingClick?: (rating: number) => void
-  selectedRating?: number | null
 }
 
-// Difficulty level mappings - Standardized 5-star rating system
-const difficultyLabels = {
-  1: 'Very Easy',
-  2: 'Easy', 
-  3: 'Moderate',
-  4: 'Hard',
-  5: 'Very Hard'
+interface DifficultyStats {
+  name: 'Easy' | 'Medium' | 'Hard'
+  correct: number
+  incorrect: number
+  skipped: number
+  total: number
 }
 
-export default function DifficultyBreakdown({ 
-  questions, 
-  className = '', 
-  onRatingClick,
-  selectedRating 
-}: DifficultyBreakdownProps) {
-  // Calculate difficulty breakdown
-  const difficultyCounts = React.useMemo(() => {
-    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
-    
-    questions.forEach(question => {
-      const rating = question.user_difficulty_rating
-      if (rating && rating >= 1 && rating <= 5) {
-        counts[rating as keyof typeof counts]++
-      }
-    })
-    
-    return counts
-  }, [questions])
+// --- Calculation Logic ---
+function calculateDifficultyBreakdown(session: SessionResult): DifficultyStats[] {
+  const { answerLog, questions } = session
+  if (!answerLog || !questions) return []
 
-  const totalQuestions = questions.length
-  const ratedQuestions = Object.values(difficultyCounts).reduce((sum, count) => sum + count, 0)
-  const unratedQuestions = totalQuestions - ratedQuestions
+  const questionById = new Map<number, Question>()
+  questions.forEach(q => questionById.set(q.id, q))
 
-  // Don't render if no questions
-  if (totalQuestions === 0) {
-    return null
+  const stats: Record<'Easy' | 'Medium' | 'Hard', Omit<DifficultyStats, 'name'>> = {
+    Easy: { correct: 0, incorrect: 0, skipped: 0, total: 0 },
+    Medium: { correct: 0, incorrect: 0, skipped: 0, total: 0 },
+    Hard: { correct: 0, incorrect: 0, skipped: 0, total: 0 },
+  }
+
+  answerLog.forEach(answer => {
+    const question = questionById.get(answer.question_id)
+    const difficulty = question?.difficulty || 'Medium' // Default to Medium if not specified
+
+    stats[difficulty].total++
+    if (answer.status === 'correct') {
+      stats[difficulty].correct++
+    } else if (answer.status === 'incorrect') {
+      stats[difficulty].incorrect++
+    } else {
+      stats[difficulty].skipped++
+    }
+  })
+
+  return [
+    { name: 'Easy', ...stats.Easy },
+    { name: 'Medium', ...stats.Medium },
+    { name: 'Hard', ...stats.Hard },
+  ]
+}
+
+// --- Main Component ---
+const DifficultyBreakdown: React.FC<DifficultyBreakdownProps> = ({ sessionResult, className }) => {
+  const data = useMemo(() => calculateDifficultyBreakdown(sessionResult), [sessionResult])
+
+  if (!data.some(d => d.total > 0)) {
+    return null // Don't render if there's no data
   }
 
   return (
-    <div className={`flex flex-wrap items-center gap-3 ${className}`}>
-      {/* Difficulty Breakdown Cards */}
-      <div className="flex flex-wrap items-center gap-2">
-        {[1, 2, 3, 4, 5].map((rating) => {
-          const count = difficultyCounts[rating as keyof typeof difficultyCounts]
-          const percentage = ratedQuestions > 0 ? Math.round((count / ratedQuestions) * 100) : 0
-          
-          return (
-            <motion.div
-              key={rating}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: rating * 0.05 }}
-              onClick={() => onRatingClick?.(rating)}
-              className={`
-                flex items-center gap-1.5 px-3 py-2 rounded-lg border transition-all duration-200
-                ${count > 0 
-                  ? selectedRating === rating
-                    ? 'bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 border-blue-300 dark:border-blue-600 shadow-md'
-                    : 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border-yellow-200 dark:border-yellow-700 shadow-sm hover:shadow-md'
-                  : 'bg-slate-50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600'
-                }
-                ${onRatingClick ? 'cursor-pointer hover:scale-105' : ''}
-              `}
-              title={`${difficultyLabels[rating as keyof typeof difficultyLabels]} - ${count} question${count !== 1 ? 's' : ''}${percentage > 0 ? ` (${percentage}% of rated)` : ''}${onRatingClick ? ' - Click to filter' : ''}`}
-            >
-              {/* Star Rating Display */}
-              <div className="flex items-center">
-                <StarRatingDisplay 
-                  value={rating} 
-                  maxRating={rating}
-                  size="sm"
-                  className={count > 0 ? '' : 'opacity-50'}
-                />
-              </div>
-              
-              {/* Count */}
-              <span className={`
-                text-sm font-semibold min-w-[2rem] text-center
-                ${count > 0 
-                  ? 'text-slate-700 dark:text-slate-200' 
-                  : 'text-slate-400 dark:text-slate-500'
-                }
-              `}>
-                {count}
-              </span>
-              
-              {/* Question/Questions label */}
-              <span className={`
-                text-xs font-medium
-                ${count > 0 
-                  ? 'text-slate-600 dark:text-slate-300' 
-                  : 'text-slate-400 dark:text-slate-500'
-                }
-              `}>
-                {count === 1 ? 'Q' : 'Qs'}
-              </span>
-            </motion.div>
-          )
-        })}
+    <div className={className || ''}>
+      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Difficulty-wise Performance</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        {/* Chart */}
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />
+              <XAxis type="number" />
+              <YAxis type="category" dataKey="name" />
+              <Tooltip
+                cursor={{ fill: 'rgba(240, 240, 240, 0.1)' }}
+                contentStyle={{
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(5px)',
+                  border: '1px solid rgba(200, 200, 200, 0.5)',
+                  borderRadius: '0.5rem',
+                  color: '#333'
+                }}
+              />
+              <Legend />
+              <Bar dataKey="correct" stackId="a" fill="#22c55e" name="Correct" />
+              <Bar dataKey="incorrect" stackId="a" fill="#ef4444" name="Incorrect" />
+              <Bar dataKey="skipped" stackId="a" fill="#64748b" name="Skipped" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        {/* Table */}
+        <div>
+          <div className="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-700/80">
+            <table className="min-w-full divide-y divide-slate-200/80 dark:divide-slate-700/80">
+              <thead className="bg-slate-50 dark:bg-slate-700/50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">Difficulty</th>
+                  <th className="px-4 py-2 text-center text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">Correct</th>
+                  <th className="px-4 py-2 text-center text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">Incorrect</th>
+                  <th className="px-4 py-2 text-center text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">Skipped</th>
+                  <th className="px-4 py-2 text-center text-xs font-semibold uppercase text-slate-600 dark:text-slate-300">Accuracy</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                {data.map(item => {
+                  const attempted = item.correct + item.incorrect
+                  const accuracy = attempted > 0 ? (item.correct / attempted) * 100 : 0
+                  return (
+                    <tr key={item.name} className="odd:bg-white even:bg-slate-50/80 dark:odd:bg-slate-800 dark:even:bg-slate-800/50">
+                      <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{item.name}</td>
+                      <td className="px-4 py-3 text-center text-green-600 font-semibold">{item.correct}</td>
+                      <td className="px-4 py-3 text-center text-red-600 font-semibold">{item.incorrect}</td>
+                      <td className="px-4 py-3 text-center text-slate-500 font-medium">{item.skipped}</td>
+                      <td className="px-4 py-3 text-center font-bold text-slate-700 dark:text-slate-200">{accuracy.toFixed(1)}%</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-
-      {/* Summary Stats */}
-      {unratedQuestions > 0 && (
-        <motion.div
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600"
-        >
-          <div className="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500"></div>
-          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-            {unratedQuestions} unrated
-          </span>
-        </motion.div>
-      )}
-
-      {/* Total Count */}
-      <motion.div
-        initial={{ opacity: 0, x: 10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, delay: 0.4 }}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700"
-      >
-        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-        <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">
-          {totalQuestions} total
-        </span>
-      </motion.div>
     </div>
   )
 }
+
+export default DifficultyBreakdown
