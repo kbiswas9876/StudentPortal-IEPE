@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import PerformanceAnalysisDashboard, { SessionResult } from '@/components/PerformanceAnalysisDashboard'
-import AnalysisSkeletonLoader from '@/components/AnalysisSkeletonLoader'
+import PerformanceAnalysisSkeletonLoader from '@/components/PerformanceAnalysisSkeletonLoader'
 import { Database } from '@/types/database'
 
 // The API now returns a `results` object directly on testResult,
@@ -67,7 +67,13 @@ export default function AnalysisReportPage() {
   }
 
   if (loading) {
-    return <AnalysisSkeletonLoader />
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <PerformanceAnalysisSkeletonLoader />
+        </div>
+      </div>
+    )
   }
 
   if (error) {
