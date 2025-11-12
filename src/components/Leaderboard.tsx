@@ -3,14 +3,51 @@
 import React, { useEffect, useState } from 'react'
 import { Award, Loader2 } from 'lucide-react'
 
+// PerformanceChip component for displaying correct, incorrect, and skipped counts
+interface PerformanceChipProps {
+  type: 'correct' | 'incorrect' | 'skipped'
+  count: number
+}
+
+const PerformanceChip: React.FC<PerformanceChipProps> = ({ type, count }) => {
+  const config = {
+    correct: {
+      bg: 'bg-green-100 dark:bg-green-900/30',
+      text: 'text-green-700 dark:text-green-300',
+      icon: '✓'
+    },
+    incorrect: {
+      bg: 'bg-red-100 dark:bg-red-900/30',
+      text: 'text-red-700 dark:text-red-300',
+      icon: '✗'
+    },
+    skipped: {
+      bg: 'bg-slate-100 dark:bg-slate-700',
+      text: 'text-slate-700 dark:text-slate-300',
+      icon: '→'
+    }
+  }
+
+  const { bg, text, icon } = config[type]
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${bg} ${text}`}>
+      <span>{icon}</span>
+      <span>{count}</span>
+    </span>
+  )
+}
+
 // Updated structure for a leaderboard entry based on the new API output
 interface LeaderboardEntry {
   rank: number
   name: string
   user_id: string
-  score: number
-  accuracy: number
-  percentile: number
+  marks_obtained: number
+  total_marks: number
+  correct: number
+  incorrect: number
+  skipped: number
 }
 
 interface LeaderboardProps {
@@ -86,8 +123,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ testId, currentUserId, classN
               <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Rank</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Name</th>
               <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Score</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Accuracy</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Percentile</th>
+              <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Performance Breakdown</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -98,27 +134,30 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ testId, currentUserId, classN
                   key={entry.rank} 
                   className={`transition-colors duration-200 ${
                     isCurrentUser 
-                      ? 'bg-indigo-50 dark:bg-indigo-900/30' 
+                      ? 'bg-indigo-100 dark:bg-indigo-900/40' 
                       : 'odd:bg-white even:bg-slate-50/80 dark:odd:bg-slate-800 dark:even:bg-slate-800/50'
                   }`}
                 >
                   <td className="px-4 py-3 text-center font-bold text-slate-700 dark:text-slate-200">
                     <div className="flex items-center justify-center">
-                      {entry.rank === 1 && <Award className="w-4 h-4 text-yellow-500 mr-1" />}
+                      {entry.rank === 1 && <span className="mr-2">🥇</span>}
+                      {entry.rank === 2 && <span className="mr-2">🥈</span>}
+                      {entry.rank === 3 && <span className="mr-2">🥉</span>}
                       {entry.rank}
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">
+                  <td className={`px-4 py-3 text-slate-800 dark:text-slate-100 ${isCurrentUser ? 'font-bold' : 'font-medium'}`}>
                     {isCurrentUser ? 'YOU' : entry.name}
                   </td>
                   <td className="px-4 py-3 text-center font-semibold text-slate-700 dark:text-slate-200">
-                    {(entry.score || 0).toFixed(2)}
+                    {entry.marks_obtained.toFixed(2)} / {entry.total_marks}
                   </td>
-                  <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-300">
-                    {(entry.accuracy || 0).toFixed(1)}%
-                  </td>
-                  <td className="px-4 py-3 text-center font-bold text-indigo-600 dark:text-indigo-400">
-                    {(entry.percentile || 0).toFixed(2)}
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                      <PerformanceChip type="correct" count={entry.correct} />
+                      <PerformanceChip type="incorrect" count={entry.incorrect} />
+                      <PerformanceChip type="skipped" count={entry.skipped} />
+                    </div>
                   </td>
                 </tr>
               )

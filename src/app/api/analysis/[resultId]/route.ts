@@ -92,9 +92,16 @@ export async function GET(
                     const topperAnswers = new Map(topperAnswerLog.map(a => [a.question_id, a.status]));
                     const allQuestionIds = new Set([...userAnswers.keys(), ...topperAnswers.keys()]);
 
-                    const buckets = {
-                        userRightTopperRight: [], userWrongTopperRight: [],
-                        userRightTopperWrong: [], userWrongTopperWrong: [],
+                    const buckets: {
+                        userRightTopperRight: number[];
+                        userWrongTopperRight: number[];
+                        userRightTopperWrong: number[];
+                        userWrongTopperWrong: number[];
+                    } = {
+                        userRightTopperRight: [],
+                        userWrongTopperRight: [],
+                        userRightTopperWrong: [],
+                        userWrongTopperWrong: [],
                     };
 
                     for (const qid of allQuestionIds) {

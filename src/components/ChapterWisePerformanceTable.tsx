@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import { SessionResult } from './PerformanceAnalysisDashboard'
 import { Database } from '@/types/database'
 
@@ -75,49 +74,60 @@ export default function ChapterWisePerformanceTable({ sessionResult, className }
 
   return (
     <div className={className || ''}>
-      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Chapter-wise Performance</h2>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="lg:col-span-1 h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chapters} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />
-              <XAxis type="number" domain={[0, 100]} unit="%" />
-              <YAxis type="category" dataKey="chapterName" width={80} tick={{ fontSize: 12 }} />
-              <Tooltip
-                cursor={{ fill: 'rgba(240, 240, 240, 0.1)' }}
-                contentStyle={{ background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(5px)', borderRadius: '0.5rem' }}
-                formatter={(value: number) => [`${value.toFixed(1)}%`, 'Accuracy']}
-              />
-              <Bar dataKey="accuracy">
-                {chapters.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getAccuracyColor(entry.accuracy)} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-700/80">
-          <table className="min-w-full divide-y divide-slate-200/80 dark:divide-slate-700/80">
-            <thead className="bg-slate-50 dark:bg-slate-700/50">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Chapter</th>
-                <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Accuracy</th>
-                <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Correct</th>
-                <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">Incorrect</th>
+      <div className="flex items-center space-x-3 mb-5">
+        <div className="h-8 w-1 bg-gradient-to-b from-indigo-600 to-purple-600 rounded-full"></div>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chapter-wise Performance</h2>
+      </div>
+      <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+        <table className="min-w-full divide-y divide-slate-200/80 dark:divide-slate-700/80">
+          <thead className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-700/50 dark:to-slate-800/50">
+            <tr>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Chapter</th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Performance</th>
+              <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Accuracy</th>
+              <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Correct</th>
+              <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Incorrect</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+            {chapters.map((item, idx) => (
+              <tr key={idx} className="group odd:bg-white even:bg-slate-50/80 dark:odd:bg-slate-800 dark:even:bg-slate-800/50 hover:bg-indigo-50/50 dark:hover:bg-slate-700/50 transition-all duration-200">
+                <td className="px-6 py-4 text-sm font-semibold text-slate-800 dark:text-slate-100 group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors">{item.chapterName}</td>
+                <td className="px-6 py-4">
+                  <div className="relative w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="h-3 rounded-full transition-all duration-500 ease-out relative overflow-hidden"
+                      style={{
+                        width: `${item.accuracy}%`,
+                        backgroundColor: getAccuracyColor(item.accuracy)
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold" style={{ 
+                    color: getAccuracyColor(item.accuracy),
+                    backgroundColor: `${getAccuracyColor(item.accuracy)}15`
+                  }}>
+                    {item.accuracy.toFixed(1)}%
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/30">
+                    {item.correct}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-center">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30">
+                    {item.incorrect}
+                  </span>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {chapters.map((item, idx) => (
-                <tr key={idx} className="odd:bg-white even:bg-slate-50/80 dark:odd:bg-slate-800 dark:even:bg-slate-800/50">
-                  <td className="px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100">{item.chapterName}</td>
-                  <td className="px-4 py-3 text-center text-sm font-bold" style={{ color: getAccuracyColor(item.accuracy) }}>{item.accuracy.toFixed(1)}%</td>
-                  <td className="px-4 py-3 text-center text-sm text-green-600">{item.correct}</td>
-                  <td className="px-4 py-3 text-center text-sm text-red-600">{item.incorrect}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

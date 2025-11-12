@@ -36,7 +36,7 @@ const TopperComparison: React.FC<TopperComparisonProps> = ({ sessionResult, clas
 
   const { summary, strategicAnalysis } = topperComparison
 
-  const MetricRow = ({ label, userValue, topperValue }) => (
+  const MetricRow = ({ label, userValue, topperValue }: { label: string; userValue: string | number; topperValue: string | number }) => (
     <tr className="odd:bg-white even:bg-slate-50/80 dark:odd:bg-slate-800 dark:even:bg-slate-800/50">
       <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">{label}</td>
       <td className="px-4 py-3 text-center font-medium text-indigo-600 dark:text-indigo-400">{userValue}</td>
@@ -44,7 +44,7 @@ const TopperComparison: React.FC<TopperComparisonProps> = ({ sessionResult, clas
     </tr>
   )
 
-  const StrategicCard = ({ icon, title, description, count, colorClass }) => (
+  const StrategicCard = ({ icon, title, description, count, colorClass }: { icon: React.ReactNode; title: string; description: string; count: number; colorClass: string }) => (
     <div className={`bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md border-l-4 ${colorClass}`}>
       <div className="flex items-start space-x-3">
         <div className="p-2 rounded-full bg-slate-100 dark:bg-slate-700">{icon}</div>

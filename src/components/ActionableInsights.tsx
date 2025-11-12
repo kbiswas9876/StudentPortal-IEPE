@@ -77,20 +77,35 @@ const ActionableInsights: React.FC<ActionableInsightsProps> = ({ sessionResult, 
 
   return (
     <div className={className || ''}>
-      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200/80 dark:border-amber-800/50 rounded-xl p-6">
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-200/80 dark:border-amber-800/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="flex items-start space-x-4">
-          <div className="p-2 bg-amber-100 dark:bg-amber-800 rounded-full">
-            <Lightbulb className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          <div className="p-3 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl shadow-md">
+            <Lightbulb className="w-6 h-6 text-white" />
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-amber-900 dark:text-amber-200 mb-2">Actionable Insights</h2>
-            <ul className="space-y-2">
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-amber-900 dark:text-amber-200 mb-4 flex items-center space-x-2">
+              <span>Actionable Insights</span>
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200">
+                {insights.length}
+              </span>
+            </h2>
+            <div className="space-y-3">
               {insights.map((insight, index) => (
-                <li key={index} className="text-sm text-amber-800 dark:text-amber-300 list-disc list-inside">
-                  {insight}
-                </li>
+                <div 
+                  key={index} 
+                  className="flex items-start space-x-3 p-3 bg-white/60 dark:bg-slate-800/60 rounded-lg border border-amber-200/50 dark:border-amber-700/50 hover:bg-white dark:hover:bg-slate-800 transition-colors duration-200"
+                >
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xs font-bold">
+                      {index + 1}
+                    </div>
+                  </div>
+                  <p className="text-sm text-amber-900 dark:text-amber-200 leading-relaxed font-medium">
+                    {insight}
+                  </p>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
       </div>

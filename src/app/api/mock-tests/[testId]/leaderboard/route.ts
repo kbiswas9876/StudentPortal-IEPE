@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { env } from '@/lib/env'
+import { calculateActualScore, calculateTotalMarks } from '@/lib/scoring'
 
 if (!env.SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable')
@@ -28,22 +29,23 @@ export async function GET(
       return NextResponse.json({ error: 'Test ID is required' }, { status: 400 });
     }
 
-    // Step 1: Fetch all test results for the given mock test
+    // Step 1: Fetch total marks for the test
+    const totalMarks = await calculateTotalMarks(supabaseAdmin as any, Number(testId));
+
+    // Step 2: Fetch all test results
     const { data: testResults, error: resultsError } = await supabaseAdmin
       .from('test_results')
       .select(`
+        id,
         user_id,
-        score_percentage,
         total_correct,
         total_incorrect,
         total_skipped
       `)
       .eq('mock_test_id', testId)
-      .eq('session_type', 'mock_test')
-      .order('score_percentage', { ascending: false });
+      .eq('session_type', 'mock_test');
 
     if (resultsError) {
-      console.error('Error fetching leaderboard data:', resultsError);
       return NextResponse.json({ error: resultsError.message }, { status: 500 });
     }
 
@@ -51,47 +53,46 @@ export async function GET(
       return NextResponse.json({ data: { leaderboard: [] } });
     }
 
-    // Step 2: Get all unique user IDs from the results
+    // Step 3: Get user profiles
     const userIds = testResults.map(result => result.user_id);
-
-    // Step 3: Fetch the profiles (names) for all users in the leaderboard
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
       .select('id, full_name')
       .in('id', userIds);
 
-    if (profilesError) {
-      console.error('Error fetching user profiles:', profilesError);
-      // Continue without names if this fails, but log the error
-    }
-
-    // Create a map for quick lookup of user names
+    if (profilesError) console.error('Error fetching user profiles:', profilesError);
     const userNames = new Map(profiles?.map(p => [p.id, p.full_name]));
 
-    // Step 4: Process the data to create the final leaderboard
-    const totalParticipants = testResults.length;
-    const leaderboard = testResults.map((result, index) => {
-      const attempted = (result.total_correct || 0) + (result.total_incorrect || 0);
-      const accuracy = attempted > 0 ? ((result.total_correct || 0) / attempted) * 100 : 0;
-      const rank = index + 1;
-      const percentile = totalParticipants > 1 
-        ? ((totalParticipants - rank) / (totalParticipants - 1)) * 100 
-        : 100;
+    // Step 4: Calculate actual marks for each user and create leaderboard entries
+    const leaderboardPromises = testResults.map(async (result) => {
+      // Calculate the actual score for each user
+      const marksObtained = await calculateActualScore(supabaseAdmin as any, result.id, Number(testId));
 
       return {
-        rank: rank,
         name: userNames.get(result.user_id) || 'Anonymous',
         user_id: result.user_id,
-        score: result.score_percentage || 0, // Using score_percentage as the main score
-        accuracy: accuracy,
-        percentile: percentile,
+        marks_obtained: marksObtained,
+        total_marks: totalMarks,
+        correct: result.total_correct || 0,
+        incorrect: result.total_incorrect || 0,
+        skipped: result.total_skipped || 0,
       };
     });
+
+    const leaderboardEntries = await Promise.all(leaderboardPromises);
+
+    // Step 5: Sort by marks_obtained (descending) and assign ranks
+    leaderboardEntries.sort((a, b) => b.marks_obtained - a.marks_obtained);
+    
+    const leaderboard = leaderboardEntries.map((entry, index) => ({
+      rank: index + 1,
+      ...entry
+    }));
 
     return NextResponse.json({
       data: {
         leaderboard: leaderboard,
-        totalParticipants: totalParticipants,
+        totalParticipants: testResults.length,
       }
     });
 

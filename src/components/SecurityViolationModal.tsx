@@ -41,7 +41,7 @@ export default function SecurityViolationModal({ isOpen, violationType, onCancel
               Auto-submitting in: <span className="text-3xl font-bold text-red-600 dark:text-red-400">{countdown}</span>
             </p>
             <p className="mt-2 text-sm text-red-700 dark:text-red-300">
-              Click "Return to Test" immediately to prevent automatic submission.
+              Click &quot;Return to Test&quot; immediately to prevent automatic submission.
             </p>
           </div>
         )}

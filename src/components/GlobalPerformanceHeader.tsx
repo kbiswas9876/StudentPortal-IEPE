@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { Award, TrendingUp, Target, CheckCircle, BarChart2, Hash, HelpCircle, X, Check } from 'lucide-react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts'
 import { SessionResult } from './PerformanceAnalysisDashboard'
 
 interface GlobalPerformanceHeaderProps {
@@ -22,38 +21,81 @@ const GlobalPerformanceHeader: React.FC<GlobalPerformanceHeaderProps> = ({ sessi
   const accuracy = attempted > 0 ? (correct / attempted) * 100 : 0
   const attemptRate = totalQuestions > 0 ? (attempted / totalQuestions) * 100 : 0
 
-  // --- Data for Doughnut Chart ---
-  const doughnutData = [
-    { name: 'Correct', value: correct },
-    { name: 'Incorrect', value: incorrect },
-    { name: 'Skipped', value: skipped },
-  ]
-  const COLORS = ['#22c55e', '#ef4444', '#64748b']
+
 
   // --- Reusable Card Components ---
-  const PrimaryMetricCard = ({ icon, label, value, subValue, colorClass }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg flex items-center space-x-4 border border-slate-200/50 dark:border-slate-700/50">
-      <div className={`p-4 rounded-full bg-slate-100 dark:bg-slate-700 ${colorClass}`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-base text-slate-500 dark:text-slate-400">{label}</p>
-        <div className="flex items-baseline space-x-2">
-          <span className="text-3xl font-bold text-slate-800 dark:text-slate-100">{value}</span>
-          {subValue && <span className="text-lg font-medium text-slate-500 dark:text-slate-400">{subValue}</span>}
+  const PrimaryMetricCard = ({ icon, label, value, subValue, colorClass, bgGradient }: {
+    icon: React.ReactNode
+    label: string
+    value: string
+    subValue?: string
+    colorClass: string
+    bgGradient?: string
+  }) => (
+    <div className="group bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-lg hover:shadow-xl border border-slate-200/50 dark:border-slate-700/50 transition-all duration-300 hover:-translate-y-1">
+      <div className="flex flex-col space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</p>
+          <div className={`flex-shrink-0 p-2 rounded-lg ${bgGradient || 'bg-slate-100 dark:bg-slate-700'} ${colorClass} transition-transform duration-300 group-hover:scale-110`}>
+            {icon}
+          </div>
+        </div>
+        <div className="flex items-baseline space-x-1.5 flex-wrap">
+          <span className="text-2xl font-bold text-slate-800 dark:text-slate-100 break-words">{value}</span>
+          {subValue && <span className="text-base font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">{subValue}</span>}
         </div>
       </div>
     </div>
   )
 
-  const SecondaryMetricCard = ({ icon, label, value }) => (
-    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md flex items-center space-x-3">
-      <div className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300">
+  // Combined Answer Status Card
+  const AnswerStatusCard = () => (
+    <div className="group bg-white dark:bg-slate-800 p-5 rounded-xl shadow-md hover:shadow-lg border border-slate-200/50 dark:border-slate-700/50 transition-all duration-200">
+      <div className="flex items-center space-x-2 mb-3">
+        <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30">
+          <CheckCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+        </div>
+        <h3 className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">Answer Status</h3>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="text-center">
+          <div className="flex items-center justify-center w-10 h-10 mx-auto mb-1.5 rounded-lg bg-green-100 dark:bg-green-900/30">
+            <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+          </div>
+          <div className="text-2xl font-bold text-green-700 dark:text-green-400">{correct}</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Correct</div>
+        </div>
+        <div className="text-center">
+          <div className="flex items-center justify-center w-10 h-10 mx-auto mb-1.5 rounded-lg bg-red-100 dark:bg-red-900/30">
+            <X className="w-5 h-5 text-red-600 dark:text-red-400" />
+          </div>
+          <div className="text-2xl font-bold text-red-700 dark:text-red-400">{incorrect}</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Incorrect</div>
+        </div>
+        <div className="text-center">
+          <div className="flex items-center justify-center w-10 h-10 mx-auto mb-1.5 rounded-lg bg-slate-100 dark:bg-slate-700">
+            <HelpCircle className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          </div>
+          <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">{skipped}</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Skipped</div>
+        </div>
+      </div>
+    </div>
+  )
+
+  const SecondaryMetricCard = ({ icon, label, value, iconColor }: {
+    icon: React.ReactNode
+    label: string
+    value: string | number
+    iconColor?: string
+  }) => (
+    <div className="group bg-white dark:bg-slate-800 p-4 rounded-xl shadow-md hover:shadow-lg flex items-center space-x-3 transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-600 border border-transparent">
+      <div className={`flex-shrink-0 p-2 rounded-full bg-slate-100 dark:bg-slate-700 ${iconColor || 'text-slate-500 dark:text-slate-300'} transition-transform duration-200 group-hover:scale-110`}>
         {icon}
       </div>
-      <div>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-        <span className="text-xl font-semibold text-slate-700 dark:text-slate-200">{value}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">{label}</p>
+        <span className="text-xl font-bold text-slate-700 dark:text-slate-200">{value}</span>
       </div>
     </div>
   )
@@ -61,68 +103,54 @@ const GlobalPerformanceHeader: React.FC<GlobalPerformanceHeaderProps> = ({ sessi
   return (
     <div className="space-y-6">
       {/* Tier 1: Primary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <PrimaryMetricCard
-          icon={<BarChart2 className="w-7 h-7" />}
+          icon={<BarChart2 className="w-6 h-6" />}
           label="Score"
-          value={results.marks_obtained.toFixed(2)}
+          value={results.marks_obtained.toString()}
           subValue={`/ ${results.total_marks}`}
-          colorClass="text-green-500"
+          colorClass="text-green-600 dark:text-green-400"
+          bgGradient="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30"
         />
         <PrimaryMetricCard
-          icon={<Award className="w-7 h-7" />}
+          icon={<Award className="w-6 h-6" />}
           label="Rank"
           value={`#${results.rank}`}
           subValue={`/ ${results.total_test_takers}`}
-          colorClass="text-blue-500"
+          colorClass="text-blue-600 dark:text-blue-400"
+          bgGradient="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30"
         />
         <PrimaryMetricCard
-          icon={<TrendingUp className="w-7 h-7" />}
+          icon={<TrendingUp className="w-6 h-6" />}
           label="Percentile"
-          value={`${results.percentile.toFixed(2)}%`}
-          colorClass="text-purple-500"
+          value={`${results.percentile}%`}
+          colorClass="text-purple-600 dark:text-purple-400"
+          bgGradient="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30"
         />
         <PrimaryMetricCard
-          icon={<Target className="w-7 h-7" />}
+          icon={<Target className="w-6 h-6" />}
           label="Accuracy"
           value={`${accuracy.toFixed(2)}%`}
-          colorClass="text-yellow-500"
+          colorClass="text-amber-600 dark:text-amber-400"
+          bgGradient="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30"
         />
       </div>
 
-      {/* Tier 2: Secondary Metrics & Doughnut Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-4">
-            <SecondaryMetricCard icon={<Check className="w-5 h-5" />} label="Correct" value={correct} />
-            <SecondaryMetricCard icon={<X className="w-5 h-5" />} label="Incorrect" value={incorrect} />
-            <SecondaryMetricCard icon={<HelpCircle className="w-5 h-5" />} label="Skipped" value={skipped} />
-            <SecondaryMetricCard icon={<CheckCircle className="w-5 h-5" />} label="Attempt Rate" value={`${attemptRate.toFixed(1)}%`} />
-            <SecondaryMetricCard icon={<Hash className="w-5 h-5" />} label="Total Questions" value={totalQuestions} />
-        </div>
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center border border-slate-200/50 dark:border-slate-700/50 min-h-[200px]">
-          <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-2">Question Breakdown</h3>
-          <div className="w-full h-48">
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie
-                  data={doughnutData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={70}
-                  fill="#8884d8"
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {doughnutData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Legend iconSize={10} wrapperStyle={{ fontSize: '14px' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      {/* Tier 2: Secondary Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        <AnswerStatusCard />
+        <SecondaryMetricCard 
+          icon={<CheckCircle className="w-5 h-5" />} 
+          label="Attempt Rate" 
+          value={`${attemptRate.toFixed(2)}%`}
+          iconColor="text-indigo-600 dark:text-indigo-400"
+        />
+        <SecondaryMetricCard 
+          icon={<Hash className="w-5 h-5" />} 
+          label="Total Questions" 
+          value={totalQuestions}
+          iconColor="text-slate-600 dark:text-slate-300"
+        />
       </div>
     </div>
   )

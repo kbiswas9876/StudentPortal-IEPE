@@ -212,7 +212,7 @@ export default function InstructionsPage() {
         console.log('SUCCESS: Fullscreen entered via promise-based handler.')
         setIsTestActive(true)
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         // FAILURE CALLBACK: This code runs if the request is denied or fails.
         console.error('FAILURE: Fullscreen failed in promise-based handler.', err)
         if (err instanceof Error && err.name === 'NotAllowedError') {
