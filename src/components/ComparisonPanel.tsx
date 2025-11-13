@@ -25,9 +25,14 @@ const ComparisonPanel: React.FC<ComparisonPanelProps> = ({ comparisonData }) => 
     return (
       <div role="tabpanel" aria-labelledby="tab-comparison">
         <h2 className="text-xl font-semibold text-slate-800 mb-4">Topper Comparison</h2>
-        <div className="flex items-center justify-center h-80 md:h-96">
-          <p className="text-slate-500 text-center">
-            Topper comparison data is not available for this test.
+        <div className="flex flex-col items-center justify-center h-80 md:h-96 px-4">
+          <div className="text-6xl mb-4">🏆</div>
+          <h3 className="text-2xl font-bold text-indigo-600 mb-2">Congratulations!</h3>
+          <p className="text-slate-600 text-center max-w-md">
+            You are the top performer in this test! There's no one to compare with because you've achieved the highest score.
+          </p>
+          <p className="text-slate-500 text-sm mt-4">
+            Keep up the excellent work!
           </p>
         </div>
       </div>
