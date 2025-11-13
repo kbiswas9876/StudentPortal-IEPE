@@ -6,6 +6,7 @@ import { AuthProvider } from '@/lib/auth-context'
 import { ThemeProvider } from '@/lib/theme-context'
 import { ToastProvider } from '@/lib/toast-context'
 import ConditionalHeader from '@/components/ConditionalHeader'
+import { ChartJsProvider } from '@/components/ChartJsProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,16 +23,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider>
-          <AuthProvider>
-            <ToastProvider>
-              <ConditionalHeader />
-              <main className="min-h-screen">
-                {children}
-              </main>
-            </ToastProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <ChartJsProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <ToastProvider>
+                <ConditionalHeader />
+                <main className="min-h-screen">
+                  {children}
+                </main>
+              </ToastProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </ChartJsProvider>
       </body>
     </html>
   )

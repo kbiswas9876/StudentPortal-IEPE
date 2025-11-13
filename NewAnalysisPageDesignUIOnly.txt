@@ -1,0 +1,755 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Doughnut, Bar, Radar } from 'react-chartjs-2';
+import {
+    Chart as ChartJS,
+    ArcElement,
+    Tooltip,
+    Legend,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    RadialLinearScale,
+    PointElement,
+    LineElement,
+    Filler
+} from 'chart.js';
+
+// Import Lucide icons
+import {
+    Award,
+    BarChart3,
+    PieChart,
+    Target,
+    Clock,
+    CheckCheck,
+    PencilLine,
+    ListChecks,
+    Medal as MedalIcon, // Renamed from Trophy
+    ChevronLeft,
+    ChevronRight,
+    MoreHorizontal, // Added for pagination
+    CheckCircle,    // Added for leaderboard
+    XCircle,        // Added for leaderboard
+    MinusCircle     // Added for leaderboard
+} from 'lucide-react';
+
+// Register Chart.js components
+ChartJS.register(
+    ArcElement,
+    Tooltip,
+    Legend,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    RadialLinearScale,
+    PointElement,
+    LineElement,
+    Filler
+);
+
+// --- Global Chart Config (applied in options) ---
+const chartDefaultFont = {
+    family: 'Inter, sans-serif',
+    weight: '500'
+};
+const chartDefaultColor = '#334155'; // slate-700
+const chartGridColor = '#e2e8f0'; // slate-200
+
+
+// --- Pagination Hook ---
+const DOTS = '...';
+
+const usePagination = ({ totalPages, currentPage, siblingCount = 1 }) => {
+    const paginationRange = useMemo(() => {
+        // Pages to show: 1 (current) + 2*siblingCount + 1 (first) + 1 (last) + 2 (dots)
+        const totalPageNumbersToShow = siblingCount + 5;
+
+        // Case 1: If total pages is less than the number we want to show, show all.
+        if (totalPages <= totalPageNumbersToShow) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+
+        const leftSiblingIndex = Math.max(currentPage - siblingCount, 1);
+        const rightSiblingIndex = Math.min(currentPage + siblingCount, totalPages);
+
+        const shouldShowLeftDots = leftSiblingIndex > 2;
+        const shouldShowRightDots = rightSiblingIndex < totalPages - 1;
+
+        const firstPageIndex = 1;
+        const lastPageIndex = totalPages;
+
+        // Case 2: No left dots, but right dots
+        if (!shouldShowLeftDots && shouldShowRightDots) {
+            let leftItemCount = 3 + 2 * siblingCount;
+            let leftRange = Array.from({ length: leftItemCount }, (_, i) => i + 1);
+            return [...leftRange, DOTS, totalPages];
+        }
+
+        // Case 3: Left dots, but no right dots
+        if (shouldShowLeftDots && !shouldShowRightDots) {
+            let rightItemCount = 3 + 2 * siblingCount;
+            let rightRange = Array.from({ length: rightItemCount }, (_, i) => totalPages - rightItemCount + i + 1);
+            return [firstPageIndex, DOTS, ...rightRange];
+        }
+
+        // Case 4: Both left and right dots
+        if (shouldShowLeftDots && shouldShowRightDots) {
+            let middleRange = Array.from({ length: rightSiblingIndex - leftSiblingIndex + 1 }, (_, i) => leftSiblingIndex + i);
+            return [firstPageIndex, DOTS, ...middleRange, DOTS, lastPageIndex];
+        }
+        
+        // Fallback (should be covered)
+        return Array.from({ length: totalPages }, (_, i) => i + 1);
+
+    }, [totalPages, currentPage, siblingCount]);
+
+    return paginationRange || [];
+};
+// --- END Pagination Hook ---
+
+
+// --- Reusable Components ---
+
+/**
+ * 1. KPI Card Component
+ * A reusable card for the top dashboard.
+ */
+const KpiCard = ({ title, value, subtext, icon, isPrimary = false }) => {
+    const IconComponent = icon;
+    const primaryClasses = isPrimary ? 'border-2 border-indigo-200' : '';
+    const titleColor = isPrimary ? 'text-indigo-800' : 'text-slate-700';
+    const valueColor = isPrimary ? 'text-indigo-600' : 'text-slate-800';
+    const subtextColor = isPrimary ? 'text-indigo-500' : 'text-slate-500';
+
+    return (
+        <div className={`glass-card group kpi-card lg:col-span-1 ${primaryClasses}`}>
+            <div className="flex flex-col h-full">
+                <h3 className={`text-sm font-medium ${titleColor}`}>{title}</h3>
+                <p className={`text-3xl font-bold ${valueColor} mt-2`}>{value}</p>
+                <p className={`text-sm ${subtextColor} mt-auto`}>{subtext}</p>
+            </div>
+            <div className="kpi-card-icon">
+                <IconComponent size="100%" />
+            </div>
+        </div>
+    );
+};
+
+/**
+ * 2. Attempt Summary Card
+ * A specific card for Correct/Incorrect/Skipped.
+ */
+const AttemptSummaryCard = () => (
+    <div className="glass-card group kpi-card col-span-2 sm:col-span-3 lg:col-span-2">
+        <div className="flex flex-col h-full">
+            <h3 className="text-sm font-medium text-slate-700">Attempt Summary</h3>
+            <div className="mt-4 grid grid-cols-3 gap-4">
+                <div>
+                    <p className="text-2xl font-bold text-indigo-600">60</p>
+                    <p className="text-xs text-indigo-500">Correct</p>
+                </div>
+                <div>
+                    <p className="text-2xl font-bold text-amber-600">20</p>
+                    <p className="text-xs text-amber-500">Incorrect</p>
+                </div>
+                <div>
+                    <p className="text-2xl font-bold text-slate-600">5</p>
+                    <p className="text-xs text-slate-500">Skipped</p>
+                </div>
+            </div>
+        </div>
+        <div className="kpi-card-icon">
+            <CheckCheck size="100%" />
+        </div>
+    </div>
+);
+
+
+// --- Tab Panel Components ---
+
+/**
+ * 3. Overview Panel (Doughnut Chart)
+ */
+const OverviewPanel = () => {
+    const data = {
+        labels: ['Correct', 'Incorrect', 'Skipped'],
+        datasets: [{
+            data: [60, 20, 5],
+            backgroundColor: [
+                'rgba(79, 70, 229, 0.7)',  // indigo-600
+                'rgba(217, 119, 6, 0.7)',   // amber-600
+                'rgba(100, 116, 139, 0.7)' // slate-500
+            ],
+            borderColor: [
+                '#4f46e5', // indigo-600
+                '#d97706', // amber-600
+                '#64748b'  // slate-500
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    };
+
+    return (
+        <div role="tabpanel" aria-labelledby="tab-overview">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">Question Breakdown</h2>
+            <div className="h-64 md:h-80">
+                <Doughnut data={data} options={options} />
+            </div>
+            {/* Custom Legend */}
+            <div className="flex flex-wrap justify-center items-center space-x-4 md:space-x-6 mt-6">
+                <div className="flex items-center space-x-2">
+                    <span className="w-4 h-3 rounded-sm bg-indigo-600"></span>
+                    <span className="text-slate-600 text-sm font-medium">Correct: 60</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <span className="w-4 h-3 rounded-sm bg-amber-600"></span>
+                    <span className="text-slate-600 text-sm font-medium">Incorrect: 20</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <span className="w-4 h-3 rounded-sm bg-slate-500"></span>
+                    <span className="text-slate-600 text-sm font-medium">Skipped: 5</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/**
+ * 4. Chapter-wise Panel
+ */
+const ChapterPanel = () => {
+    const chapters = [
+        { name: 'Kinematics', questions: '25 questions', accuracy: 92, correct: 23, incorrect: 2, time: '38s', gradient: 'linear-gradient(to right, #2dd4bf, #0d9488)' },
+        { name: 'Dynamics', questions: '15 questions', accuracy: 80, correct: 12, incorrect: 3, time: '52s', gradient: 'linear-gradient(to right, #2dd4bf, #0d9488)' },
+        { name: 'Thermodynamics', questions: '25 questions', accuracy: 76, correct: 19, incorrect: 6, time: '68s', gradient: 'linear-gradient(to right, #fbbf24, #d97706)' },
+        { name: 'Optics', questions: '22 questions', accuracy: 68, correct: 15, incorrect: 7, time: '55s', gradient: 'linear-gradient(to right, #f87171, #dc2626)' },
+    ];
+
+    return (
+        <div role="tabpanel" aria-labelledby="tab-chapters">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">Chapter-wise Performance</h2>
+            <div className="overflow-x-auto">
+                <div className="min-w-full">
+                    {/* Header */}
+                    <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                        <div className="col-span-4">Chapter</div>
+                        <div className="col-span-3 text-center">Accuracy</div>
+                        <div className="col-span-2 text-center">Correct</div>
+                        <div className="col-span-2 text-center">Incorrect</div>
+                        <div className="col-span-1 text-right">Avg Time/Q</div>
+                    </div>
+                    {/* Body */}
+                    <div className="divide-y divide-slate-200">
+                        {chapters.map((chapter) => (
+                            <div key={chapter.name} className="grid grid-cols-12 gap-4 p-4 items-center">
+                                <div className="col-span-4">
+                                    <p className="font-medium text-slate-800">{chapter.name}</p>
+                                    <p className="text-sm text-slate-500">{chapter.questions}</p>
+                                </div>
+                                <div className="col-span-3">
+                                    <p className="font-medium text-slate-800 text-center mb-1">{chapter.accuracy}%</p>
+                                    <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                        <div 
+                                            className="h-1.5 rounded-full" 
+                                            style={{ width: `${chapter.accuracy}%`, background: chapter.gradient }}
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div className="col-span-2 text-center text-slate-700">{chapter.correct}</div>
+                                <div className="col-span-2 text-center text-slate-700">{chapter.incorrect}</div>
+                                <div className="col-span-1 text-right text-slate-700">{chapter.time}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/**
+ * 5. Difficulty-wise Panel (Stacked Bar Chart)
+ */
+const DifficultyPanel = () => {
+    const data = {
+        labels: ['Easy', 'Medium', 'Hard'],
+        datasets: [
+            {
+                label: 'Correct',
+                data: [30, 25, 5],
+                backgroundColor: 'rgba(79, 70, 229, 0.7)', // indigo-600
+                borderColor: '#4f46e5',
+                borderWidth: 1
+            },
+            {
+                label: 'Incorrect',
+                data: [5, 10, 5],
+                backgroundColor: 'rgba(217, 119, 6, 0.7)', // amber-600
+                borderColor: '#d97706',
+                borderWidth: 1
+            },
+            {
+                label: 'Skipped',
+                data: [1, 3, 1],
+                backgroundColor: 'rgba(100, 116, 139, 0.7)', // slate-500
+                borderColor: '#64748b',
+                borderWidth: 1
+            }
+        ]
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                stacked: true,
+                grid: { display: false },
+                ticks: { color: chartDefaultColor, font: chartDefaultFont }
+            },
+            y: {
+                stacked: true,
+                beginAtZero: true,
+                ticks: { color: chartDefaultColor, font: chartDefaultFont }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    color: chartDefaultColor,
+                    font: chartDefaultFont
+                }
+            }
+        }
+    };
+
+    return (
+        <div role="tabpanel" aria-labelledby="tab-difficulty">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">Difficulty-wise Performance</h2>
+            <div className="h-80 md:h-96">
+                <Bar data={data} options={options} />
+            </div>
+        </div>
+    );
+};
+
+/**
+ * 6. Topper Comparison Panel (Radar Chart)
+ */
+const ComparisonPanel = () => {
+    const data = {
+        labels: ['Kinematics', 'Dynamics', 'Thermo', 'Optics', 'Overall'],
+        datasets: [
+            {
+                label: 'You',
+                data: [92, 80, 76, 68, 75],
+                backgroundColor: 'rgba(79, 70, 229, 0.7)', // indigo
+                borderColor: '#4f46e5',
+                borderWidth: 2,
+                pointBackgroundColor: '#4f46e5',
+                pointRadius: 4
+            },
+            {
+                label: 'Topper',
+                data: [100, 95, 90, 98, 98],
+                backgroundColor: 'rgba(20, 184, 166, 0.7)', // teal
+                borderColor: '#14b8a6',
+                borderWidth: 2,
+                pointBackgroundColor: '#14b8a6',
+                pointRadius: 4
+            }
+        ]
+    };
+
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            r: {
+                beginAtZero: true,
+                max: 100,
+                grid: { color: chartGridColor },
+                angleLines: { color: chartGridColor },
+                pointLabels: {
+                    font: {
+                        size: 13,
+                        weight: '600',
+                        family: 'Inter, sans-serif'
+                    },
+                    color: chartDefaultColor
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    color: chartDefaultColor,
+                    font: chartDefaultFont
+                }
+            }
+        }
+    };
+
+    return (
+        <div role="tabpanel" aria-labelledby="tab-comparison">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">Topper Comparison</h2>
+            <div className="h-80 md:h-96">
+                <Radar data={data} options={options} />
+            </div>
+        </div>
+    );
+};
+
+// --- DUMMY DATA FOR LEADERBOARD ---
+// Function to generate random names
+const firstNames = ['Aarav', 'Vihaan', 'Vivaan', 'Aditya', 'Reyansh', 'Shaurya', 'Kabir', 'Ansh', 'Rohan', 'Arjun'];
+const lastNames = ['Sharma', 'Verma', 'Singh', 'Kumar', 'Patel', 'Gupta', 'Yadav', 'Reddy', 'Bose', 'Jain'];
+
+// FIX: Corrected data generation to avoid duplicate rank 52
+const generateLeaderboard = (totalUsers, userRank) => {
+    let leaderboard = [];
+    // Generate top 3
+    leaderboard.push({ rank: 1, name: 'Aditya Verma', score: '200.00 / 200', cis: '85/0/0', time: '01:55:30', medal: 'gold' });
+    leaderboard.push({ rank: 2, name: 'Riya Sharma', score: '198.80 / 200', cis: '84/1/0', time: '02:10:15', medal: 'silver' });
+    leaderboard.push({ rank: 3, name: 'Priya Singh', score: '197.60 / 200', cis: '83/1/1', time: '02:05:45', medal: 'bronze' });
+
+    // Generate other users
+    for (let i = 4; i <= totalUsers; i++) {
+        if (i === userRank) {
+            leaderboard.push({ rank: userRank, name: 'You', score: '145.50 / 200', cis: '60/20/5', time: '02:15:30', isUser: true });
+        } else {
+            // Adjust rank if it's after the user
+            const rank = i > userRank ? i : i;
+            const score = Math.max(0, 197 - (rank * 0.5) - Math.random() * 5);
+            const correct = Math.floor(score / (200 / 85));
+            const incorrect = Math.floor(Math.random() * (85 - correct));
+            const skipped = 85 - correct - incorrect;
+            const time = `02:${Math.floor(10 + Math.random() * 40)}:${Math.floor(10 + Math.random() * 40)}`;
+            
+            // Ensure we don't duplicate the user rank
+            if(rank !== userRank) {
+                leaderboard.push({
+                    rank: rank,
+                    name: `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`,
+                    score: `${score.toFixed(2)} / 200`,
+                    cis: `${correct}/${incorrect}/${skipped}`,
+                    time: time
+                });
+            }
+        }
+    }
+    // Sort just in case logic got complex, ensuring ranks are correct
+    leaderboard.sort((a, b) => b.score.split(' ')[0] - a.score.split(' ')[0]);
+    // Re-assign ranks
+    leaderboard = leaderboard.map((item, index) => ({...item, rank: index + 1}));
+    
+    // Find the user again after sorting
+    const user = leaderboard.find(item => item.name === 'You');
+    if (user) {
+        user.isUser = true;
+    }
+    
+    return leaderboard;
+};
+// --- END DUMMY DATA ---
+
+
+/**
+ * 7. Leaderboard Panel
+ */
+const LeaderboardPanel = () => {
+    const userRank = 52;
+    const totalUsers = 1430;
+    const itemsPerPage = 10;
+
+    // Generate full leaderboard data
+    const [fullLeaderboardData] = useState(() => generateLeaderboard(totalUsers, userRank));
+
+    // Find the user's page
+    const userIndex = fullLeaderboardData.findIndex(item => item.isUser);
+    const initialPage = Math.floor(userIndex / itemsPerPage) + 1;
+    
+    const [currentPage, setCurrentPage] = useState(initialPage);
+
+    const totalPages = Math.ceil(fullLeaderboardData.length / itemsPerPage);
+
+    // Get pagination items
+    const paginationRange = usePagination({ totalPages, currentPage });
+
+    // Calculate data for the current page
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentLeaderboardData = fullLeaderboardData.slice(startIndex, endIndex);
+
+    const goToPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    // UPDATED Medal Component
+    const Medal = ({ rank }) => {
+        const medalStyles = {
+            gold: 'text-yellow-500',
+            silver: 'text-slate-500',
+            bronze: 'text-orange-600'
+        };
+        const style = rank === 1 ? medalStyles.gold : rank === 2 ? medalStyles.silver : medalStyles.bronze;
+        
+        return (
+            <span className={`flex items-center justify-center w-6 h-6 ${style}`}>
+                <MedalIcon size={20} strokeWidth={2.5} />
+            </span>
+        );
+    };
+
+    return (
+        <div role="tabpanel" aria-labelledby="tab-leaderboard">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">Leaderboard</h2>
+            
+            {/* Table */}
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                    <thead className="bg-slate-50">
+                        <tr>
+                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Rank</th>
+                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
+                            <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Score</th>
+                            <th className="p-4 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">Breakdown</th>
+                            <th className="p-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Time Taken</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-slate-200">
+                        {currentLeaderboardData.map((row) => {
+                            const [correct, incorrect, skipped] = row.cis.split('/');
+                            const numberClass = row.isUser ? 'font-bold text-indigo-700' : 'text-slate-600';
+                            
+                            return (
+                                <tr key={row.rank} className={row.isUser ? 'bg-indigo-50 border-l-4 border-indigo-500' : ''}>
+                                    <td className={`p-4 whitespace-nowrap text-sm font-medium ${row.isUser ? 'text-indigo-700 font-bold' : 'text-slate-900'}`}>
+                                        <div className="flex items-center space-x-2">
+                                            {row.medal && <Medal rank={row.rank} />}
+                                            <span>{row.rank}</span>
+                                        </div>
+                                    </td>
+                                    <td className={`p-4 whitespace-nowrap text-sm font-medium ${row.isUser ? 'text-indigo-700 font-bold' : 'text-slate-900'}`}>{row.name}</td>
+                                    <td className={`p-4 whitespace-nowrap text-sm ${row.isUser ? 'text-indigo-700 font-bold' : 'text-slate-600'}`}>{row.score}</td>
+                                    <td className="p-4 whitespace-nowrap text-sm text-center">
+                                        <div className="flex items-center justify-center space-x-3">
+                                            <span className="flex items-center text-indigo-600" title="Correct">
+                                                <CheckCircle size={14} className="mr-0.5" />
+                                                <span className={numberClass}>{correct}</span>
+                                            </span>
+                                            <span className="flex items-center text-amber-600" title="Incorrect">
+                                                <XCircle size={14} className="mr-0.5" />
+                                                <span className={numberClass}>{incorrect}</span>
+                                            </span>
+                                            <span className="flex items-center text-slate-500" title="Skipped">
+                                                <MinusCircle size={14} className="mr-0.5" />
+                                                <span className={numberClass}>{skipped}</span>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className={`p-4 whitespace-nowrap text-sm text-right ${row.isUser ? 'text-indigo-700 font-bold' : 'text-slate-600'}`}>{row.time}</td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <nav className="flex items-center justify-center space-x-1 mt-6">
+                <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="flex items-center justify-center w-9 h-9 text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Previous page"
+                >
+                    <ChevronLeft size={18} />
+                </button>
+
+                {paginationRange.map((pageNumber, index) => {
+                    const key = `page-${pageNumber}-index-${index}`;
+                    if (pageNumber === DOTS) {
+                        return (
+                            <span key={key} className="flex items-center justify-center w-9 h-9 text-slate-600">
+                                <MoreHorizontal size={18} />
+                            </span>
+                        );
+                    }
+
+                    const isActive = pageNumber === currentPage;
+                    return (
+                        <button
+                            key={key}
+                            onClick={() => goToPage(pageNumber)}
+                            className={`flex items-center justify-center w-9 h-9 border rounded-md text-sm font-medium transition-colors
+                                ${isActive 
+                                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
+                                    : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
+                                }
+                            `}
+                        >
+                            {pageNumber}
+                        </button>
+                    );
+                })}
+
+                <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center justify-center w-9 h-9 text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Next page"
+                >
+                    <ChevronRight size={18} />
+                </button>
+            </nav>
+        </div>
+    );
+};
+
+// --- Main App Component ---
+
+export default function App() {
+    const [activeTab, setActiveTab] = useState('overview');
+
+    // Effect to add global styles
+    useEffect(() => {
+        document.body.className = 'font-sans bg-slate-100 p-4 md:p-8';
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .glass-card {
+                background: rgba(255, 255, 255, 0.6);
+                backdrop-filter: blur(12px) saturate(180%);
+                -webkit-backdrop-filter: blur(12px) saturate(180%);
+                border: 1px solid rgba(226, 232, 240, 0.8);
+                border-radius: 1rem;
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+                transition: all 0.3s ease;
+            }
+            .glass-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 12px 32px 0 rgba(31, 38, 135, 0.15);
+            }
+            .kpi-card {
+                position: relative;
+                overflow: hidden;
+                padding: 1.5rem;
+            }
+            .kpi-card-icon {
+                position: absolute;
+                right: -1.5rem;
+                bottom: -1rem;
+                font-size: 6rem;
+                color: rgba(100, 116, 139, 0.08);
+                line-height: 1;
+                transition: all 0.3s ease;
+            }
+            .kpi-card.group:hover .kpi-card-icon {
+                color: rgba(100, 116, 139, 0.12);
+                transform: rotate(-5deg) scale(1.05);
+            }
+            ::-webkit-scrollbar { width: 8px; height: 8px; }
+            ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
+            ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+            ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+            
+            .tab-btn {
+                transition: all 0.2s ease-in-out;
+            }
+            .tab-btn.active {
+                border-color: #4f46e5; /* indigo-600 */
+                color: #4f46e5;
+                font-weight: 600;
+            }
+        `;
+        document.head.appendChild(style);
+        return () => {
+            document.head.removeChild(style);
+            document.body.className = '';
+        };
+    }, []);
+
+    const tabs = [
+        { id: 'overview', label: 'Overview' },
+        { id: 'chapters', label: 'Chapter-wise' },
+        { id: 'difficulty', label: 'Difficulty' },
+        { id: 'comparison', label: 'Topper Comparison' },
+        { id: 'leaderboard', label: 'Leaderboard' },
+    ];
+
+    return (
+        <div className="max-w-7xl mx-auto">
+            {/* 1. Header */}
+            <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">Performance Analysis</h1>
+                    <p className="text-sm text-slate-500 mt-1">Submitted at: 12 Nov 2025, 08:15 PM</p>
+                </div>
+                <div className="mt-4 sm:mt-0">
+                    <button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-indigo-400/50 transition-all duration-300 ease-in-out">
+                        View Solution
+                    </button>
+                </div>
+            </header>
+
+            {/* 2. KPI Dashboard */}
+            <section className="mb-8">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+                    <KpiCard title="Score" value="145.50" subtext="/ 200" icon={Award} isPrimary />
+                    <KpiCard title="Rank" value="#52" subtext="/ 1,430" icon={BarChart3} isPrimary />
+                    <KpiCard title="Percentile" value="96.4%" subtext="Top 4%" icon={PieChart} isPrimary />
+                    <KpiCard title="Accuracy" value="75.0%" subtext="60 / 80 Attempted" icon={Target} isPrimary />
+                    <KpiCard title="Time Taken" value="02:15" subtext="/ 03:00 Hrs" icon={Clock} isPrimary />
+                    
+                    <AttemptSummaryCard />
+                    
+                    <KpiCard title="Attempt Rate" value="94.1%" subtext="80 / 85 Att." icon={PencilLine} />
+                    <KpiCard title="Questions" value="85" subtext="Total" icon={ListChecks} />
+                </div>
+            </section>
+
+            {/* 3. Detailed Analysis Tabs */}
+            <section className="glass-card p-4 sm:p-6">
+                {/* Tab Headers */}
+                <nav className="flex flex-wrap border-b border-slate-200" aria-label="Tabs">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            id={`btn-${tab.id}`}
+                            className={`tab-btn -mb-px p-3 sm:p-4 border-b-2 border-transparent text-sm sm:text-base font-medium text-slate-600 hover:text-indigo-600 hover:border-indigo-300 ${activeTab === tab.id ? 'active' : ''}`}
+                            aria-controls={`tab-${tab.id}`}
+                            role="tab"
+                            aria-selected={activeTab === tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
+
+                {/* Tab Panels */}
+                <div className="pt-6">
+                    {activeTab === 'overview' && <OverviewPanel />}
+                    {activeTab === 'chapters' && <ChapterPanel />}
+                    {activeTab === 'difficulty' && <DifficultyPanel />}
+                    {activeTab === 'comparison' && <ComparisonPanel />}
+                    {activeTab === 'leaderboard' && <LeaderboardPanel />}
+                </div>
+            </section>
+        </div>
+    );
+}

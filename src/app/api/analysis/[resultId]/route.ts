@@ -50,6 +50,7 @@ export async function GET(
     // --- START: Refined Rank, Percentile, and Topper Comparison Logic ---
     let resultsData = {}
     let topperComparisonData = null
+    let topperData = null
 
     if (testResult.session_type === 'mock_test' && testResult.mock_test_id) {
         const marksObtained = await calculateActualScore(supabaseAdmin as any, Number(resultId), Number(testResult.mock_test_id))
@@ -76,6 +77,7 @@ export async function GET(
                 total_test_takers: totalTestTakers
             }
             testResult.results = resultsData;
+            testResult.accuracy = calculateAccuracy(testResult.total_correct, testResult.total_incorrect);
 
             // --- Refined Topper Logic ---
             const topperResult = allTestResults[0];
@@ -83,7 +85,7 @@ export async function GET(
                 const topperMarksObtained = await calculateActualScore(supabaseAdmin as any, topperResult.id, topperResult.mock_test_id);
 
                 const { data: topperAnswerLog, error: topperAnswerLogError } = await supabaseAdmin
-                    .from('answer_log').select('question_id, status').eq('result_id', topperResult.id)
+                    .from('answer_log').select('*').eq('result_id', topperResult.id)
                 const { data: userAnswerLog, error: userAnswerLogError } = await supabaseAdmin
                     .from('answer_log').select('question_id, status').eq('result_id', testResult.id)
 
@@ -128,6 +130,22 @@ export async function GET(
                         },
                         strategicAnalysis: buckets,
                     };
+
+                    // Store topper data for new dashboard
+                    topperData = {
+                        testResult: {
+                            ...topperResult,
+                            results: {
+                                marks_obtained: topperMarksObtained,
+                                total_marks: totalMarks,
+                                percentile: 100, // Topper is always 100th percentile
+                                rank: 1,
+                                total_test_takers: totalTestTakers
+                            },
+                            accuracy: calculateAccuracy(topperResult.total_correct, topperResult.total_incorrect)
+                        },
+                        answerLog: topperAnswerLog
+                    };
                 }
             }
         }
@@ -149,6 +167,7 @@ export async function GET(
         answerLog,
         questions,
         topperComparison: topperComparisonData,
+        topperResult: topperData,
       }
     });
   } catch (error) {

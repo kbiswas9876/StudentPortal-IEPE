@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import PerformanceAnalysisDashboard, { SessionResult } from '@/components/PerformanceAnalysisDashboard'
+import NewPerformanceAnalysisDashboard from '@/components/NewPerformanceAnalysisDashboard'
+import { SessionResult } from '@/components/PerformanceAnalysisDashboard'
 import PerformanceAnalysisSkeletonLoader from '@/components/PerformanceAnalysisSkeletonLoader'
 import { Database } from '@/types/database'
 
@@ -50,7 +51,7 @@ export default function AnalysisReportPage() {
       const fetchedData: FetchedSessionData = analysisResult.data
       const finalSessionResult: SessionResult = {
           ...fetchedData,
-          topperResult: undefined, // This would be fetched if needed
+          topperResult: analysisResult.data.topperResult || undefined,
           leaderboard: undefined, // This is fetched by the Leaderboard component itself
       }
 
@@ -104,7 +105,7 @@ export default function AnalysisReportPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <PerformanceAnalysisDashboard
+        <NewPerformanceAnalysisDashboard
           sessionResult={sessionResult}
           onNavigateToSolutions={handleNavigateToSolutions}
         />
