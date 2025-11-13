@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react'
 import { Database } from '@/types/database'
+import { formatPercentage } from '@/utils/formatNumber'
 
 // --- Type Definitions ---
 type AnswerLogRow = Database['public']['Tables']['answer_log']['Row']
@@ -139,7 +140,7 @@ const ChapterPanel: React.FC<ChapterPanelProps> = ({ answerLog, questions }) => 
                 </div>
                 <div className="col-span-3">
                   <p className="font-medium text-slate-800 text-center mb-1">
-                    {chapter.accuracy.toFixed(0)}%
+                    {formatPercentage(chapter.accuracy)}%
                   </p>
                   <div className="w-full bg-slate-200 rounded-full h-1.5">
                     <div

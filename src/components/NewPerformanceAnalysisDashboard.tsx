@@ -19,6 +19,7 @@ import ComparisonPanel from './ComparisonPanel';
 import { LeaderboardPanel } from './LeaderboardPanel';
 import { Database } from '@/types/database';
 import { calculateTopperComparison } from '@/utils/analysisCalculations';
+import { formatNumber, formatPercentage, formatScore } from '@/utils/formatNumber';
 
 // --- Type Definitions ---
 
@@ -192,32 +193,33 @@ const NewPerformanceAnalysisDashboard: React.FC<NewPerformanceAnalysisDashboardP
     // Calculate attempt rate
     const attemptRate = totalQuestions > 0 ? ((attempted / totalQuestions) * 100).toFixed(1) : '0.0';
     
-    // Format time taken (convert seconds to HH:MM)
+    // Format time taken (convert seconds to HH:MM:SS)
     const formatTime = (seconds: number | null | undefined): string => {
-      if (!seconds) return '00:00';
+      if (!seconds) return '00:00:00';
       const hours = Math.floor(seconds / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      const secs = seconds % 60;
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
     
     const timeTaken = formatTime(testResult.total_time_taken);
     // Note: time_limit might not exist on testResult, using a default of 3 hours (10800 seconds)
-    const totalTime = '03:00'; // Default to 3 hours as shown in design
+    const totalTime = '03:00:00'; // Default to 3 hours as shown in design
     
     return {
-      score: results.marks_obtained.toFixed(2),
+      score: formatScore(results.marks_obtained),
       totalMarks: results.total_marks,
       rank: results.rank,
       totalTestTakers: results.total_test_takers.toLocaleString(),
-      percentile: results.percentile.toFixed(1),
-      accuracy,
+      percentile: formatPercentage(results.percentile),
+      accuracy: formatPercentage(parseFloat(accuracy)),
       attemptedCount: attempted,
       timeTaken,
       totalTime,
       correct: totalCorrect,
       incorrect: totalIncorrect,
       skipped: totalSkipped,
-      attemptRate,
+      attemptRate: formatPercentage(parseFloat(attemptRate)),
       totalQuestions,
     };
   }, [sessionResult]);
@@ -319,7 +321,7 @@ const NewPerformanceAnalysisDashboard: React.FC<NewPerformanceAnalysisDashboardP
           <KpiCard
             title="Percentile"
             value={`${kpiData.percentile}%`}
-            subtext={`Top ${(100 - parseFloat(kpiData.percentile)).toFixed(1)}%`}
+            subtext={`Top ${formatPercentage(100 - parseFloat(kpiData.percentile))}%`}
             icon={PieChart}
             isPrimary
           />

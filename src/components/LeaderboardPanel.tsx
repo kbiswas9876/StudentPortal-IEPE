@@ -12,6 +12,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { usePagination, DOTS } from '@/hooks/usePagination';
+import { formatScore } from '@/utils/formatNumber';
 
 interface LeaderboardEntry {
   rank: number;
@@ -230,7 +231,7 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({ testId, curr
                     {row.name}
                   </td>
                   <td className={`p-4 whitespace-nowrap text-sm ${row.isCurrentUser ? 'text-indigo-700 font-bold' : 'text-slate-600'}`}>
-                    {row.score.toFixed(2)} / {row.totalMarks}
+                    {formatScore(row.score)} / {row.totalMarks}
                   </td>
                   <td className="p-4 whitespace-nowrap text-sm text-center">
                     <div className="flex items-center justify-center space-x-3">
