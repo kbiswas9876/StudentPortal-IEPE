@@ -7,6 +7,7 @@ interface KpiCardProps {
   subtext: string;
   icon: LucideIcon;
   isPrimary?: boolean;
+  isLoading?: boolean;
 }
 
 /**
@@ -19,7 +20,8 @@ const KpiCard: React.FC<KpiCardProps> = ({
   value, 
   subtext, 
   icon, 
-  isPrimary = false 
+  isPrimary = false,
+  isLoading = false
 }) => {
   const IconComponent = icon;
   const primaryClasses = isPrimary ? 'border-2 border-indigo-200' : '';
@@ -28,7 +30,18 @@ const KpiCard: React.FC<KpiCardProps> = ({
   const subtextColor = isPrimary ? 'text-indigo-500' : 'text-slate-500';
 
   return (
-    <div className={`glass-card group kpi-card lg:col-span-1 ${primaryClasses}`}>
+    <div className={`glass-card group kpi-card lg:col-span-1 ${primaryClasses} ${isLoading ? 'relative' : ''}`}>
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-sm rounded-2xl flex items-center justify-center z-10">
+          <div className="flex flex-col items-center gap-2">
+            <svg className="animate-spin h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span className="text-xs text-indigo-600 font-medium">Updating...</span>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col h-full">
         <h3 className={`text-sm font-medium ${titleColor}`}>{title}</h3>
         <p className={`text-3xl font-bold ${valueColor} mt-2`}>{value}</p>

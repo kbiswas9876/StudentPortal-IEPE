@@ -29,7 +29,7 @@ const ComparisonPanel: React.FC<ComparisonPanelProps> = ({ comparisonData }) => 
           <div className="text-6xl mb-4">🏆</div>
           <h3 className="text-2xl font-bold text-indigo-600 mb-2">Congratulations!</h3>
           <p className="text-slate-600 text-center max-w-md">
-            You are the top performer in this test! There's no one to compare with because you've achieved the highest score.
+            You are the top performer in this test! There&apos;s no one to compare with because you&apos;ve achieved the highest score.
           </p>
           <p className="text-slate-500 text-sm mt-4">
             Keep up the excellent work!
