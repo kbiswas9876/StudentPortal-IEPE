@@ -81,16 +81,25 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({ testId, curr
       return;
     }
 
+    if (!currentUserId) {
+      setError('User ID not available');
+      setLoading(false);
+      return;
+    }
+
     const fetchLeaderboard = async () => {
       try {
         setError(null);
-        const response = await fetch(`/api/analysis/leaderboard/${testId}?page=${currentPage}&limit=${itemsPerPage}`);
+        const response = await fetch(`/api/analysis/leaderboard/${testId}?page=${currentPage}&limit=${itemsPerPage}&userId=${currentUserId}`);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch leaderboard data');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch leaderboard data');
         }
 
-        const data = await response.json();
+        const result = await response.json();
+        const data = result.data || result; // Handle both response formats
+        
         setLeaderboardData(data.entries || []);
         setTotalEntries(data.totalEntries || 0);
         setCurrentUserRank(data.currentUserRank);
@@ -104,6 +113,7 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({ testId, curr
           }
         }
       } catch (err) {
+        console.error('Leaderboard fetch error:', err);
         setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
       } finally {
         setLoading(false);
@@ -112,7 +122,7 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({ testId, curr
     };
 
     fetchLeaderboard();
-  }, [testId, currentPage, itemsPerPage]);
+  }, [testId, currentUserId, currentPage, itemsPerPage, loading]);
 
   const totalPages = Math.ceil(totalEntries / itemsPerPage);
 
