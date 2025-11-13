@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Medal as MedalIcon, 
   ChevronLeft, 
@@ -8,7 +8,8 @@ import {
   MoreHorizontal,
   CheckCircle,
   XCircle,
-  MinusCircle
+  MinusCircle,
+  Loader2
 } from 'lucide-react';
 import { usePagination, DOTS } from '@/hooks/usePagination';
 
@@ -64,49 +65,115 @@ const formatTime = (seconds: number): string => {
 export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({ testId, currentUserId }) => {
   const itemsPerPage = 10;
   
-  // TODO: Replace with actual API call to /api/analysis/leaderboard/[testId]
-  // For now, using dummy data
-  const [fullLeaderboardData] = useState<LeaderboardEntry[]>(() => {
-    // Dummy data - will be replaced with API call
-    const dummyData: LeaderboardEntry[] = [];
-    for (let i = 1; i <= 100; i++) {
-      dummyData.push({
-        rank: i,
-        userId: `user-${i}`,
-        name: i === 52 ? 'You' : `Student ${i}`,
-        score: 200 - (i * 0.5),
-        totalMarks: 200,
-        correct: Math.max(0, 85 - i),
-        incorrect: Math.min(85, Math.floor(i / 2)),
-        skipped: Math.min(85, Math.floor(i / 5)),
-        timeTaken: 7200 + (i * 60),
-        isCurrentUser: i === 52
-      });
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalEntries, setTotalEntries] = useState(0);
+  const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isChangingPage, setIsChangingPage] = useState(false);
+
+  // Fetch leaderboard data
+  useEffect(() => {
+    if (!testId) {
+      setError('Test ID not available');
+      setLoading(false);
+      return;
     }
-    return dummyData;
-  });
 
-  // Find the user's page
-  const userIndex = fullLeaderboardData.findIndex(item => item.isCurrentUser);
-  const initialPage = userIndex >= 0 ? Math.floor(userIndex / itemsPerPage) + 1 : 1;
-  
-  const [currentPage, setCurrentPage] = useState(initialPage);
+    const fetchLeaderboard = async () => {
+      try {
+        setError(null);
+        const response = await fetch(`/api/analysis/leaderboard/${testId}?page=${currentPage}&limit=${itemsPerPage}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch leaderboard data');
+        }
 
-  const totalPages = Math.ceil(fullLeaderboardData.length / itemsPerPage);
+        const data = await response.json();
+        setLeaderboardData(data.entries || []);
+        setTotalEntries(data.totalEntries || 0);
+        setCurrentUserRank(data.currentUserRank);
+        
+        // Set initial page to user's page on first load
+        if (loading && data.currentUserRank) {
+          const userPage = Math.floor((data.currentUserRank - 1) / itemsPerPage) + 1;
+          if (userPage !== currentPage) {
+            setCurrentPage(userPage);
+            return; // Will trigger another fetch with correct page
+          }
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load leaderboard');
+      } finally {
+        setLoading(false);
+        setIsChangingPage(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, [testId, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(totalEntries / itemsPerPage);
 
   // Get pagination items
   const paginationRange = usePagination({ totalPages, currentPage });
 
-  // Calculate data for the current page
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentLeaderboardData = fullLeaderboardData.slice(startIndex, endIndex);
-
   const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
+    if (page >= 1 && page <= totalPages && !isChangingPage) {
+      setIsChangingPage(true);
       setCurrentPage(page);
     }
   };
+
+  const retryFetch = () => {
+    setLoading(true);
+    setError(null);
+    setCurrentPage(1);
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div role="tabpanel" aria-labelledby="tab-leaderboard">
+        <h2 className="text-xl font-semibold text-slate-800 mb-4">Leaderboard</h2>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+          <span className="ml-3 text-slate-600">Loading leaderboard...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div role="tabpanel" aria-labelledby="tab-leaderboard">
+        <h2 className="text-xl font-semibold text-slate-800 mb-4">Leaderboard</h2>
+        <div className="text-center py-12">
+          <p className="text-red-600 font-semibold mb-4">{error}</p>
+          <button
+            onClick={retryFetch}
+            className="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (leaderboardData.length === 0) {
+    return (
+      <div role="tabpanel" aria-labelledby="tab-leaderboard">
+        <h2 className="text-xl font-semibold text-slate-800 mb-4">Leaderboard</h2>
+        <div className="text-center py-12">
+          <p className="text-slate-600">No leaderboard data available.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div role="tabpanel" aria-labelledby="tab-leaderboard">
@@ -135,7 +202,7 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({ testId, curr
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-slate-200">
-            {currentLeaderboardData.map((row) => {
+            {leaderboardData.map((row) => {
               const numberClass = row.isCurrentUser ? 'font-bold text-indigo-700' : 'text-slate-600';
               
               return (
@@ -185,11 +252,15 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({ testId, curr
       <nav className="flex items-center justify-center space-x-1 mt-6">
         <button
           onClick={() => goToPage(currentPage - 1)}
-          disabled={currentPage === 1}
+          disabled={currentPage === 1 || isChangingPage}
           className="flex items-center justify-center w-9 h-9 text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           aria-label="Previous page"
         >
-          <ChevronLeft size={18} />
+          {isChangingPage && currentPage > 1 ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : (
+            <ChevronLeft size={18} />
+          )}
         </button>
 
         {paginationRange.map((pageNumber, index) => {
@@ -207,7 +278,8 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({ testId, curr
             <button
               key={key}
               onClick={() => goToPage(pageNumber as number)}
-              className={`flex items-center justify-center w-9 h-9 border rounded-md text-sm font-medium transition-colors
+              disabled={isChangingPage}
+              className={`flex items-center justify-center w-9 h-9 border rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                 ${isActive 
                   ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
                   : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
@@ -221,11 +293,15 @@ export const LeaderboardPanel: React.FC<LeaderboardPanelProps> = ({ testId, curr
 
         <button
           onClick={() => goToPage(currentPage + 1)}
-          disabled={currentPage === totalPages}
+          disabled={currentPage === totalPages || isChangingPage}
           className="flex items-center justify-center w-9 h-9 text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           aria-label="Next page"
         >
-          <ChevronRight size={18} />
+          {isChangingPage && currentPage < totalPages ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : (
+            <ChevronRight size={18} />
+          )}
         </button>
       </nav>
     </div>

@@ -80,12 +80,12 @@ export default function AnalysisReportPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-center p-4">
-        <div>
-          <h2 className="text-xl font-bold text-red-600 mb-2">Failed to load analysis</h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-4">{error}</p>
+        <div className="max-w-md">
+          <h2 className="text-2xl font-bold text-red-600 mb-3">Failed to Load Analysis</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">{error}</p>
           <button
             onClick={fetchData}
-            className="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700"
+            className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-lg hover:shadow-indigo-400/50"
           >
             Retry
           </button>
@@ -97,7 +97,10 @@ export default function AnalysisReportPage() {
   if (!sessionResult) {
     return (
        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-center p-4">
-          <p className="text-slate-600 dark:text-slate-400">No analysis data found for this result.</p>
+          <div className="max-w-md">
+            <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">No Data Available</h2>
+            <p className="text-slate-600 dark:text-slate-400">No analysis data found for this result.</p>
+          </div>
        </div>
     )
   }

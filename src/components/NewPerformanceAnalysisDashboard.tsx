@@ -65,8 +65,16 @@ const NewPerformanceAnalysisDashboard: React.FC<NewPerformanceAnalysisDashboardP
   className = '',
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [isVisible, setIsVisible] = useState(false);
+  const [tabContentKey, setTabContentKey] = useState(0);
 
-  // Inject global CSS styles
+  // Handle tab change with animation
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    setTabContentKey(prev => prev + 1);
+  };
+
+  // Inject global CSS styles and trigger fade-in animation
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
@@ -114,10 +122,41 @@ const NewPerformanceAnalysisDashboard: React.FC<NewPerformanceAnalysisDashboardP
         color: #4f46e5;
         font-weight: 600;
       }
+      
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      .dashboard-fade-in {
+        animation: fadeInUp 0.6s ease-out forwards;
+      }
+      
+      .dashboard-hidden {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      
+      .tab-content-fade {
+        animation: fadeInUp 0.4s ease-out forwards;
+      }
     `;
     document.head.appendChild(style);
+    
+    // Trigger fade-in animation after a brief delay
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 50);
+    
     return () => {
       document.head.removeChild(style);
+      clearTimeout(timer);
     };
   }, []);
 
@@ -243,7 +282,7 @@ const NewPerformanceAnalysisDashboard: React.FC<NewPerformanceAnalysisDashboardP
   ];
 
   return (
-    <div className={`max-w-7xl mx-auto ${className}`}>
+    <div className={`max-w-7xl mx-auto ${className} ${isVisible ? 'dashboard-fade-in' : 'dashboard-hidden'}`}>
       {/* Header Section */}
       <header className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -332,7 +371,7 @@ const NewPerformanceAnalysisDashboard: React.FC<NewPerformanceAnalysisDashboardP
               aria-controls={`tab-${tab.id}`}
               role="tab"
               aria-selected={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
             >
               {tab.label}
             </button>
@@ -340,7 +379,7 @@ const NewPerformanceAnalysisDashboard: React.FC<NewPerformanceAnalysisDashboardP
         </nav>
 
         {/* Tab Panels */}
-        <div className="pt-6">
+        <div key={tabContentKey} className="pt-6 tab-content-fade">
           {activeTab === 'overview' && (
             <OverviewPanel
               correct={kpiData.correct}
