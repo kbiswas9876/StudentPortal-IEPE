@@ -218,3 +218,39 @@ export function extractDynamicData(apiResponse: any): DynamicAnalysisData {
     topperResult: topperResult || undefined
   };
 }
+
+/**
+ * Get cache statistics for monitoring
+ */
+export function getCacheStats(): {
+  totalEntries: number;
+  cacheKeys: string[];
+  estimatedSize: number;
+} {
+  try {
+    const keys = Object.keys(localStorage);
+    const analysisKeys = keys.filter(key => key.startsWith(CACHE_PREFIX));
+    
+    // Estimate size in bytes
+    let estimatedSize = 0;
+    analysisKeys.forEach(key => {
+      const value = localStorage.getItem(key);
+      if (value) {
+        estimatedSize += key.length + value.length;
+      }
+    });
+    
+    return {
+      totalEntries: analysisKeys.length,
+      cacheKeys: analysisKeys,
+      estimatedSize
+    };
+  } catch (error) {
+    console.warn('Failed to get cache stats:', error);
+    return {
+      totalEntries: 0,
+      cacheKeys: [],
+      estimatedSize: 0
+    };
+  }
+}

@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
 import { Database } from '@/types/database'
+import { getCachedStaticData, cacheStaticData, extractStaticData } from '@/utils/analysisCache'
  // AnalysisSkeletonLoader dynamically imported below to avoid server bundling framer-motion
 import nextDynamic from 'next/dynamic'
 // Dynamically import client-only components to avoid server bundling framer-motion
@@ -57,6 +58,7 @@ export default function DetailedSolutionReviewPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
+  const [loadedFromCache, setLoadedFromCache] = useState(false)
 
   // Track which question is currently being reviewed (index in original order)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
@@ -194,6 +196,34 @@ export default function DetailedSolutionReviewPage() {
   }, [loading])
 
   const fetchSessionData = async (isRetry = false) => {
+    const resultIdStr = String(resultId)
+    
+    // Try to load from cache first (only on initial load, not retries)
+    if (!isRetry) {
+      const cachedStatic = getCachedStaticData(resultIdStr)
+      
+      if (cachedStatic) {
+        console.log('⚡ [Solutions] Loading from cache for instant display')
+        
+        // Build session data from cached static data
+        const cachedSessionData: SessionData = {
+          testResult: cachedStatic.testResult as any,
+          answerLog: cachedStatic.answerLog,
+          questions: cachedStatic.questions,
+          peerAverages: {} // Will be populated if needed
+        }
+        
+        setSessionData(cachedSessionData)
+        setLoadedFromCache(true)
+        setLoading(false)
+        
+        // Continue to fetch fresh data in background (for any updates)
+        fetchFreshData(resultIdStr)
+        return
+      }
+    }
+    
+    // No cache or retry - fetch normally
     try {
       setLoading(true)
       if (isRetry) {
@@ -201,7 +231,7 @@ export default function DetailedSolutionReviewPage() {
         setRetryCount((prev) => prev + 1)
       }
 
-      const response = await fetch(`/api/analysis/${resultId}`)
+      const response = await fetch(`/api/analysis/${resultIdStr}`)
       const result = await response.json()
 
       if (!response.ok) {
@@ -209,6 +239,13 @@ export default function DetailedSolutionReviewPage() {
       }
 
       setSessionData(result.data as SessionData)
+      
+      // Cache the static data for future visits
+      if (!isRetry) {
+        const staticData = extractStaticData(result.data)
+        cacheStaticData(resultIdStr, staticData)
+        console.log('✅ [Solutions] Data cached for future visits')
+      }
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to fetch session data'
@@ -220,6 +257,28 @@ export default function DetailedSolutionReviewPage() {
       }
     } finally {
       setLoading(false)
+    }
+  }
+  
+  // Fetch fresh data in background (when loaded from cache)
+  const fetchFreshData = async (resultIdStr: string) => {
+    try {
+      console.log('🔄 [Solutions] Fetching fresh data in background...')
+      const response = await fetch(`/api/analysis/${resultIdStr}`)
+      const result = await response.json()
+      
+      if (response.ok) {
+        // Update with fresh data (in case anything changed)
+        setSessionData(result.data as SessionData)
+        
+        // Update cache with fresh data
+        const staticData = extractStaticData(result.data)
+        cacheStaticData(resultIdStr, staticData)
+        console.log('✅ [Solutions] Fresh data loaded and cache updated')
+      }
+    } catch (err) {
+      console.warn('⚠️ [Solutions] Background fetch failed (non-critical):', err)
+      // Non-critical error - cached data is already displayed
     }
   }
 
