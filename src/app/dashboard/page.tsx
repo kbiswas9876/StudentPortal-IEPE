@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/lib/auth-context'
+import { useSidebar } from '@/lib/sidebar-context'
 import { supabase } from '@/lib/supabaseClient'
 import { Database } from '@/types/database'
 import { PracticeSessionConfig, QuestionSelection } from '@/types/practice'
@@ -14,6 +15,7 @@ import AccessHub from '@/components/AccessHub'
 import SupabaseTest from '@/components/SupabaseTest'
 import DashboardSkeletonLoader from '@/components/DashboardSkeletonLoader'
 import { BookAccordionSkeleton, RecentReportsSkeleton } from '@/components/SkeletonLoader'
+import { getCachedDashboardData, cacheDashboardData } from '@/utils/dashboardCache'
 
 type BookSource = Database['public']['Tables']['book_sources']['Row']
 
@@ -26,6 +28,7 @@ type TestResult = Database['public']['Tables']['test_results']['Row']
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
+  const { isCollapsed: sidebarCollapsed } = useSidebar()
   const router = useRouter()
   const [books, setBooks] = useState<BookSourceWithStats[]>([])
   const [recentReports, setRecentReports] = useState<TestResult[]>([])
@@ -36,14 +39,10 @@ export default function DashboardPage() {
   const [sessionLoading, setSessionLoading] = useState(false)
   const [currentSessionConfig, setCurrentSessionConfig] = useState<PracticeSessionConfig | null>(null)
   const [activeTab, setActiveTab] = useState<'practice' | 'saved'>('practice')
+  const [isLoadingFromCache, setIsLoadingFromCache] = useState(false)
   
   // Ref to track if data has been fetched to prevent duplicate calls
   const dataFetchedRef = useRef(false)
-  
-  // Reset loading state on component mount
-  useEffect(() => {
-    setLoading(false)
-  }, [])
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -53,20 +52,39 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user && !dataFetchedRef.current) {
-      console.log('Triggering fetchDashboardData for user:', user.id)
+      console.log('Triggering hybrid loading for user:', user.id)
       dataFetchedRef.current = true
-      fetchDashboardData()
       
-      // Fallback timeout to ensure loading state doesn't get stuck
+      // HYBRID LOADING STRATEGY
+      // Step 1: Try to load from cache instantly
+      const cachedData = getCachedDashboardData()
+      
+      if (cachedData && cachedData.books.length > 0) {
+        console.log('📦 Loading from cache instantly')
+        setBooks(cachedData.books)
+        setIsLoadingFromCache(true)
+        setLoading(false)
+        setBooksLoading(false)
+        
+        // Step 2: Fetch fresh data in background
+        console.log('🔄 Fetching fresh data in background...')
+        fetchDashboardDataInBackground()
+      } else {
+        // No cache: Show loading and fetch
+        console.log('⏳ No cache found, fetching data...')
+        setLoading(true)
+        fetchDashboardData()
+      }
+      
+      // Fallback timeout
       const timeoutId = setTimeout(() => {
         console.log('Fallback: Setting loading to false after timeout')
         setLoading(false)
-      }, 10000) // 10 second timeout
+      }, 10000)
       
       return () => clearTimeout(timeoutId)
     }
   }, [user])
-
 
   const fetchDashboardData = async () => {
     try {
@@ -82,11 +100,43 @@ export default function DashboardPage() {
       console.log('Dashboard data fetched:', { books: booksResult.length, reports: reportsResult.length })
       setBooks(booksResult)
       setRecentReports(reportsResult)
+      
+      // Cache the books data
+      if (booksResult.length > 0) {
+        cacheDashboardData(booksResult)
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
       console.log('Setting loading to false')
       setLoading(false)
+      setIsLoadingFromCache(false)
+    }
+  }
+
+  const fetchDashboardDataInBackground = async () => {
+    try {
+      // Fetch fresh data without showing loading state
+      const [booksResult, reportsResult] = await Promise.all([
+        fetchBooks(),
+        fetchRecentReports()
+      ])
+
+      console.log('✅ Background fetch complete, updating data smoothly')
+      
+      // Smooth update: only update if data changed
+      setBooks(booksResult)
+      setRecentReports(reportsResult)
+      
+      // Update cache with fresh data
+      if (booksResult.length > 0) {
+        cacheDashboardData(booksResult)
+      }
+      
+      setIsLoadingFromCache(false)
+    } catch (error) {
+      console.error('Error in background fetch:', error)
+      setIsLoadingFromCache(false)
     }
   }
 
@@ -259,7 +309,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
       {booksLoading ? (
         <DashboardSkeletonLoader />
       ) : books.length === 0 ? (
@@ -279,7 +329,7 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <div className="w-full px-6 py-8 max-w-[1920px] mx-auto">
+        <div className="w-full">
           {/* Tab Navigation */}
           <div className="mb-8">
             <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
@@ -320,9 +370,10 @@ export default function DashboardPage() {
                 setCurrentSessionConfig(config)
               }}
               sessionLoading={sessionLoading}
+              sidebarCollapsed={sidebarCollapsed}
             />
           ) : (
-            <div className="w-full max-h-[calc(100vh-12rem)] overflow-y-auto">
+            <div className="w-full pb-24">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
                   Saved Practice Sessions

@@ -29,6 +29,7 @@ interface PremiumPracticeSetupProps {
   onTotalQuestionsChange: (total: number) => void
   onSessionConfigChange: (config: PracticeSessionConfig | null) => void
   sessionLoading?: boolean
+  sidebarCollapsed?: boolean
 }
 
 export default function PremiumPracticeSetup({
@@ -36,7 +37,8 @@ export default function PremiumPracticeSetup({
   onSessionStart,
   onTotalQuestionsChange,
   onSessionConfigChange,
-  sessionLoading = false
+  sessionLoading = false,
+  sidebarCollapsed = false
 }: PremiumPracticeSetupProps) {
   const [selectedBook, setSelectedBook] = useState<string | null>(null)
   const [chapters, setChapters] = useState<Record<string, ChapterData[]>>({})
@@ -240,11 +242,11 @@ export default function PremiumPracticeSetup({
 
   return (
     <div className="w-full">
-      <div className="w-full px-0 py-0 max-h-[calc(100vh-8rem)] overflow-y-auto">
+      <div className="w-full px-0 py-0 pt-4">
         {/* Mobile-First Layout */}
-        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-8 lg:min-h-[calc(100vh-12rem)] pb-24 sm:pb-20">
-          {/* Mobile: Books & Chapters First, Desktop: Left Column (wider - 75% of space) */}
-          <div className="lg:col-span-9 flex flex-col">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-6 xl:gap-8 pb-24 sm:pb-20">
+          {/* Mobile: Books & Chapters First, Desktop: Left Column (67% of space) */}
+          <div className="lg:col-span-8 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -257,7 +259,7 @@ export default function PremiumPracticeSetup({
               
               {/* Mobile: Full height, Desktop: Scrollable */}
               <div className="flex-1 lg:overflow-y-auto lg:pr-2">
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-2 gap-6 items-start">
                   {books.map((book) => (
                     <PremiumBookCard
                       key={book.id}
@@ -276,20 +278,20 @@ export default function PremiumPracticeSetup({
             </motion.div>
           </div>
 
-          {/* Mobile: Settings Second, Desktop: Right Column (narrower - 25% of space) */}
-          <div className="lg:col-span-3 flex flex-col">
+          {/* Mobile: Settings Second, Desktop: Right Column (33% of space) */}
+          <div className="lg:col-span-4 flex flex-col">
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex-1 flex flex-col space-y-4 lg:max-h-[calc(100vh-20rem)] lg:overflow-y-auto lg:pr-2 lg:border-t lg:border-b lg:border-slate-200 dark:lg:border-slate-700 lg:pt-4 lg:pb-4"
+              className="flex-1 flex flex-col space-y-4 lg:min-w-0"
             >
               {/* Card 1: Session Settings */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 }}
-                className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3 sm:p-4 shadow-lg"
+                className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 sm:p-5 shadow-lg"
               >
                 <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3 sm:mb-4">
                   Session Settings
@@ -429,6 +431,7 @@ export default function PremiumPracticeSetup({
         onStartSession={handleStartSession}
         disabled={getTotalQuestions() === 0}
         loading={sessionLoading}
+        sidebarCollapsed={sidebarCollapsed}
       />
     </div>
   )

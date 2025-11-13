@@ -1,28 +1,48 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface StickyActionFooterProps {
   totalQuestions: number
   onStartSession: () => void
   disabled?: boolean
   loading?: boolean
+  sidebarCollapsed?: boolean
 }
 
 export default function StickyActionFooter({
   totalQuestions,
   onStartSession,
   disabled = false,
-  loading = false
+  loading = false,
+  sidebarCollapsed = false
 }: StickyActionFooterProps) {
+  const pathname = usePathname()
+  
+  // Determine if sidebar should be shown (replicating AppLayout logic)
+  const hideSidebar = pathname?.includes('/practice') || 
+                     pathname?.includes('/instructions') || 
+                     pathname?.includes('/solutions') ||
+                     pathname === '/login'
   return (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-lg z-50"
+      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-lg z-40"
     >
-      <div className="max-w-[1920px] mx-auto px-6 py-3 sm:py-4">
+      {/* Adaptive container that responds to sidebar state */}
+      <div className={`
+        transition-all duration-300 ease-in-out
+        ${!hideSidebar ? (
+          sidebarCollapsed 
+            ? 'ml-20' 
+            : 'ml-[280px]'
+        ) : ''}
+      `}>
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
         {/* Mobile Layout */}
         <div className="flex flex-col space-y-3 sm:hidden">
           {/* Total Questions Count - Mobile */}
@@ -71,10 +91,10 @@ export default function StickyActionFooter({
           </motion.button>
         </div>
 
-        {/* Desktop Layout - Aligned with 12-column grid (9/3 split) */}
-        <div className="hidden sm:grid sm:grid-cols-12 sm:gap-8 sm:items-center">
-          {/* Left side (9 columns) - Total Questions Count */}
-          <div className="sm:col-span-9 flex items-center space-x-3">
+        {/* Adaptive Desktop Layout */}
+        <div className="hidden sm:flex sm:items-center sm:justify-between">
+          {/* Left side - Total Questions Count (anchored to left) */}
+          <div className="flex items-center space-x-3">
             <div className="text-sm text-slate-600 dark:text-slate-400">
               Total Questions Selected:
             </div>
@@ -89,37 +109,41 @@ export default function StickyActionFooter({
             </motion.div>
           </div>
 
-          {/* Right side (3 columns) - Start Session Button aligned with Session Settings */}
-          <div className="sm:col-span-3">
-            <motion.button
-              onClick={onStartSession}
-              disabled={disabled || loading}
-              className={`w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-semibold text-lg transition-all duration-200 ${
-                disabled || loading
-                  ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
-              }`}
-              whileHover={!disabled && !loading ? { scale: 1.02 } : {}}
-              whileTap={!disabled && !loading ? { scale: 0.98 } : {}}
-            >
-              {loading ? (
-                <>
-                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Starting...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-5-8V6a2 2 0 012-2h2a2 2 0 012 2v2M7 7h10a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" />
-                  </svg>
-                  <span>Start Practice Session</span>
-                </>
-              )}
-            </motion.button>
+          {/* Right side - Dynamic Button Container */}
+          <div className="flex justify-end">
+            {/* Spacer to push button to align with Session Settings */}
+            <div className="w-full max-w-xs">
+              <motion.button
+                onClick={onStartSession}
+                disabled={disabled || loading}
+                className={`w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-semibold text-base transition-all duration-200 ${
+                  disabled || loading
+                    ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
+                }`}
+                whileHover={!disabled && !loading ? { scale: 1.02 } : {}}
+                whileTap={!disabled && !loading ? { scale: 0.98 } : {}}
+              >
+                {loading ? (
+                  <>
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Starting...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h8m-5-8V6a2 2 0 012-2h2a2 2 0 012 2v2M7 7h10a2 2 0 012 2v8a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z" />
+                    </svg>
+                    <span>Start Practice Session</span>
+                  </>
+                )}
+              </motion.button>
+            </div>
           </div>
+        </div>
         </div>
       </div>
     </motion.div>

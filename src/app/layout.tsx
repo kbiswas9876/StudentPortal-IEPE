@@ -3,10 +3,11 @@ import React from 'react'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
+import { SidebarProvider } from '@/lib/sidebar-context'
 import { ThemeProvider } from '@/lib/theme-context'
 import { ToastProvider } from '@/lib/toast-context'
-import ConditionalHeader from '@/components/ConditionalHeader'
 import { ChartJsProvider } from '@/components/ChartJsProvider'
+import { AppLayout } from '@/components/layout'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -26,12 +27,13 @@ export default function RootLayout({
         <ChartJsProvider>
           <ThemeProvider>
             <AuthProvider>
-              <ToastProvider>
-                <ConditionalHeader />
-                <main className="min-h-screen">
-                  {children}
-                </main>
-              </ToastProvider>
+              <SidebarProvider>
+                <ToastProvider>
+                  <AppLayout>
+                    {children}
+                  </AppLayout>
+                </ToastProvider>
+              </SidebarProvider>
             </AuthProvider>
           </ThemeProvider>
         </ChartJsProvider>

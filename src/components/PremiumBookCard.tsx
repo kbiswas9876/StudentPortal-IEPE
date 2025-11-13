@@ -122,7 +122,7 @@ export default function PremiumBookCard({
           <motion.div
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={{ duration: 0.3 }}
-            className="ml-2 p-2 rounded-lg bg-slate-100 dark:bg-slate-700 flex-shrink-0"
+            className="ml-2 p-2 rounded-lg bg-slate-100 dark:bg-slate-700 flex-shrink-0 self-start"
           >
             <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -163,7 +163,7 @@ export default function PremiumBookCard({
                   </p>
                 </div>
               ) : (
-                <div className="max-h-80 sm:max-h-96 overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
+                <div className="max-h-80 sm:max-h-96 overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
                   {chapters.map((chapter, index) => {
                     const config = chapterConfigs[chapter.chapter_name] || {
                       selected: false,
@@ -174,24 +174,24 @@ export default function PremiumBookCard({
                     return (
                       <motion.div
                         key={chapter.chapter_name}
-                        className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3 border border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-shadow"
+                        className="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-4 border border-slate-200 dark:border-slate-600 shadow-sm hover:shadow-md transition-shadow"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        {/* Robust two-line layout for professional appearance */}
-                        <div className="space-y-2">
+                        {/* Enhanced layout with better spacing */}
+                        <div className="space-y-3">
                           {/* First Line: Checkbox and Chapter Info */}
-                          <div className="flex items-center">
+                          <div className="flex items-start">
                             <CustomCheckbox
                               checked={config.selected}
                               onChange={(selected) => handleChapterSelect(chapter.chapter_name, selected)}
                             />
                             <div className="ml-3 flex-1 min-w-0">
-                              <h4 className="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                              <h4 className="font-medium text-slate-900 dark:text-slate-100 text-sm leading-relaxed">
                                 {chapter.chapter_name}
                               </h4>
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
                                 {chapter.count} questions available
                               </p>
                             </div>

@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* MUI Sidebar Custom Styles */
+.MuiDrawer-paper {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.1);
+}
+
+.MuiListItemButton-root {
+  border-radius: 12px !important;
+}
+
+.MuiMenu-paper {
+  backdrop-filter: blur(20px) !important;
+}
+
 /* Import design tokens */
 @import '../styles/tokens.css';
 
@@ -359,3 +373,98 @@ a {
 }
 
 /* Remove old slider styles - no longer needed */
+
+/* ============================================================================ */
+/* PREMIUM SIDEBAR STYLES */
+/* ============================================================================ */
+
+/* Premium sidebar glassmorphic styling */
+.premium-sidebar {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(31, 38, 135, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dark .premium-sidebar {
+  background: rgba(15, 23, 42, 0.85);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Mobile sidebar styling */
+.premium-sidebar-mobile {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 16px 48px rgba(31, 38, 135, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.dark .premium-sidebar-mobile {
+  background: rgba(15, 23, 42, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for sidebar */
+.premium-sidebar::-webkit-scrollbar,
+.premium-sidebar-mobile::-webkit-scrollbar {
+  width: 6px;
+}
+
+.premium-sidebar::-webkit-scrollbar-track,
+.premium-sidebar-mobile::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.premium-sidebar::-webkit-scrollbar-thumb,
+.premium-sidebar-mobile::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 3px;
+}
+
+.premium-sidebar::-webkit-scrollbar-thumb:hover,
+.premium-sidebar-mobile::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.dark .premium-sidebar::-webkit-scrollbar-thumb,
+.dark .premium-sidebar-mobile::-webkit-scrollbar-thumb {
+  background: rgba(71, 85, 105, 0.5);
+}
+
+.dark .premium-sidebar::-webkit-scrollbar-thumb:hover,
+.dark .premium-sidebar-mobile::-webkit-scrollbar-thumb:hover {
+  background: rgba(71, 85, 105, 0.7);
+}
+
+/* Custom border utilities */
+.border-l-3 {
+  border-left-width: 3px;
+}
+
+/* Layout margin utilities for sidebar spacing */
+.lg\:ml-70 {
+  margin-left: 280px;
+}
+
+.lg\:ml-20 {
+  margin-left: 80px;
+}
+
+@media (min-width: 1024px) {
+  .lg\:ml-70 {
+    margin-left: 280px;
+  }
+  .lg\:ml-20 {
+    margin-left: 80px;
+  }
+}
