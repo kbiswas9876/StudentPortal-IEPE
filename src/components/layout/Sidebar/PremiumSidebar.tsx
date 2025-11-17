@@ -255,15 +255,24 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                   className={`
                     flex items-center justify-between gap-3 px-4 py-3
                     transition-all duration-300 cursor-pointer
-                    ${isActive('/dashboard') 
-                      ? 'bg-slate-100 text-indigo-900' 
+                    ${isActive('/dashboard')
+                      ? 'bg-indigo-100 text-indigo-900' 
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                     }
                   `}
-                  onClick={() => setIsPracticeMenuOpen(!isPracticeMenuOpen)}
+                  onClick={() => {
+                    if (pathname !== '/dashboard' && pathname !== '/') {
+                      router.push('/dashboard');
+                    }
+                    setActiveTab('practice');
+                    setIsPracticeMenuOpen(true);
+                    if (isMobile) {
+                      onClose();
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <HomeIcon className={`w-5 h-5 ${isActive('/dashboard') ? 'text-indigo-600' : ''}`} />
+                    <HomeIcon className={`w-5 h-5 ${isActive('/dashboard') ? 'text-indigo-700' : ''}`} />
                     <span className="font-medium text-sm">Practice Dashboard</span>
                   </div>
                   <ChevronDownIcon
@@ -273,17 +282,17 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                   />
                 </div>
                 <AnimatePresence>
-                  {isPracticeMenuOpen && (
+                  {isPracticeMenuOpen && isActive('/dashboard') && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="pl-8 pr-4 py-1 space-y-1">
+                      <div className="relative pl-8 pr-4 py-1 space-y-1 before:absolute before:left-[42px] before:top-0 before:bottom-0 before:w-0.5 before:bg-slate-200">
                         <div
                           className={`
-                            flex items-center gap-3 px-4 py-2 rounded-lg
+                            flex items-center gap-3 px-4 py-2
                             transition-all duration-200 cursor-pointer text-sm
                             ${activeTab === 'practice'
                               ? 'bg-indigo-50 text-indigo-700 font-semibold'
@@ -296,7 +305,7 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                         </div>
                         <div
                           className={`
-                            flex items-center gap-3 px-4 py-2 rounded-lg
+                            flex items-center gap-3 px-4 py-2
                             transition-all duration-200 cursor-pointer text-sm
                             ${activeTab === 'saved'
                               ? 'bg-indigo-50 text-indigo-700 font-semibold'
