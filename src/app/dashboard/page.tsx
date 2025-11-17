@@ -15,6 +15,7 @@ import AccessHub from '@/components/AccessHub'
 import SupabaseTest from '@/components/SupabaseTest'
 import DashboardSkeletonLoader from '@/components/DashboardSkeletonLoader'
 import { BookAccordionSkeleton, RecentReportsSkeleton } from '@/components/SkeletonLoader'
+import { useDashboard } from '@/lib/dashboard-context'
 import { getCachedDashboardData, cacheDashboardData } from '@/utils/dashboardCache'
 
 type BookSource = Database['public']['Tables']['book_sources']['Row']
@@ -29,6 +30,7 @@ type TestResult = Database['public']['Tables']['test_results']['Row']
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth()
   const { isCollapsed: sidebarCollapsed } = useSidebar()
+  const { activeTab, setActiveTab } = useDashboard()
   const router = useRouter()
   const [books, setBooks] = useState<BookSourceWithStats[]>([])
   const [recentReports, setRecentReports] = useState<TestResult[]>([])
@@ -38,7 +40,6 @@ export default function DashboardPage() {
   const [totalQuestions, setTotalQuestions] = useState(0)
   const [sessionLoading, setSessionLoading] = useState(false)
   const [currentSessionConfig, setCurrentSessionConfig] = useState<PracticeSessionConfig | null>(null)
-  const [activeTab, setActiveTab] = useState<'practice' | 'saved'>('practice')
   const [isLoadingFromCache, setIsLoadingFromCache] = useState(false)
   
   // Ref to track if data has been fetched to prevent duplicate calls
@@ -330,31 +331,7 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="w-full">
-          {/* Tab Navigation */}
-          <div className="mb-8">
-            <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg w-fit">
-              <button
-                onClick={() => setActiveTab('practice')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  activeTab === 'practice'
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-                }`}
-              >
-                Practice Setup
-              </button>
-              <button
-                onClick={() => setActiveTab('saved')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  activeTab === 'saved'
-                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-                }`}
-              >
-                Saved Sessions
-              </button>
-            </div>
-          </div>
+
 
           {/* Tab Content */}
           {activeTab === 'practice' ? (

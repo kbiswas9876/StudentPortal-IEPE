@@ -7,6 +7,7 @@ import { SidebarProvider } from '@/lib/sidebar-context'
 import { ThemeProvider } from '@/lib/theme-context'
 import { ToastProvider } from '@/lib/toast-context'
 import { ChartJsProvider } from '@/components/ChartJsProvider'
+import { DashboardProvider } from '@/lib/dashboard-context'
 import { AppLayout } from '@/components/layout'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -29,9 +30,11 @@ export default function RootLayout({
             <AuthProvider>
               <SidebarProvider>
                 <ToastProvider>
-                  <AppLayout>
-                    {children}
-                  </AppLayout>
+                  <DashboardProvider>
+                    <AppLayout>
+                      {children}
+                    </AppLayout>
+                  </DashboardProvider>
                 </ToastProvider>
               </SidebarProvider>
             </AuthProvider>

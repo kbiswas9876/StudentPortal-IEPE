@@ -1,10 +1,11 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSidebar } from '@/lib/sidebar-context'
+import { useDashboard } from '@/lib/dashboard-context'
 import {
   HomeIcon,
   BookOpenIcon,
@@ -13,6 +14,7 @@ import {
   CalendarIcon,
   CogIcon,
 } from '@heroicons/react/24/outline'
+import { ChevronDownIcon } from '@heroicons/react/24/solid'
 
 interface PremiumSidebarProps {
   isOpen: boolean
@@ -156,12 +158,33 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
   const pathname = usePathname()
   const router = useRouter()
   const { isCollapsed, setIsCollapsed } = useSidebar()
+  const { activeTab, setActiveTab } = useDashboard()
+  const [isPracticeMenuOpen, setIsPracticeMenuOpen] = useState(false)
+
+  useEffect(() => {
+    // Open the submenu if the user is on the dashboard page
+    if (pathname === '/dashboard' || pathname === '/') {
+      setIsPracticeMenuOpen(true)
+    } else {
+      setIsPracticeMenuOpen(false)
+    }
+  }, [pathname])
 
   const isActive = (path: string) => {
     if (path === '/dashboard') {
       return pathname === '/dashboard' || pathname === '/'
     }
     return pathname?.startsWith(path) || false
+  }
+
+  const handleSubMenuClick = (tab: 'practice' | 'saved') => {
+    if (pathname !== '/dashboard' && pathname !== '/') {
+      router.push('/dashboard');
+    }
+    setActiveTab(tab)
+    if (isMobile) {
+      onClose()
+    }
   }
 
   const sidebarWidth = isCollapsed && !isMobile ? '80px' : '280px'
@@ -226,13 +249,70 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
             {/* Learning Section */}
             <SectionHeader title="Learning" color="#6366f1" />
             <div className="space-y-1">
-              <NavItem
-                icon={HomeIcon}
-                label="Practice Dashboard"
-                href="/dashboard"
-                isActive={isActive('/dashboard')}
-                onClick={isMobile ? onClose : undefined}
-              />
+              {/* Practice Dashboard with Sub-menu */}
+              <div>
+                <div
+                  className={`
+                    flex items-center justify-between gap-3 px-4 py-3
+                    transition-all duration-300 cursor-pointer
+                    ${isActive('/dashboard') 
+                      ? 'bg-slate-100 text-indigo-900' 
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }
+                  `}
+                  onClick={() => setIsPracticeMenuOpen(!isPracticeMenuOpen)}
+                >
+                  <div className="flex items-center gap-3">
+                    <HomeIcon className={`w-5 h-5 ${isActive('/dashboard') ? 'text-indigo-600' : ''}`} />
+                    <span className="font-medium text-sm">Practice Dashboard</span>
+                  </div>
+                  <ChevronDownIcon
+                    className={`w-4 h-4 transition-transform duration-300 ${
+                      isPracticeMenuOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </div>
+                <AnimatePresence>
+                  {isPracticeMenuOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-8 pr-4 py-1 space-y-1">
+                        <div
+                          className={`
+                            flex items-center gap-3 px-4 py-2 rounded-lg
+                            transition-all duration-200 cursor-pointer text-sm
+                            ${activeTab === 'practice'
+                              ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                              : 'text-slate-500 hover:bg-slate-100'
+                            }
+                          `}
+                          onClick={() => handleSubMenuClick('practice')}
+                        >
+                          Practice Setup
+                        </div>
+                        <div
+                          className={`
+                            flex items-center gap-3 px-4 py-2 rounded-lg
+                            transition-all duration-200 cursor-pointer text-sm
+                            ${activeTab === 'saved'
+                              ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                              : 'text-slate-500 hover:bg-slate-100'
+                            }
+                          `}
+                          onClick={() => handleSubMenuClick('saved')}
+                        >
+                          Saved Sessions
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               <NavItem
                 icon={BookOpenIcon}
                 label="Revision Hub"
