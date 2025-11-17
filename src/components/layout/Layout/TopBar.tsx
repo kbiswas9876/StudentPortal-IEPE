@@ -185,7 +185,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
 
   return (
     <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700">
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between px-4 h-[69px]">
         {/* Left side - Menu button and title */}
         <div className="flex items-center space-x-4">
           <HamburgerMenu isOpen={false} onClick={onMenuClick} />

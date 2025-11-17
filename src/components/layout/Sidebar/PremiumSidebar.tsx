@@ -12,9 +12,6 @@ import {
   FolderOpenIcon,
   CalendarIcon,
   CogIcon,
-  ChevronLeftIcon,
-  XMarkIcon,
-  Bars3Icon
 } from '@heroicons/react/24/outline'
 
 interface PremiumSidebarProps {
@@ -37,10 +34,10 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, href, isActive, on
       <motion.div
         whileHover={{ x: 4 }}
         className={`
-          flex items-center gap-3 px-4 py-3 mx-3 rounded-xl
+          flex items-center gap-3 px-4 py-3
           transition-all duration-300 cursor-pointer
           ${isActive 
-            ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-600 text-indigo-900 shadow-md shadow-indigo-100' 
+            ? 'bg-slate-100 text-indigo-900' 
             : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
           }
         `}
@@ -74,6 +71,84 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ title, color }) => {
         style={{ background: `linear-gradient(90deg, ${color}66, transparent)` }}
       />
     </div>
+  )
+}
+
+const HamburgerMenu = ({
+  isOpen,
+  onClick,
+  isMobile = false,
+}: {
+  isOpen: boolean
+  onClick: () => void
+  isMobile?: boolean
+}) => {
+  const strokeWidth = 3
+  const color = '#4a5568'
+  const transition = { type: 'spring', stiffness: 400, damping: 30 }
+
+  const topLineVariants = {
+    open: { rotate: 45, y: 8.5 },
+    closed: { rotate: 0, y: 0 },
+  }
+
+  const middleLineVariants = {
+    open: { opacity: 0 },
+    closed: { opacity: 1 },
+  }
+
+  const bottomLineVariants = {
+    open: { rotate: -45, y: -8.5 },
+    closed: { rotate: 0, y: 0 },
+  }
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+      className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
+      aria-label={isOpen ? 'Close menu' : 'Open menu'}
+    >
+      <motion.div
+        className="w-5 h-5 flex flex-col justify-between"
+        animate={isOpen ? 'open' : 'closed'}
+        initial={false}
+      >
+        <motion.div
+          variants={topLineVariants}
+          transition={transition}
+          style={{
+            width: '100%',
+            height: strokeWidth,
+            backgroundColor: color,
+            borderRadius: strokeWidth / 2,
+            originX: 'center',
+          }}
+        />
+        <motion.div
+          variants={middleLineVariants}
+          transition={transition}
+          style={{
+            width: '100%',
+            height: strokeWidth,
+            backgroundColor: color,
+            borderRadius: strokeWidth / 2,
+          }}
+        />
+        <motion.div
+          variants={bottomLineVariants}
+          transition={transition}
+          style={{
+            width: '100%',
+            height: strokeWidth,
+            backgroundColor: color,
+            borderRadius: strokeWidth / 2,
+            originX: 'center',
+          }}
+        />
+      </motion.div>
+    </motion.button>
   )
 }
 
@@ -122,49 +197,27 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
         style={{ width: sidebarWidth }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
-          {(!isCollapsed || isMobile) && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex items-center gap-3"
-            >
-              {/* Logo */}
-              <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-                  <Bars3Icon className="w-5 h-5 text-white" />
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl blur-md opacity-30 -z-10" />
-              </div>
-
-              {/* Title */}
-              <Link href="/" className="flex flex-col">
-                <span className="text-slate-900 font-bold text-lg tracking-tight">
-                  Student Portal
-                </span>
-                <div className="h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" />
-              </Link>
-            </motion.div>
-          )}
-
-          {/* Toggle Button */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={isMobile ? onClose : () => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
-          >
-            {isMobile ? (
-              <XMarkIcon className="w-5 h-5 text-slate-600" />
-            ) : (
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 h-[69px]">
+          <div className="flex items-center gap-3">
+            <HamburgerMenu
+              isOpen={isMobile ? isOpen : !isCollapsed}
+              onClick={isMobile ? onClose : () => setIsCollapsed(!isCollapsed)}
+              isMobile={isMobile}
+            />
+            {(!isCollapsed || isMobile) && (
               <motion.div
-                animate={{ rotate: isCollapsed ? 180 : 0 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
               >
-                <ChevronLeftIcon className="w-5 h-5 text-slate-600" />
+                <Link href="/" className="flex flex-col">
+                  <span className="text-slate-900 font-bold text-lg tracking-tight">
+                    Student Portal
+                  </span>
+                </Link>
               </motion.div>
             )}
-          </motion.button>
+          </div>
         </div>
 
         {/* Navigation */}
