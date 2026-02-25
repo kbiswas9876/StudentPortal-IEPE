@@ -8,16 +8,19 @@ import {
   BookOpenIcon
 } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
-import { 
-  Edit3, 
-  Check, 
-  X, 
+import {
+  Edit3,
+  Check,
+  X,
   Plus,
   Trash2,
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Clock
+  Clock,
+  Eye,
+  BookmarkMinus,
+  Archive
 } from 'lucide-react'
 import KatexRenderer from './ui/KatexRenderer'
 import { Database } from '@/types/database'
@@ -47,9 +50,12 @@ interface BookmarkedQuestionCardProps {
   question: BookmarkedQuestion
   index: number
   onRatingUpdate?: () => void
+  onRemove?: (questionId: string) => void
+  isSelected?: boolean
+  onSelect?: (questionId: string, selected: boolean) => void
 }
 
-export default function BookmarkedQuestionCard({ question, index, onRatingUpdate }: BookmarkedQuestionCardProps) {
+export default function BookmarkedQuestionCard({ question, index, onRatingUpdate, onRemove, isSelected = false, onSelect }: BookmarkedQuestionCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isEditingRating, setIsEditingRating] = useState(false)
   const [isEditingTags, setIsEditingTags] = useState(false)
@@ -59,6 +65,8 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
   const [tempTags, setTempTags] = useState<string[]>(question.custom_tags || [])
   const [tagInput, setTagInput] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [hoveredRating, setHoveredRating] = useState(0)
+  const [showAnswer, setShowAnswer] = useState(false) // New state for answer visibility
 
   const formatTime = (seconds: number | null) => {
     if (!seconds) return 'N/A'
@@ -107,6 +115,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
       // Update the local state
       question.user_difficulty_rating = tempRating || null
+      setHoveredRating(0)
       setIsEditingRating(false)
       
       // Notify parent to refresh if needed
@@ -192,6 +201,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
 
   const handleCancelRating = () => {
     setTempRating(question.user_difficulty_rating || 0)
+    setHoveredRating(0)
     setIsEditingRating(false)
   }
 
@@ -255,16 +265,26 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
     }
   }
 
-  const truncateText = (text: string, maxLength: number = 120) => {
-    if (text.length <= maxLength) return text
-    return text.substring(0, maxLength) + '...'
+  // Removed truncateText function - now showing full question text for better scannability
+
+  const getRatingLabel = (rating: number) => {
+    const labels = {
+      1: 'Easy',
+      2: 'Easy-to-Moderate', 
+      3: 'Moderate',
+      4: 'Moderate-to-Hard',
+      5: 'Hard'
+    }
+    return labels[rating as keyof typeof labels] || ''
   }
 
   const renderStars = () => {
     const currentRating = isEditingRating ? tempRating : (question.user_difficulty_rating || 0)
+    const displayRating = isEditingRating && hoveredRating > 0 ? hoveredRating : currentRating
+    const showTooltip = isEditingRating && hoveredRating > 0
     
     return (
-      <div className="flex items-center gap-1">
+      <div className="relative flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <motion.button
             key={star}
@@ -276,16 +296,65 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                 setTempRating(star)
               }
             }}
+            onMouseEnter={() => {
+              if (isEditingRating) {
+                setHoveredRating(star)
+              }
+            }}
+            onMouseLeave={() => {
+              if (isEditingRating) {
+                setHoveredRating(0)
+              }
+            }}
             disabled={!isEditingRating}
             className={`transition-all ${isEditingRating ? 'cursor-pointer' : 'cursor-default'}`}
           >
-            {star <= currentRating ? (
+            {star <= displayRating ? (
               <StarSolidIcon className="h-5 w-5 text-yellow-500 drop-shadow-md" />
             ) : (
               <StarIcon className="h-5 w-5 text-slate-300 dark:text-slate-600" />
             )}
           </motion.button>
         ))}
+        
+            {/* Descriptive Text Label - Always Visible */}
+            {currentRating > 0 && (
+              <span className="ml-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                {getRatingLabel(currentRating)}
+              </span>
+            )}
+            
+            {/* Descriptive Tooltip - Only during editing */}
+            <AnimatePresence>
+              {showTooltip && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute -top-12 bg-slate-900 dark:bg-slate-700 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap z-10"
+                  style={{
+                    left: `${(hoveredRating - 1) * 20 - (() => {
+                      // Precise positioning based on star position
+                      switch(hoveredRating) {
+                        case 1: return 10; // Easy: shift left by half distance (10px)
+                        case 2: return 40; // Easy-to-Moderate: shift left by 2x distance (40px)
+                        case 3: return 20; // Moderate: shift left by 1x distance (20px)
+                        case 4: return 40; // Moderate-to-Hard: shift left by 2x distance (40px)
+                        case 5: return 10; // Hard: shift left by half distance (10px)
+                        default: return 0;
+                      }
+                    })()}px`,
+                    transform: 'translateX(-50%)'
+                  }}
+                >
+                  {getRatingLabel(hoveredRating)}
+                  <div 
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-900 dark:border-t-slate-700"
+                  ></div>
+                </motion.div>
+              )}
+            </AnimatePresence>
       </div>
     )
   }
@@ -298,15 +367,32 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
       className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
     >
       {/* Collapsed/Compact View - Always Visible */}
-      <div 
-        className="p-5 cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-start justify-between gap-4">
+          <div className="relative flex items-center justify-between p-5">
+        {/* Selection Checkbox - Top Left Corner */}
+        {onSelect && (
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="absolute top-3 left-3 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={(e) => {
+                e.stopPropagation()
+                onSelect(question.question_id, e.target.checked)
+              }}
+              className="w-4 h-4 text-blue-600 bg-white dark:bg-slate-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 shadow-sm"
+            />
+          </motion.div>
+        )}
+
+        <div className="flex items-center justify-between gap-4">
           {/* Left Side - Main Content */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 pl-8">
             {/* Book & Question ID + Metadata Header */}
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap mb-3">
               <span className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm inline-flex items-center gap-1.5">
                 <BookOpenIcon className="h-3.5 w-3.5" />
                 {question.questions.book_source} #{question.questions.question_number_in_book}
@@ -326,10 +412,10 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
               )}
             </div>
 
-            {/* Truncated Question Text */}
+            {/* Full Question Text - Always Show Complete Text for Better Scannability */}
             <div className="text-slate-900 dark:text-slate-100 mb-3">
               <KatexRenderer 
-                content={isExpanded ? question.questions.question_text : truncateText(question.questions.question_text)}
+                content={question.questions.question_text}
                 className="text-sm leading-relaxed"
               />
             </div>
@@ -353,6 +439,7 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
                           e.stopPropagation()
                           setIsEditingRating(true)
                           setTempRating(question.user_difficulty_rating || 0)
+                          setHoveredRating(0)
                         }}
                         className="p-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
                         title="Edit rating"
@@ -403,15 +490,39 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
             </div>
           </div>
 
-          {/* Right Side - Expand/Collapse Icon */}
-          <div className="flex-shrink-0">
-            <motion.div
-              animate={{ rotate: isExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
+          {/* Right Side - Actions */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {onRemove && (
+              <motion.button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRemove(question.question_id)
+                }}
+                className="p-2 rounded-lg bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 hover:from-red-100 hover:to-orange-100 dark:hover:from-red-900/30 dark:hover:to-orange-900/30 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-all duration-200 shadow-sm hover:shadow-md"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Remove bookmark"
+                title="Remove from Revision Hub"
+              >
+                <BookmarkMinus className="h-4 w-4" strokeWidth={2.5} />
+              </motion.button>
+            )}
+            <motion.button
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsExpanded(!isExpanded)
+                setShowAnswer(false)
+              }}
               className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              aria-label="Expand/collapse"
+              title="Expand/collapse"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <ChevronDownIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-            </motion.div>
+              <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <ChevronDownIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+              </motion.div>
+            </motion.button>
           </div>
         </div>
       </div>
@@ -429,43 +540,73 @@ export default function BookmarkedQuestionCard({ question, index, onRatingUpdate
           >
             <div className="px-5 pb-5 pt-0 border-t border-slate-200 dark:border-slate-700">
               <div className="pt-4 space-y-4">
-                {/* Options */}
-                {question.questions.options && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Options:
-                    </h4>
-                    {Object.entries(question.questions.options).map(([key, value]) => (
-                      <div
-                        key={key}
-                        className={`p-3 rounded-lg border ${
-                          key === question.questions.correct_option
-                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                            : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30'
-                        }`}
-                      >
-                        <div className="flex items-start">
-                          <span className={`font-semibold mr-3 ${
-                            key === question.questions.correct_option
-                              ? 'text-green-700 dark:text-green-400'
-                              : 'text-slate-600 dark:text-slate-400'
-                          }`}>
-                            {key}.
-                          </span>
-                          <div className="flex-1">
-                            <KatexRenderer 
-                              content={value as string}
-                              className="text-sm"
-                            />
-                          </div>
-                              {key === question.questions.correct_option && (
-                                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 ml-2 flex-shrink-0" strokeWidth={2.5} />
-                              )}
+                    {/* Options */}
+                    {question.questions.options && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                            Options:
+                          </h4>
+                          {!showAnswer ? (
+                            <motion.button
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setShowAnswer(true)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200"
+                            >
+                              <Eye className="h-3.5 w-3.5" strokeWidth={2.5} />
+                              Show Answer
+                            </motion.button>
+                          ) : (
+                            <motion.button
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setShowAnswer(false)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-200"
+                            >
+                              <Eye className="h-3.5 w-3.5" strokeWidth={2.5} />
+                              Hide Answer
+                            </motion.button>
+                          )}
+                        </div>
+                        {/* Two-column grid layout */}
+                        <div className="grid grid-cols-2 gap-3">
+                          {Object.entries(question.questions.options).map(([key, value]) => (
+                            <div
+                              key={key}
+                              className={`p-3 rounded-lg border transition-all ${
+                                showAnswer && key === question.questions.correct_option
+                                  ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                  : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/30'
+                              }`}
+                            >
+                              <div className="flex items-start">
+                                <span className={`font-semibold mr-3 ${
+                                  showAnswer && key === question.questions.correct_option
+                                    ? 'text-green-700 dark:text-green-400'
+                                    : 'text-slate-600 dark:text-slate-400'
+                                }`}>
+                                  {key}.
+                                </span>
+                                <div className="flex-1">
+                                  <KatexRenderer
+                                    content={value as string}
+                                    className="text-sm"
+                                  />
+                                </div>
+                                {showAnswer && key === question.questions.correct_option && (
+                                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 ml-2 flex-shrink-0" strokeWidth={2.5} />
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    )}
 
                 {/* Performance Metrics */}
                 <div className="grid grid-cols-2 gap-3">

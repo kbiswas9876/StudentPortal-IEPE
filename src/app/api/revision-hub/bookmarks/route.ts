@@ -147,3 +147,125 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+// POST - Create new bookmark with rating, personal note, and custom tags
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const { questionId, difficultyRating, customTags, personalNote, userId } = body
+
+    console.log('📝 Create bookmark request received:', { questionId, difficultyRating, customTags, personalNote, userId })
+
+    if (!questionId) {
+      console.error('❌ No question ID provided')
+      return NextResponse.json({ error: 'Question ID is required' }, { status: 400 })
+    }
+
+    if (!userId) {
+      console.error('❌ No user ID provided')
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
+
+    // Validate rating if provided
+    if (difficultyRating !== undefined && difficultyRating !== null && (difficultyRating < 1 || difficultyRating > 5)) {
+      console.error('❌ Invalid rating value:', difficultyRating)
+      return NextResponse.json({ error: 'Rating must be between 1 and 5, or null' }, { status: 400 })
+    }
+
+    // Check if bookmark already exists
+    const { data: existingBookmark, error: checkError } = await supabaseAdmin
+      .from('bookmarked_questions')
+      .select('id')
+      .eq('question_id', questionId)
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (checkError) {
+      console.error('❌ Error checking existing bookmark:', checkError)
+      return NextResponse.json({ error: checkError.message }, { status: 500 })
+    }
+
+    if (existingBookmark) {
+      console.log('📌 Bookmark already exists, updating instead')
+      // Update existing bookmark
+      const updateData: any = {
+        updated_at: new Date().toISOString()
+      }
+
+      if (difficultyRating !== undefined) {
+        updateData.user_difficulty_rating = difficultyRating
+      }
+      if (personalNote !== undefined) {
+        updateData.personal_note = personalNote || null
+      }
+      if (customTags !== undefined) {
+        updateData.custom_tags = customTags || null
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('bookmarked_questions')
+        .update(updateData)
+        .eq('id', existingBookmark.id)
+        .select()
+
+      if (error) {
+        console.error('❌ Database error updating bookmark:', error)
+        return NextResponse.json({ 
+          error: 'Database error: ' + error.message,
+          details: error 
+        }, { status: 500 })
+      }
+
+      console.log('✅ Successfully updated existing bookmark:', data[0])
+      return NextResponse.json({ 
+        data: data[0],
+        message: 'Bookmark updated successfully' 
+      })
+    }
+
+    // Create new bookmark
+    const bookmarkData: any = {
+      question_id: questionId,
+      user_id: userId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    if (difficultyRating !== undefined) {
+      bookmarkData.user_difficulty_rating = difficultyRating
+    }
+    if (personalNote !== undefined) {
+      bookmarkData.personal_note = personalNote || null
+    }
+    if (customTags !== undefined) {
+      bookmarkData.custom_tags = customTags || null
+    }
+
+    console.log('📦 Creating new bookmark with data:', bookmarkData)
+
+    const { data, error } = await supabaseAdmin
+      .from('bookmarked_questions')
+      .insert([bookmarkData])
+      .select()
+
+    if (error) {
+      console.error('❌ Database error creating bookmark:', error)
+      return NextResponse.json({ 
+        error: 'Database error: ' + error.message,
+        details: error 
+      }, { status: 500 })
+    }
+
+    console.log('✅ Successfully created new bookmark:', data[0])
+    return NextResponse.json({ 
+      data: data[0],
+      message: 'Bookmark created successfully' 
+    })
+  } catch (error) {
+    console.error('❌ Unexpected error:', error)
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
+  }
+}

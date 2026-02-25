@@ -32,6 +32,7 @@ interface MainQuestionViewProps {
   canNext?: boolean
   filteredPosition?: number
   filteredTotal?: number
+  showBookmark?: boolean // New prop to control bookmark visibility
 }
 
 /**
@@ -56,7 +57,8 @@ export default function MainQuestionView({
   canPrev,
   canNext,
   filteredPosition,
-  filteredTotal
+  filteredTotal,
+  showBookmark = true // Default to true for backward compatibility
 }: MainQuestionViewProps) {
   const totalQuestions = session.questions.length
   const question = session.questions[currentIndex]
@@ -158,8 +160,8 @@ export default function MainQuestionView({
       {/* Question Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {/* Premium Bookmark Button - Repositioned to top-left */}
-          {onToggleBookmark && (
+          {/* Premium Bookmark Button - Only show in solution review context */}
+          {showBookmark && onToggleBookmark && (
             <motion.button
               onClick={onToggleBookmark}
               className={`

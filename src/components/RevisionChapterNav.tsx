@@ -3,7 +3,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { BookmarkIcon } from '@heroicons/react/24/outline'
-import { Play, Rocket } from 'lucide-react'
+import { Play, Rocket, Archive } from 'lucide-react'
 
 interface ChapterData {
   name: string
@@ -44,20 +44,26 @@ export default function RevisionChapterNav({
     )
   }
 
-  if (chapters.length === 0) {
+  // Defensive programming: ensure chapters is always an array
+  const safeChapters = Array.isArray(chapters) ? chapters : []
+
+  if (safeChapters.length === 0) {
     return (
       <div className="h-full flex items-center justify-center p-6">
         <div className="text-center">
-          <BookmarkIcon className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            No bookmarked chapters yet
+          <Archive className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            No Chapters Yet
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Bookmark questions to see your chapters appear here.
           </p>
         </div>
       </div>
     )
   }
 
-  const isAllSelected = selectedChapters.length === chapters.length
+  const isAllSelected = selectedChapters.length === safeChapters.length
   const isAnySelected = selectedChapters.length > 0
 
   return (
@@ -86,7 +92,7 @@ export default function RevisionChapterNav({
           Chapters
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-          {chapters.length} chapter{chapters.length !== 1 ? 's' : ''} with bookmarks
+          {safeChapters.length} chapter{safeChapters.length !== 1 ? 's' : ''} with bookmarks
         </p>
 
         {/* Select All / Deselect All */}
@@ -102,7 +108,7 @@ export default function RevisionChapterNav({
         </div>
 
         <div className="space-y-2">
-          {chapters.map((chapter, index) => {
+          {safeChapters.map((chapter, index) => {
             const isSelected = selectedChapter === chapter.name
             const isChecked = selectedChapters.includes(chapter.name)
 

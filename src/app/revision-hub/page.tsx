@@ -8,8 +8,12 @@ import { Database } from '@/types/database'
 import RevisionChapterNav from '@/components/RevisionChapterNav'
 import BookmarkedQuestionCard from '@/components/BookmarkedQuestionCard'
 import RevisionSessionModal from '@/components/RevisionSessionModal'
-import { FunnelIcon } from '@heroicons/react/24/outline'
+import AdvancedRevisionSessionModal from '@/components/AdvancedRevisionSessionModal'
+import DifficultyBreakdown from '@/components/DifficultyBreakdown'
+import BookmarkRemovalModal from '@/components/BookmarkRemovalModal'
+import { FunnelIcon, BookmarkIcon } from '@heroicons/react/24/outline'
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
+import { Archive, Play } from 'lucide-react'
 
 interface ChapterData {
   name: string
@@ -38,7 +42,7 @@ interface BookmarkedQuestion {
 }
 
 export default function RevisionHubPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, session, loading: authLoading } = useAuth()
   const router = useRouter()
   
   const [chapters, setChapters] = useState<ChapterData[]>([])
@@ -57,6 +61,19 @@ export default function RevisionHubPage() {
   // Revision Session states
   const [selectedChapters, setSelectedChapters] = useState<string[]>([])
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false)
+  const [useAdvancedModal, setUseAdvancedModal] = useState(true) // Toggle between simple and advanced modal
+  
+  // Bookmark removal states
+  const [showRemovalModal, setShowRemovalModal] = useState(false)
+  const [removalQuestionId, setRemovalQuestionId] = useState<string | null>(null)
+  const [removalQuestionText, setRemovalQuestionText] = useState('')
+  const [removalUserRating, setRemovalUserRating] = useState<number>(1)
+  const [isBulkRemoval, setIsBulkRemoval] = useState(false)
+  const [bulkDifficultyBreakdown, setBulkDifficultyBreakdown] = useState<{ [rating: number]: number }>({})
+  
+  // Bulk selection states
+  const [selectedQuestions, setSelectedQuestions] = useState<Set<string>>(new Set())
+  const [showBulkActions, setShowBulkActions] = useState(false)
 
   // State persistence - prevent unnecessary reloads
   const dataFetchedRef = React.useRef(false)
@@ -193,6 +210,109 @@ export default function RevisionHubPage() {
     }
   }
 
+  // Handle bookmark removal - show confirmation modal
+  const handleRemoveBookmark = (questionId: string) => {
+    const question = bookmarkedQuestions.find(q => q.question_id === questionId)
+    if (!question) return
+
+    setRemovalQuestionId(questionId)
+    setRemovalQuestionText(question.questions.question_text)
+    setRemovalUserRating(question.user_difficulty_rating || 1)
+    setIsBulkRemoval(false)
+    setShowRemovalModal(true)
+  }
+
+  // Handle bulk bookmark removal
+  const handleBulkRemoveBookmarks = () => {
+    if (selectedQuestions.size === 0) return
+
+    // Calculate difficulty breakdown for selected questions
+    const breakdown: { [rating: number]: number } = {}
+    selectedQuestions.forEach(questionId => {
+      const question = bookmarkedQuestions.find(q => q.question_id === questionId)
+      if (question) {
+        const rating = question.user_difficulty_rating || 1
+        breakdown[rating] = (breakdown[rating] || 0) + 1
+      }
+    })
+
+    setBulkDifficultyBreakdown(breakdown)
+    setIsBulkRemoval(true)
+    setRemovalQuestionId(null)
+    setRemovalQuestionText('')
+    setShowRemovalModal(true)
+  }
+
+  // Confirm bookmark removal
+  const handleConfirmRemoval = async () => {
+    if (!user || !session) return
+
+    try {
+      if (isBulkRemoval) {
+        // Remove multiple bookmarks
+        const questionIds = Array.from(selectedQuestions)
+        for (const questionId of questionIds) {
+          const response = await fetch('/api/practice/bookmark', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+            },
+            body: JSON.stringify({ questionId }),
+          })
+
+          if (!response.ok) {
+            const result = await response.json()
+            throw new Error(result.error || 'Failed to remove bookmark')
+          }
+        }
+        
+        // Clear selection
+        setSelectedQuestions(new Set())
+        setShowBulkActions(false)
+      } else {
+        // Remove single bookmark
+        if (!removalQuestionId) return
+
+        const response = await fetch('/api/practice/bookmark', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({ questionId: removalQuestionId }),
+        })
+
+        const result = await response.json()
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to remove bookmark')
+        }
+      }
+
+      // Refresh the questions to update the UI
+      if (selectedChapter) {
+        await fetchQuestionsForChapter(selectedChapter)
+      }
+
+      setShowRemovalModal(false)
+    } catch (error) {
+      console.error('Error removing bookmark:', error)
+      alert('Failed to remove bookmark. Please try again.')
+    }
+  }
+
+  // Handle question selection for bulk actions
+  const handleQuestionSelect = (questionId: string, selected: boolean) => {
+    const newSelected = new Set(selectedQuestions)
+    if (selected) {
+      newSelected.add(questionId)
+    } else {
+      newSelected.delete(questionId)
+    }
+    setSelectedQuestions(newSelected)
+    setShowBulkActions(newSelected.size > 0)
+  }
+
   // Revision Session handlers
   const handleChapterSelectionChange = (chapter: string, selected: boolean) => {
     if (selected) {
@@ -258,6 +378,104 @@ export default function RevisionHubPage() {
     setIsSessionModalOpen(false)
   }
 
+  const handleAdvancedStartSession = (config: any) => {
+    // Handle advanced session configuration
+    const fetchAdvancedQuestionsForSession = async () => {
+      try {
+        console.log('🚀 Starting Advanced Session with config:', config)
+        const allQuestionIds: string[] = []
+        
+        // Process each chapter configuration
+        for (const chapterConfig of config.chapterConfigs) {
+          console.log(`📚 Processing chapter: ${chapterConfig.chapterName}`)
+          console.log(`📋 Chapter config:`, chapterConfig)
+          
+          const response = await fetch(`/api/revision-hub/by-chapter?userId=${user?.id}&chapterName=${encodeURIComponent(chapterConfig.chapterName)}`)
+          const result = await response.json()
+          const chapterQuestions = result.data || []
+          
+          console.log(`📊 Found ${chapterQuestions.length} questions for ${chapterConfig.chapterName}`)
+          console.log('📋 Chapter questions:', chapterQuestions)
+          
+          let chapterQuestionIds: string[] = []
+          
+          if (chapterConfig.questionScope === 'all') {
+            chapterQuestionIds = chapterQuestions.map((q: any) => q.questions.question_id)
+            console.log(`✅ All questions selected: ${chapterQuestionIds.length} questions`)
+          } else if (chapterConfig.questionScope === 'random') {
+            const shuffled = [...chapterQuestions].sort(() => Math.random() - 0.5)
+            chapterQuestionIds = shuffled.slice(0, chapterConfig.questionCount || 0).map((q: any) => q.questions.question_id)
+            console.log(`🎲 Random selection: ${chapterQuestionIds.length} questions (requested: ${chapterConfig.questionCount})`)
+          } else if (chapterConfig.questionScope === 'difficulty') {
+            console.log(`⭐ Difficulty-based selection for ${chapterConfig.chapterName}`)
+            console.log('📊 Difficulty breakdown:', chapterConfig.difficultyBreakdown)
+            
+            // Filter by difficulty ratings
+            const difficultyFiltered = chapterQuestions.filter((q: any) => {
+              const rating = q.user_difficulty_rating
+              return rating && chapterConfig.difficultyBreakdown?.[rating] > 0
+            })
+            
+            console.log(`🔍 Difficulty filtered questions: ${difficultyFiltered.length}`)
+            
+            // Apply difficulty-based selection
+            const selectedByDifficulty: string[] = []
+            for (const [rating, count] of Object.entries(chapterConfig.difficultyBreakdown || {})) {
+              const ratingNum = parseInt(rating)
+              const countNum = typeof count === 'number' ? count : 0
+              const questionsOfRating = difficultyFiltered.filter((q: any) => q.user_difficulty_rating === ratingNum)
+              const shuffled = [...questionsOfRating].sort(() => Math.random() - 0.5)
+              const selected = shuffled.slice(0, countNum).map((q: any) => q.questions.question_id)
+              selectedByDifficulty.push(...selected)
+              
+              console.log(`⭐ Rating ${rating}: ${questionsOfRating.length} available, ${countNum} requested, ${selected.length} selected`)
+            }
+            chapterQuestionIds = selectedByDifficulty
+            console.log(`✅ Difficulty selection result: ${chapterQuestionIds.length} questions`)
+          }
+          
+          console.log(`📝 Final chapter question IDs:`, chapterQuestionIds)
+          allQuestionIds.push(...chapterQuestionIds)
+        }
+        
+        console.log(`🎯 Total question IDs collected: ${allQuestionIds.length}`)
+        console.log('📋 All question IDs:', allQuestionIds)
+        
+        // Validate that we have questions
+        if (allQuestionIds.length === 0) {
+          console.error('❌ No questions found for the selected configuration!')
+          console.error('📋 Config that failed:', config)
+          alert('No questions found for the selected configuration. Please check your selections and try again.')
+          return
+        }
+        
+        // Validate that all question IDs are strings (not numbers)
+        const invalidIds = allQuestionIds.filter(id => typeof id !== 'string' || id === '')
+        if (invalidIds.length > 0) {
+          console.error('❌ Invalid question IDs found:', invalidIds)
+          alert('Invalid question data detected. Please try again.')
+          return
+        }
+        
+        // Navigate to practice with the questions
+        const params = new URLSearchParams({
+          questions: allQuestionIds.join(','),
+          mode: config.testMode,
+          ...(config.timeLimit && { timeLimit: config.timeLimit.toString() })
+        })
+        
+        console.log(`🔗 Navigating to practice with params:`, params.toString())
+        router.push(`/practice?${params.toString()}`)
+      } catch (error) {
+        console.error('❌ Error starting advanced revision session:', error)
+        alert('Failed to start revision session. Please try again.')
+      }
+    }
+    
+    fetchAdvancedQuestionsForSession()
+    setIsSessionModalOpen(false)
+  }
+
   // Loading state
   if (authLoading || loadingChapters) {
     return (
@@ -295,11 +513,11 @@ export default function RevisionHubPage() {
     )
   }
 
-  // Empty state
-  if (chapters.length === 0) {
+  // Empty state - show two-column layout even when empty
+  if (chapters.length === 0 && !loadingChapters) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -315,31 +533,85 @@ export default function RevisionHubPage() {
             </p>
           </motion.div>
 
-          {/* Empty State */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex items-center justify-center py-20"
-          >
-            <div className="bg-white dark:bg-slate-800 p-12 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-md text-center">
-              <div className="text-7xl mb-6">📚</div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">
-                No Bookmarked Questions Yet
-              </h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-                Start bookmarking questions during practice sessions to build your personal revision collection.
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => router.push('/dashboard')}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg transition-all font-semibold shadow-md hover:shadow-lg"
-              >
-                Start Practicing
-              </motion.button>
-            </div>
-          </motion.div>
+          {/* Two-Column Layout - Empty State */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-200px)]">
+            {/* Left Column - Chapter Navigation (Empty) */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="lg:col-span-3"
+            >
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 h-full overflow-hidden">
+                <RevisionChapterNav
+                  chapters={chapters}
+                  selectedChapter={selectedChapter}
+                  onSelectChapter={handleSelectChapter}
+                  isLoading={loadingChapters}
+                  selectedChapters={selectedChapters}
+                  onChapterSelectionChange={handleChapterSelectionChange}
+                  onSelectAllChapters={handleSelectAllChapters}
+                  onDeselectAllChapters={handleDeselectAllChapters}
+                  onStartRevisionSession={handleStartRevisionSession}
+                />
+              </div>
+            </motion.div>
+
+            {/* Right Column - Empty State */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="lg:col-span-9"
+            >
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 h-full overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 flex-shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                        Your Revision Collection is Empty
+                      </h2>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Empty State Content */}
+                <div className="flex-1 flex items-center justify-center p-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-center"
+                  >
+                    <div className="mb-6">
+                      <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center">
+                        <BookmarkIcon className="h-10 w-10 text-blue-500 dark:text-blue-400" />
+                      </div>
+                    </div>
+                    
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+                      Your Revision Collection is Empty
+                    </h3>
+                    
+                    <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-sm leading-relaxed">
+                      Start bookmarking questions after your practice sessions. They will appear here, ready for you to review and master!
+                    </p>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => router.push('/dashboard')}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 mx-auto"
+                    >
+                      <Play className="h-5 w-5" strokeWidth={2.5} />
+                      Start Practicing
+                    </motion.button>
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </div>
     )
@@ -398,25 +670,39 @@ export default function RevisionHubPage() {
               {/* Header */}
               <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     {selectedChapter ? (
                       <>
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">
                           {selectedChapter}
                         </h2>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {filteredAndSortedQuestions.length} 
-                          {selectedRatingFilter || sortOrder !== 'none' ? ' filtered' : ''} 
-                          {' '}question{filteredAndSortedQuestions.length !== 1 ? 's' : ''}
-                          {bookmarkedQuestions.length !== filteredAndSortedQuestions.length && (
-                            <span className="text-xs text-slate-500"> (of {bookmarkedQuestions.length} total)</span>
-                          )}
+                        
+                        {/* Difficulty Breakdown */}
+                        {bookmarkedQuestions.length > 0 && (
+                          <DifficultyBreakdown 
+                            questions={bookmarkedQuestions}
+                            className="mb-2"
+                            onRatingClick={handleRatingFilterClick}
+                            selectedRating={selectedRatingFilter}
+                          />
+                        )}
+                        
+                        {/* Question Count Summary */}
+                        <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
+                          <span>
+                            {filteredAndSortedQuestions.length} 
+                            {selectedRatingFilter || sortOrder !== 'none' ? ' filtered' : ''} 
+                            {' '}question{filteredAndSortedQuestions.length !== 1 ? 's' : ''}
+                            {bookmarkedQuestions.length !== filteredAndSortedQuestions.length && (
+                              <span className="text-xs text-slate-500"> (of {bookmarkedQuestions.length} total)</span>
+                            )}
+                          </span>
                           {filteredAndSortedQuestions.length > 0 && (
-                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-500">
+                            <span className="text-xs text-slate-500 dark:text-slate-500">
                               • Click any card to expand
                             </span>
                           )}
-                        </p>
+                        </div>
                       </>
                     ) : (
                       <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -572,13 +858,99 @@ export default function RevisionHubPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {filteredAndSortedQuestions.map((question, index) => (
-                      <BookmarkedQuestionCard
-                        key={question.id}
-                        question={question}
-                        index={index}
-                      />
-                    ))}
+                    {/* Contextual Bulk Actions Bar - Only appears when questions are selected */}
+                    {showBulkActions && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4 mb-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                              <Archive className="h-5 w-5 text-amber-600 dark:text-amber-400" strokeWidth={2.5} />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                                {selectedQuestions.size} Question{selectedQuestions.size !== 1 ? 's' : ''} Selected
+                              </h3>
+                              <p className="text-sm text-slate-600 dark:text-slate-400">
+                                Choose an action for the selected questions
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => {
+                                setSelectedQuestions(new Set())
+                                setShowBulkActions(false)
+                              }}
+                              className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700"
+                            >
+                              Cancel
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={handleBulkRemoveBookmarks}
+                              className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold text-sm rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                            >
+                              <Archive className="h-4 w-4" strokeWidth={2.5} />
+                              Remove Selected
+                            </motion.button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Empty State - Show when no questions */}
+                    {filteredAndSortedQuestions.length === 0 && !loadingQuestions ? (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="flex flex-col items-center justify-center py-12 px-6 text-center"
+                      >
+                        <div className="mb-6">
+                          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 flex items-center justify-center">
+                            <BookmarkIcon className="h-10 w-10 text-blue-500 dark:text-blue-400" />
+                          </div>
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-3">
+                          Your Revision Collection is Empty
+                        </h3>
+                        
+                        <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-sm leading-relaxed">
+                          Start bookmarking questions after your practice sessions. They will appear here, ready for you to review and master!
+                        </p>
+                        
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => router.push('/dashboard')}
+                          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+                        >
+                          <Play className="h-5 w-5" strokeWidth={2.5} />
+                          Start Practicing
+                        </motion.button>
+                      </motion.div>
+                    ) : (
+                      /* Questions List */
+                      filteredAndSortedQuestions.map((question, index) => (
+                        <BookmarkedQuestionCard
+                          key={question.id}
+                          question={question}
+                          index={index}
+                          onRemove={handleRemoveBookmark}
+                          isSelected={selectedQuestions.has(question.question_id)}
+                          onSelect={handleQuestionSelect}
+                        />
+                      ))
+                    )}
                   </div>
                 )}
               </div>
@@ -588,12 +960,37 @@ export default function RevisionHubPage() {
       </div>
 
       {/* Revision Session Modal */}
-      <RevisionSessionModal
-        isOpen={isSessionModalOpen}
-        onClose={() => setIsSessionModalOpen(false)}
-        selectedChapters={selectedChapters}
-        chapters={chapters}
-        onStartSession={handleStartSession}
+      {useAdvancedModal ? (
+        <AdvancedRevisionSessionModal
+          isOpen={isSessionModalOpen}
+          onClose={() => setIsSessionModalOpen(false)}
+          selectedChapters={selectedChapters}
+          chapters={chapters}
+          userId={user?.id || ''}
+          onStartSession={handleAdvancedStartSession}
+        />
+      ) : (
+        <RevisionSessionModal
+          isOpen={isSessionModalOpen}
+          onClose={() => setIsSessionModalOpen(false)}
+          selectedChapters={selectedChapters}
+          chapters={chapters}
+          onStartSession={handleStartSession}
+        />
+      )}
+
+      {/* Bookmark Removal Confirmation Modal */}
+      <BookmarkRemovalModal
+        isOpen={showRemovalModal}
+        onClose={() => setShowRemovalModal(false)}
+        onConfirm={handleConfirmRemoval}
+        questionText={removalQuestionText}
+        questionId={removalQuestionId || ''}
+        isBulk={isBulkRemoval}
+        bulkCount={selectedQuestions.size}
+        chapterNames={isBulkRemoval ? [selectedChapter || ''] : []}
+        userDifficultyRating={removalUserRating}
+        bulkDifficultyBreakdown={bulkDifficultyBreakdown}
       />
     </div>
   )
