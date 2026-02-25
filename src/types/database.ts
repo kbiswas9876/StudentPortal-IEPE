@@ -150,95 +150,95 @@ export interface Database {
           created_at?: string
         }
       }
-    }
-    bookmarked_questions: {
-      Row: {
-        id: string
-        user_id: string
-        question_id: string
-        personal_note: string | null
-        custom_tags: string[] | null
-        created_at: string
-        updated_at: string
+      bookmarked_questions: {
+        Row: {
+          id: string
+          user_id: string
+          question_id: string
+          personal_note: string | null
+          custom_tags: string[] | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          question_id: string
+          personal_note?: string | null
+          custom_tags?: string[] | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          question_id?: string
+          personal_note?: string | null
+          custom_tags?: string[] | null
+          created_at?: string
+          updated_at?: string
+        }
       }
-      Insert: {
-        id?: string
-        user_id: string
-        question_id: string
-        personal_note?: string | null
-        custom_tags?: string[] | null
-        created_at?: string
-        updated_at?: string
+      practice_plans: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          plan_type: 'daily' | 'weekly' | 'monthly'
+          content: any // JSONB - stores structured plan data
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          plan_type: 'daily' | 'weekly' | 'monthly'
+          content: any
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          plan_type?: 'daily' | 'weekly' | 'monthly'
+          content?: any
+          created_at?: string
+          updated_at?: string
+        }
       }
-      Update: {
-        id?: string
-        user_id?: string
-        question_id?: string
-        personal_note?: string | null
-        custom_tags?: string[] | null
-        created_at?: string
-        updated_at?: string
-      }
-    }
-    practice_plans: {
-      Row: {
-        id: string
-        user_id: string
-        name: string
-        plan_type: 'daily' | 'weekly' | 'monthly'
-        content: any // JSONB - stores structured plan data
-        created_at: string
-        updated_at: string
-      }
-      Insert: {
-        id?: string
-        user_id: string
-        name: string
-        plan_type: 'daily' | 'weekly' | 'monthly'
-        content: any
-        created_at?: string
-        updated_at?: string
-      }
-      Update: {
-        id?: string
-        user_id?: string
-        name?: string
-        plan_type?: 'daily' | 'weekly' | 'monthly'
-        content?: any
-        created_at?: string
-        updated_at?: string
-      }
-    }
-    error_reports: {
-      Row: {
-        id: number
-        question_id: number
-        reported_by_user_id: string
-        report_description: string
-        status: 'new' | 'reviewed' | 'resolved' | 'dismissed'
-        admin_notes: string | null
-        created_at: string
-        updated_at: string | null
-      }
-      Insert: {
-        id?: number
-        question_id: number
-        reported_by_user_id: string
-        report_description: string
-        status?: 'new' | 'reviewed' | 'resolved' | 'dismissed'
-        admin_notes?: string | null
-        created_at?: string
-        updated_at?: string | null
-      }
-      Update: {
-        id?: number
-        question_id?: number
-        reported_by_user_id?: string
-        report_description?: string
-        status?: 'new' | 'reviewed' | 'resolved' | 'dismissed'
-        admin_notes?: string | null
-        created_at?: string
-        updated_at?: string | null
+      error_reports: {
+        Row: {
+          id: number
+          question_id: number
+          reported_by_user_id: string
+          report_description: string
+          status: 'new' | 'reviewed' | 'resolved' | 'dismissed'
+          admin_notes: string | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: number
+          question_id: number
+          reported_by_user_id: string
+          report_description: string
+          status?: 'new' | 'reviewed' | 'resolved' | 'dismissed'
+          admin_notes?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: number
+          question_id?: number
+          reported_by_user_id?: string
+          report_description?: string
+          status?: 'new' | 'reviewed' | 'resolved' | 'dismissed'
+          admin_notes?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
       }
     }
     Views: {

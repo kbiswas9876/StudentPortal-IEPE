@@ -49,6 +49,10 @@ export default function PremiumBookCard({
     onChapterConfigChange(book.code, chapterName, config)
   }
 
+  // Calculate total chapters and questions
+  const totalChapters = chapters.length
+  const totalQuestions = chapters.reduce((sum, chapter) => sum + chapter.count, 0)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -72,9 +76,30 @@ export default function PremiumBookCard({
             <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 truncate">
               {book.name}
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-3">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mb-2">
               Code: {book.code}
             </p>
+            
+            {/* Book Statistics */}
+            <div className="flex items-center space-x-4 mb-3">
+              <div className="flex items-center space-x-1.5">
+                <svg className="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {totalChapters} {totalChapters === 1 ? 'Chapter' : 'Chapters'}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <svg className="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {totalQuestions} {totalQuestions === 1 ? 'Question' : 'Questions'}
+                </span>
+              </div>
+            </div>
+            
             {isSelected && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -118,8 +143,19 @@ export default function PremiumBookCard({
                     </div>
                   ))}
                 </div>
+              ) : chapters.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    No chapters available in this book
+                  </p>
+                </div>
               ) : (
-                <div className="max-h-80 sm:max-h-96 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
+                <div className="max-h-80 sm:max-h-96 overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 scrollbar-track-transparent hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500">
                   {chapters.map((chapter, index) => {
                     const config = chapterConfigs[chapter.chapter_name] || {
                       selected: false,
@@ -135,20 +171,25 @@ export default function PremiumBookCard({
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1 }}
                       >
-                        <div className="flex items-center">
-                          <CustomCheckbox
-                            checked={config.selected}
-                            onChange={(selected) => handleChapterSelect(chapter.chapter_name, selected)}
-                          />
-                          <div className="ml-3 sm:ml-4 flex-1 min-w-0">
-                            <h4 className="font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base truncate">
-                              {chapter.chapter_name}
-                            </h4>
-                            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                              {chapter.count} questions available
-                            </p>
+                        {/* Robust two-line layout for professional appearance */}
+                        <div className="space-y-2">
+                          {/* First Line: Checkbox and Chapter Info */}
+                          <div className="flex items-center">
+                            <CustomCheckbox
+                              checked={config.selected}
+                              onChange={(selected) => handleChapterSelect(chapter.chapter_name, selected)}
+                            />
+                            <div className="ml-3 flex-1 min-w-0">
+                              <h4 className="font-medium text-slate-900 dark:text-slate-100 text-sm">
+                                {chapter.chapter_name}
+                              </h4>
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                                {chapter.count} questions available
+                              </p>
+                            </div>
                           </div>
                           
+                          {/* Second Section: Configuration Controls (appears when selected) */}
                           <AnimatePresence>
                             {config.selected && (
                               <InlineChapterConfig
