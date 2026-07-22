@@ -195,3 +195,27 @@ CREATE TABLE IF NOT EXISTS public.student_notifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 15. USER PROFILES
+CREATE TABLE IF NOT EXISTS public.user_profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    full_name TEXT,
+    email VARCHAR,
+    phone_number VARCHAR,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'correction_required', 'active', 'suspended')),
+    role TEXT DEFAULT 'student',
+    rejection_reason TEXT,
+    date_of_birth DATE,
+    state TEXT,
+    city TEXT,
+    target_exam TEXT,
+    student_category TEXT,
+    timezone VARCHAR DEFAULT 'Asia/Kolkata',
+    country TEXT DEFAULT 'India',
+    profile_picture_url TEXT,
+    active_flags TEXT[] DEFAULT '{}'::text[],
+    trajectory_data JSONB,
+    last_login_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
