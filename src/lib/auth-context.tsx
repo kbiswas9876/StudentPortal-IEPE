@@ -103,8 +103,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProfile])
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut()
+    setUser(null)
+    setSession(null)
     setUserProfile(null)
+    try {
+      await supabase.auth.signOut()
+    } catch (err) {
+      console.error('Error during supabase signOut:', err)
+    }
   }, [])
 
   const refreshProfile = useCallback(async () => {

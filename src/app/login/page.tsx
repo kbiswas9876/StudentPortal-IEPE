@@ -8,11 +8,25 @@ import { useAuth } from '@/lib/auth-context'
 import { EXAM_CATEGORIES, INDIAN_STATES, STUDENT_CATEGORIES } from '@/lib/constants/auth-constants'
 import { AndroidDatePickerModal } from '@/components/ui/android-date-picker-modal'
 import { CustomSelectDropdown } from '@/components/ui/custom-select-dropdown'
-import { 
-  GraduationCap, Mail, Lock, User, MapPin, 
-  BookOpen, Clock, AlertCircle, ArrowRight, 
-  RotateCcw, ShieldAlert, LogOut, Eye, EyeOff, Building2, UserCheck,
-  Zap, BarChart3, BookmarkCheck, Check, Sparkles
+import {
+  Hourglass,
+  Sparkle,
+  Lightning,
+  BookOpenText,
+  ChartBar,
+  BookmarkSimple,
+  SignOut,
+  EnvelopeSimple,
+  WarningCircle,
+  ShieldWarning,
+  Target,
+  ArrowClockwise,
+  User as PhosphorUser
+} from '@phosphor-icons/react'
+import {
+  GraduationCap, Mail, Lock, User, MapPin,
+  BookOpen, Clock, AlertCircle, ArrowRight,
+  RotateCcw, ShieldAlert, LogOut, Eye, EyeOff, Building2, UserCheck
 } from 'lucide-react'
 
 export default function LoginPage() {
@@ -21,7 +35,27 @@ export default function LoginPage() {
 
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin')
   const [loading, setLoading] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const [error, setError] = useState('')
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      setSignInEmail('')
+      setSignInPassword('')
+      setSignUpEmail('')
+      setSignUpPassword('')
+      setConfirmPassword('')
+      setFullName('')
+      setError('')
+      await signOut()
+      setActiveTab('signin')
+    } catch (err) {
+      console.error('Sign out error:', err)
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
 
   // Show/Hide Password Toggle States
   const [showSignInPassword, setShowSignInPassword] = useState(false)
@@ -225,262 +259,403 @@ export default function LoginPage() {
 
   const activeExamList = EXAM_CATEGORIES.find((c) => c.category === selectedExamCategory)?.exams || []
 
-  // RENDER 1: Email Verification Sent Screen
+  // RENDER 1: Email Verification Sent Screen (Dual-Panel Layout)
   if (emailSent) {
     return (
-      <div className="min-h-screen bg-slate-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-50/70 via-indigo-50/40 to-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#eef2f5] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden font-sans">
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#ffc53d] rounded-full blur-2xl opacity-80 pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#f7685b] rounded-full blur-2xl opacity-80 pointer-events-none" />
+
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-white/90 backdrop-blur-2xl border border-slate-200/90 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl shadow-indigo-500/10"
+          transition={{ duration: 0.35 }}
+          className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-300/60 max-w-5xl w-full min-h-[640px] flex flex-col md:flex-row overflow-hidden relative border-0 z-10 my-4"
         >
-          <div className="w-16 h-16 bg-gradient-to-tr from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-teal-500/25">
-            <Mail className="w-8 h-8 text-white" />
+          {/* Left Overlay Panel */}
+          <div className="md:w-[42%] bg-gradient-to-tr from-[#2cb67d] via-[#24b47e] to-[#1cb075] p-5 sm:p-7 lg:p-8 text-white flex flex-col justify-between items-center text-center relative overflow-hidden shrink-0 min-h-[600px]">
+            <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-xl pointer-events-none" />
+
+            {/* Top Prominent Calcoholics Logo */}
+            <div className="relative z-10 w-full flex justify-center items-center pt-1">
+              <img
+                src="/images/calcoholics-logo.png"
+                alt="Calcoholics Logo"
+                className="w-80 sm:w-96 lg:w-120 h-auto object-contain brightness-0 invert filter drop-shadow-2xl transition-transform duration-300 hover:scale-105"
+              />
+            </div>
+
+            <div className="relative z-10 w-full max-w-sm mx-auto my-auto flex flex-col items-center justify-center space-y-4">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center border border-white/30">
+                <EnvelopeSimple size={36} weight="fill" className="text-white" />
+              </div>
+
+              <div>
+                <h2 className="text-3xl font-black tracking-tight text-white mb-2">Check Your Inbox!</h2>
+                <p className="text-emerald-50 text-xs sm:text-sm font-medium leading-relaxed opacity-95">
+                  We sent a verification link to your email. Click the link to activate your student account.
+                </p>
+              </div>
+            </div>
+            <div className="h-4 pointer-events-none" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Verification Email Sent</h2>
-          <p className="text-slate-600 text-sm mb-6 leading-relaxed">
-            We sent a verification link to <strong className="text-indigo-600 font-semibold">{signUpEmail}</strong>. 
-            Please check your email inbox and click the link to confirm your account.
-          </p>
-          <button
-            onClick={() => {
-              setEmailSent(false)
-              setActiveTab('signin')
-            }}
-            className="w-full py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold text-sm rounded-xl transition-all shadow-md shadow-indigo-500/25"
-          >
-            Return to Sign In
-          </button>
+
+          {/* Right Content Panel */}
+          <div className="md:w-7/12 p-8 sm:p-12 flex flex-col justify-center relative bg-white">
+            <div className="max-w-md mx-auto w-full text-center">
+              <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-[#2cb67d]">
+                <EnvelopeSimple size={42} weight="fill" />
+              </div>
+              <h2 className="text-3xl font-extrabold text-slate-900 mb-3 tracking-tight">Verification Email Sent</h2>
+              <p className="text-slate-500 text-sm mb-8 leading-relaxed font-medium">
+                We sent an activation link to <strong className="text-[#2cb67d] font-bold">{signUpEmail}</strong>.<br />
+                Please check your inbox to confirm your email address.
+              </p>
+              <button
+                onClick={() => {
+                  setEmailSent(false)
+                  setActiveTab('signin')
+                }}
+                className="w-full py-4 bg-[#2cb67d] hover:bg-[#24b47e] active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-full transition-all shadow-lg shadow-emerald-500/20 cursor-pointer"
+              >
+                Return to Sign In
+              </button>
+            </div>
+          </div>
         </motion.div>
       </div>
     )
   }
 
-  // RENDER 2: Logged-in User Status Gate Screens
+  // RENDER 2: Logged-in User Status Gate Screens (Dual-Panel Layout)
   if (user && userProfile) {
-    // Pending Admin Approval (ENHANCED RICH FEATURE DISCOVERY)
+    // Pending Admin Approval (DUAL-PANEL LAYOUT MATCHING USER SCREENSHOT)
     if (userProfile.status === 'pending') {
       return (
-        <div className="min-h-screen bg-slate-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-50/60 via-slate-50 to-slate-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[#eef2f5] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden font-sans">
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#ffc53d] rounded-full blur-2xl opacity-80 pointer-events-none" />
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#f7685b] rounded-full blur-2xl opacity-80 pointer-events-none" />
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white/95 backdrop-blur-2xl border border-slate-200/90 rounded-3xl p-8 max-w-xl w-full text-slate-900 shadow-2xl shadow-amber-500/5 my-8"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.35 }}
+            className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-300/60 max-w-6xl w-full min-h-[700px] flex flex-col md:flex-row overflow-hidden relative border-0 z-10 my-4"
           >
-            {/* Header with Hourglass Icon */}
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-tr from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/25">
-                <Clock className="w-8 h-8 text-white animate-pulse" />
+            {/* Left Overlay Panel */}
+            <div className="md:w-[42%] bg-gradient-to-br from-[#2cb67d] via-[#24b47e] to-[#1cb075] p-5 sm:p-7 lg:p-8 text-white flex flex-col justify-between items-center text-center relative overflow-hidden shrink-0 min-h-[640px]">
+              <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-xl pointer-events-none" />
+              <div className="absolute -left-10 -top-10 w-60 h-60 bg-emerald-400/20 rounded-full blur-lg pointer-events-none" />
+
+              {/* Top Prominent Calcoholics Logo */}
+              <div className="relative z-10 w-full flex justify-center items-center pt-1">
+                <img
+                  src="/images/calcoholics-logo.png"
+                  alt="Calcoholics Logo"
+                  className="w-80 sm:w-96 lg:w-120 h-auto object-contain brightness-0 invert filter drop-shadow-2xl transition-transform duration-300 hover:scale-105"
+                />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-1">Pending Admin Approval</h2>
-              <p className="text-slate-600 text-xs sm:text-sm">
-                Welcome <strong className="text-amber-700">{userProfile.full_name || user.email}</strong>! Your email is verified. 
-                Your profile is currently undergoing review by our team.
-              </p>
+
+              <div className="relative z-10 w-full max-w-sm mx-auto my-auto flex flex-col items-center justify-center space-y-4">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center border border-white/30">
+                  <Hourglass size={36} weight="fill" className="text-white animate-pulse" />
+                </div>
+
+                <div>
+                  <h2 className="text-3xl font-black tracking-tight text-white mb-2">Under Review!</h2>
+                  <p className="text-emerald-50 text-xs sm:text-sm font-medium leading-relaxed opacity-95 mb-4">
+                    Your email is verified. Your student profile is currently undergoing review by our Academic Administration.
+                  </p>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md rounded-full border border-white/30 text-xs font-bold">
+                    <Hourglass size={14} weight="fill" className="animate-spin text-amber-200" />
+                    <span>STATUS: PENDING APPROVAL</span>
+                  </div>
+                </div>
+              </div>
+              <div className="h-4 pointer-events-none" />
             </div>
 
-            {/* Profile Summary Badge */}
-            <div className="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-4 mb-6 text-xs text-amber-950 flex items-center justify-between">
-              <div>
-                <span className="font-semibold text-amber-800 uppercase tracking-wider block text-[10px]">Target Exam</span>
-                <span className="font-bold text-sm">{userProfile.target_exam || 'General Competitive'}</span>
+            {/* Right Content Panel */}
+            <div className="md:w-7/12 p-8 sm:p-10 flex flex-col justify-center relative bg-white overflow-y-auto">
+              {/* Header */}
+              <div className="mb-6">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#2cb67d] tracking-tight mb-1">
+                  Pending Admin Approval
+                </h2>
+                <p className="text-slate-500 text-xs sm:text-sm font-medium">
+                  Welcome <strong className="text-slate-900 font-bold">{userProfile.full_name || user.email}</strong>! Please sit tight while we approve your profile.
+                </p>
               </div>
-              <div className="text-right">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold">
-                  <Clock className="w-3.5 h-3.5" /> Under Review
-                </span>
-              </div>
-            </div>
 
-            {/* Feature Discovery Card: What you can explore once approved */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 mb-6">
-              <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
-                What You&apos;ll Unlock Once Approved:
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3 bg-white border border-slate-200/70 rounded-xl flex items-start gap-2.5 shadow-2xs">
-                  <Zap className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              {/* Profile Summary Badge */}
+              <div className="bg-amber-50/70 rounded-2xl p-4.5 mb-6 text-xs text-amber-950 flex items-center justify-between shadow-2xs border-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100/80 flex items-center justify-center text-amber-700 shrink-0">
+                    <Target size={22} weight="duotone" />
+                  </div>
                   <div>
-                    <strong className="font-bold text-slate-900 block">Spaced Repetition (SRS)</strong>
-                    <span className="text-slate-500 text-[11px]">SM-2 algorithm for long-term memory retention</span>
+                    <span className="font-semibold text-amber-800 uppercase tracking-widest block text-[10px]">Target Exam</span>
+                    <span className="font-extrabold text-sm text-slate-900">{userProfile.target_exam || 'General Competitive'}</span>
                   </div>
                 </div>
-                <div className="p-3 bg-white border border-slate-200/70 rounded-xl flex items-start gap-2.5 shadow-2xs">
-                  <BookOpen className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="font-bold text-slate-900 block">Mock Test Engine</strong>
-                    <span className="text-slate-500 text-[11px]">Timed exams with real-time proctoring</span>
-                  </div>
+                <div className="text-right">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-200/60 text-amber-900 font-bold text-xs">
+                    <Hourglass size={14} weight="fill" className="text-amber-700 animate-spin" /> Under Review
+                  </span>
                 </div>
-                <div className="p-3 bg-white border border-slate-200/70 rounded-xl flex items-start gap-2.5 shadow-2xs">
-                  <BarChart3 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="font-bold text-slate-900 block">Performance Analytics</strong>
-                    <span className="text-slate-500 text-[11px]">Accuracy, speed & topic weakness analysis</span>
+              </div>
+
+              {/* Feature Discovery Grid */}
+              <div className="bg-slate-50/80 rounded-2xl p-5 mb-6">
+                <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-widest mb-3.5 flex items-center gap-2">
+                  <Sparkle size={18} weight="fill" className="text-[#2cb67d]" />
+                  What You&apos;ll Unlock Once Approved:
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3.5 bg-white rounded-2xl flex items-start gap-3 shadow-2xs border-0">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100/70 flex items-center justify-center text-amber-600 shrink-0 mt-0.5">
+                      <Lightning size={18} weight="fill" />
+                    </div>
+                    <div>
+                      <strong className="font-extrabold text-slate-900 block text-xs">Spaced Repetition (SRS)</strong>
+                      <span className="text-slate-500 text-[11px] font-medium leading-snug block mt-0.5">SM-2 memory retention engine</span>
+                    </div>
                   </div>
-                </div>
-                <div className="p-3 bg-white border border-slate-200/70 rounded-xl flex items-start gap-2.5 shadow-2xs">
-                  <BookmarkCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong className="font-bold text-slate-900 block">Custom Revision Hub</strong>
-                    <span className="text-slate-500 text-[11px]">Bookmarks, personal notes & difficulty tags</span>
+
+                  <div className="p-3.5 bg-white rounded-2xl flex items-start gap-3 shadow-2xs border-0">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100/70 flex items-center justify-center text-[#2cb67d] shrink-0 mt-0.5">
+                      <BookOpenText size={18} weight="fill" />
+                    </div>
+                    <div>
+                      <strong className="font-extrabold text-slate-900 block text-xs">Mock Test Engine</strong>
+                      <span className="text-slate-500 text-[11px] font-medium leading-snug block mt-0.5">Timed exams & proctoring</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 bg-white rounded-2xl flex items-start gap-3 shadow-2xs border-0">
+                    <div className="w-8 h-8 rounded-xl bg-teal-100/70 flex items-center justify-center text-teal-600 shrink-0 mt-0.5">
+                      <ChartBar size={18} weight="fill" />
+                    </div>
+                    <div>
+                      <strong className="font-extrabold text-slate-900 block text-xs">Performance Analytics</strong>
+                      <span className="text-slate-500 text-[11px] font-medium leading-snug block mt-0.5">Speed & topic weakness analysis</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 bg-white rounded-2xl flex items-start gap-3 shadow-2xs border-0">
+                    <div className="w-8 h-8 rounded-xl bg-blue-100/70 flex items-center justify-center text-blue-600 shrink-0 mt-0.5">
+                      <BookmarkSimple size={18} weight="fill" />
+                    </div>
+                    <div>
+                      <strong className="font-extrabold text-slate-900 block text-xs">Custom Revision Hub</strong>
+                      <span className="text-slate-500 text-[11px] font-medium leading-snug block mt-0.5">Bookmarks & difficulty tags</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <button
-              onClick={() => signOut()}
-              className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-all border border-slate-200 flex items-center justify-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </button>
+              {/* Sign Out Button with Loading Spinner */}
+              <button
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+                className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer border-0 disabled:opacity-50"
+              >
+                {isSigningOut ? (
+                  <>
+                    <ArrowClockwise size={18} weight="bold" className="animate-spin text-[#2cb67d]" />
+                    <span>Signing Out...</span>
+                  </>
+                ) : (
+                  <>
+                    <SignOut size={18} weight="bold" />
+                    <span>Sign Out</span>
+                  </>
+                )}
+              </button>
+            </div>
           </motion.div>
         </div>
       )
     }
 
-    // Correction Required Screen
+    // Correction Required Screen (Dual-Panel Layout)
     if (userProfile.status === 'correction_required') {
       return (
-        <div className="min-h-screen bg-slate-50 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-50/60 via-slate-50 to-slate-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[#eef2f5] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden font-sans">
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#ffc53d] rounded-full blur-2xl opacity-80 pointer-events-none" />
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#f7685b] rounded-full blur-2xl opacity-80 pointer-events-none" />
+
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white/95 backdrop-blur-2xl border border-slate-200/90 rounded-3xl p-8 max-w-xl w-full text-slate-900 shadow-2xl shadow-rose-500/5 my-8"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.35 }}
+            className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-300/60 max-w-6xl w-full min-h-[700px] flex flex-col md:flex-row overflow-hidden relative border-0 z-10 my-4"
           >
-            <div className="flex items-center gap-3.5 mb-6 border-b border-slate-200/80 pb-4">
-              <div className="w-12 h-12 bg-rose-100 border border-rose-200 rounded-2xl flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-rose-600" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">Revision Required for Approval</h2>
-                <p className="text-xs text-rose-600 font-medium">Please review feedback and update your profile</p>
-              </div>
-            </div>
-
-            <div className="bg-rose-50/90 border border-rose-200 rounded-2xl p-4 mb-6">
-              <h4 className="text-xs font-bold text-rose-900 uppercase tracking-wider mb-1">Feedback from Administrator</h4>
-              <p className="text-sm text-rose-950 italic">
-                &ldquo;{userProfile.rejection_reason || 'Please correct your details and resubmit for approval.'}&rdquo;
-              </p>
-            </div>
-
-            <form onSubmit={handleResubmitCorrection} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  value={correctionFullName}
-                  onChange={(e) => setCorrectionFullName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  required
+            {/* Left Panel */}
+            <div className="md:w-[42%] bg-gradient-to-br from-rose-500 via-rose-600 to-rose-700 p-5 sm:p-7 lg:p-8 text-white flex flex-col justify-between items-center text-center relative overflow-hidden shrink-0 min-h-[640px]">
+              {/* Top Prominent Calcoholics Logo */}
+              <div className="relative z-10 w-full flex justify-center items-center pt-1">
+                <img
+                  src="/images/calcoholics-logo.png"
+                  alt="Calcoholics Logo"
+                  className="w-80 sm:w-96 lg:w-120 h-auto object-contain brightness-0 invert filter drop-shadow-2xl transition-transform duration-300 hover:scale-105"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number (+91)</label>
-                <div className="flex items-center rounded-xl overflow-hidden border border-slate-200 bg-slate-50/80 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all">
-                  <div className="bg-slate-100/90 text-slate-700 font-bold text-xs px-3 py-2.5 border-r border-slate-200 flex items-center gap-1.5 shrink-0 select-none">
-                    <span>🇮🇳</span>
-                    <span>+91</span>
-                  </div>
+              <div className="relative z-10 w-full max-w-sm mx-auto my-auto flex flex-col items-center justify-center space-y-4">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-3xl flex items-center justify-center border border-white/30">
+                  <WarningCircle size={36} weight="fill" className="text-white" />
+                </div>
+
+                <div>
+                  <h2 className="text-3xl font-black tracking-tight text-white mb-2">Revision Needed!</h2>
+                  <p className="text-rose-100 text-xs sm:text-sm font-medium leading-relaxed opacity-95">
+                    Please update your registration details based on the administrator feedback on the right.
+                  </p>
+                </div>
+              </div>
+              <div className="h-4 pointer-events-none" />
+            </div>
+
+            {/* Right Panel Form */}
+            <div className="md:w-7/12 p-8 sm:p-10 flex flex-col justify-center relative bg-white overflow-y-auto">
+              <h2 className="text-2xl font-extrabold text-slate-900 mb-1">Revision Required for Approval</h2>
+              <p className="text-xs text-rose-600 font-bold mb-4">Please review feedback and update your profile</p>
+
+              <div className="bg-rose-50/80 rounded-2xl p-4 mb-5 border-0">
+                <h4 className="text-[10px] font-extrabold text-rose-900 uppercase tracking-widest mb-1">Feedback from Administrator</h4>
+                <p className="text-xs font-semibold text-rose-950 italic">
+                  &ldquo;{userProfile.rejection_reason || 'Please correct your details and resubmit for approval.'}&rdquo;
+                </p>
+              </div>
+
+              <form onSubmit={handleResubmitCorrection} className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
                   <input
-                    type="tel"
-                    value={correctionPhone}
-                    onChange={(e) => handleCorrectionPhoneChange(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-transparent text-sm text-slate-900 placeholder-slate-400 focus:outline-none"
-                    placeholder="Enter 10-digit number"
+                    type="text"
+                    value={correctionFullName}
+                    onChange={(e) => setCorrectionFullName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2cb67d]/20 focus:border-[#2cb67d]"
                     required
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <CustomSelectDropdown
-                  label="State"
-                  options={INDIAN_STATES}
-                  value={correctionState}
-                  onChange={setCorrectionState}
-                  icon={<MapPin className="w-4 h-4" />}
-                />
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">City / Region</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number (+91)</label>
+                  <div className="flex items-center rounded-xl overflow-hidden border border-slate-200 bg-slate-50 focus-within:bg-white focus-within:ring-2 focus-within:ring-[#2cb67d]/20 focus-within:border-[#2cb67d] transition-all">
+                    <div className="bg-slate-100 text-slate-700 font-bold text-xs px-3 py-2.5 border-r border-slate-200 flex items-center gap-1 shrink-0 select-none">
+                      <span>🇮🇳</span>
+                      <span>+91</span>
+                    </div>
+                    <input
+                      type="tel"
+                      value={correctionPhone}
+                      onChange={(e) => handleCorrectionPhoneChange(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none"
+                      placeholder="Enter 10-digit number"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <CustomSelectDropdown
+                    label="State"
+                    options={INDIAN_STATES}
+                    value={correctionState}
+                    onChange={setCorrectionState}
+                    icon={<MapPin className="w-4 h-4" />}
+                  />
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">City / Region</label>
+                    <input
+                      type="text"
+                      value={correctionCity}
+                      onChange={(e) => setCorrectionCity(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
+                      placeholder="e.g. Kolkata"
+                    />
+                  </div>
+                </div>
+
+                <AndroidDatePickerModal
+                  value={correctionDob}
+                  onChange={(dateStr) => setCorrectionDob(dateStr)}
+                  label="Date of Birth"
+                />
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Target Exam</label>
                   <input
                     type="text"
-                    value={correctionCity}
-                    onChange={(e) => setCorrectionCity(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none"
-                    placeholder="e.g. Kolkata"
+                    value={correctionExam}
+                    onChange={(e) => setCorrectionExam(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
+                    required
                   />
                 </div>
-              </div>
 
-              <AndroidDatePickerModal
-                value={correctionDob}
-                onChange={(dateStr) => setCorrectionDob(dateStr)}
-                label="Date of Birth"
-              />
+                {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Target Exam</label>
-                <input
-                  type="text"
-                  value={correctionExam}
-                  onChange={(e) => setCorrectionExam(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none"
-                  required
-                />
-              </div>
-
-              {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
-
-              <div className="pt-2 flex gap-3">
-                <button
-                  type="submit"
-                  disabled={isResubmitting}
-                  className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  {isResubmitting ? 'Resubmitting...' : 'Resubmit for Approval'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => signOut()}
-                  className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl border border-slate-200 text-sm"
-                >
-                  Sign Out
-                </button>
-              </div>
-            </form>
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="submit"
+                    disabled={isResubmitting}
+                    className="flex-1 py-3.5 bg-[#2cb67d] hover:bg-[#24b47e] text-white font-bold text-xs uppercase tracking-wider rounded-full transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer border-0"
+                  >
+                    <ArrowClockwise size={18} weight="bold" />
+                    {isResubmitting ? 'Resubmitting...' : 'Resubmit for Approval'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                    className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-full transition-all cursor-pointer border-0 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {isSigningOut ? <ArrowClockwise size={18} weight="bold" className="animate-spin text-[#2cb67d]" /> : null}
+                    <span>{isSigningOut ? 'Signing Out...' : 'Sign Out'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
           </motion.div>
         </div>
       )
     }
 
-    // Suspended Screen
+    // Suspended Screen (Dual-Panel Layout)
     if (userProfile.status === 'suspended') {
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-[#eef2f5] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden font-sans">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full text-center shadow-xl"
+            className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-300/60 max-w-md w-full p-8 text-center border-0 z-10"
           >
-            <div className="w-16 h-16 bg-rose-100 border border-rose-200 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <ShieldAlert className="w-8 h-8 text-rose-600" />
+            <div className="w-20 h-20 bg-rose-100/80 rounded-3xl flex items-center justify-center mx-auto mb-5 text-rose-600">
+              <ShieldWarning size={42} weight="fill" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Account Suspended</h2>
-            <p className="text-slate-600 text-sm mb-6">
+            <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">Account Suspended</h2>
+            <p className="text-slate-500 text-xs sm:text-sm mb-6 leading-relaxed font-medium">
               Your account has been suspended by administration. Please contact support.
             </p>
             <button
-              onClick={() => signOut()}
-              className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all border border-slate-200"
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer border-0 disabled:opacity-50"
             >
-              Sign Out
+              {isSigningOut ? (
+                <>
+                  <ArrowClockwise size={18} weight="bold" className="animate-spin text-[#2cb67d]" />
+                  <span>Signing Out...</span>
+                </>
+              ) : (
+                <>
+                  <SignOut size={18} weight="bold" />
+                  <span>Sign Out</span>
+                </>
+              )}
             </button>
           </motion.div>
         </div>
@@ -502,116 +677,170 @@ export default function LoginPage() {
         transition={{ duration: 0.4 }}
         className="w-full max-w-6xl bg-white rounded-[2.5rem] shadow-2xl shadow-slate-300/60 border border-white/60 relative z-10 overflow-hidden min-h-[720px] flex flex-col md:flex-row"
       >
+        {/* LEFT TEAL OVERLAY PANEL */}
+        <div className="w-full md:w-[42%] bg-gradient-to-br from-[#2cb67d] via-[#24b47e] to-[#1cb075] text-white p-5 sm:p-7 lg:p-8 flex flex-col justify-between items-center text-center relative overflow-hidden shrink-0 min-h-[640px]">
 
-        {/* LEFT TEAL OVERLAY PANEL (Matching Image Theme #2cb67d) */}
-        <div className="w-full md:w-[40%] bg-gradient-to-br from-[#2cb67d] via-[#24b47e] to-[#1cb075] text-white p-8 sm:p-10 lg:p-12 flex flex-col justify-between relative overflow-hidden shrink-0">
-          
-          {/* Company Branding Logo */}
-          <div className="flex items-center gap-2.5 z-10">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center shadow-inner border border-white/30">
-              <GraduationCap className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <span className="font-serif italic font-bold text-xl tracking-wide text-white block leading-none">
-                IEPE Portal
-              </span>
-              <span className="text-[10px] tracking-widest uppercase font-semibold text-emerald-100 opacity-90">
-                Educational Excellence
-              </span>
-            </div>
+          {/* Decorative Glow Circles */}
+          <div className="absolute -top-20 -left-20 w-72 h-72 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Top Prominent Calcoholics Logo */}
+          <div className="relative z-10 w-full flex justify-center items-center pt-1">
+            <img
+              src="/images/calcoholics-logo.png"
+              alt="Calcoholics Logo"
+              className="w-80 sm:w-96 lg:w-120 h-auto object-contain brightness-0 invert filter drop-shadow-2xl transition-transform duration-300 hover:scale-105"
+            />
           </div>
 
-          {/* Central Welcome Hero Copy */}
-          <div className="my-8 md:my-auto text-center z-10 space-y-4">
+          {/* Center Hero Greeting & Button Stack (Aligned with Right Panel Form) */}
+          <div className="relative z-10 w-full max-w-sm mx-auto mt-2 mb-2 py-1 space-y-2.5">
             <AnimatePresence mode="wait">
               {activeTab === 'signup' ? (
                 <motion.div
                   key="welcome-back"
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
+                  exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.25 }}
+                  className="space-y-3 w-full"
                 >
-                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
                     Welcome Back!
                   </h2>
-                  <p className="text-sm text-emerald-50/90 font-medium max-w-xs mx-auto leading-relaxed">
+                  <p className="text-xs sm:text-sm text-emerald-50/95 font-medium max-w-xs mx-auto leading-relaxed">
                     To keep connected with us please login with your personal info
                   </p>
-                  <button
-                    onClick={() => {
-                      setActiveTab('signin')
-                      setError('')
-                    }}
-                    className="mt-6 px-10 py-3 bg-transparent border-2 border-white rounded-full text-white font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-[#2cb67d] transition-all shadow-md active:scale-95 cursor-pointer"
-                  >
-                    SIGN IN
-                  </button>
+                  <div className="pt-1.5">
+                    <button
+                      onClick={() => {
+                        setActiveTab('signin')
+                        setError('')
+                      }}
+                      className="px-10 py-3 bg-transparent border-2 border-white/90 rounded-full text-white font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-[#2cb67d] transition-all shadow-lg active:scale-95 cursor-pointer"
+                    >
+                      SIGN IN
+                    </button>
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div
                   key="hello-friend"
-                  initial={{ opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
+                  exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.25 }}
+                  className="space-y-3 w-full"
                 >
-                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
                     Hello, Student!
                   </h2>
-                  <p className="text-sm text-emerald-50/90 font-medium max-w-xs mx-auto leading-relaxed">
+                  <p className="text-xs sm:text-sm text-emerald-50/95 font-medium max-w-xs mx-auto leading-relaxed">
                     Enter your personal details and start your exam preparation journey with us
                   </p>
-                  <button
-                    onClick={() => {
-                      setActiveTab('signup')
-                      setError('')
-                    }}
-                    className="mt-6 px-10 py-3 bg-transparent border-2 border-white rounded-full text-white font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-[#2cb67d] transition-all shadow-md active:scale-95 cursor-pointer"
-                  >
-                    SIGN UP
-                  </button>
+                  <div className="pt-1.5">
+                    <button
+                      onClick={() => {
+                        setActiveTab('signup')
+                        setError('')
+                      }}
+                      className="px-10 py-3 bg-transparent border-2 border-white/90 rounded-full text-white font-bold text-xs tracking-wider uppercase hover:bg-white hover:text-[#2cb67d] transition-all shadow-lg active:scale-95 cursor-pointer"
+                    >
+                      SIGN UP
+                    </button>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Bottom Illustration Graphic (Matching reference image mobile app vector) */}
-          <div className="relative z-10 flex items-end justify-center pt-4">
-            <div className="relative w-44 h-36 flex items-end justify-center">
-              {/* Phone Frame */}
-              <div className="w-28 h-36 bg-white rounded-t-2xl border-4 border-slate-200 shadow-xl flex flex-col p-2 space-y-2 relative overflow-hidden">
-                <div className="w-8 h-1 bg-slate-300 rounded-full mx-auto" />
-                <div className="w-full h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                  <div className="w-4 h-4 rounded-full bg-[#2cb67d]" />
-                </div>
-                <div className="space-y-1">
-                  <div className="w-3/4 h-1.5 bg-slate-200 rounded" />
-                  <div className="w-1/2 h-1.5 bg-slate-200 rounded" />
-                </div>
-                <div className="w-8 h-4 bg-[#2cb67d] rounded-md mt-auto" />
-              </div>
-              {/* Character standing next to phone */}
-              <div className="absolute right-2 bottom-0 w-10 h-20 flex flex-col items-center">
-                <div className="w-4 h-4 rounded-full bg-amber-200 border border-amber-300" />
-                <div className="w-6 h-9 bg-[#2cb67d] rounded-t-md mt-0.5" />
-                <div className="w-5 h-9 bg-slate-800 rounded-b-md" />
-              </div>
-            </div>
-          </div>
+          {/* Bottom Smartphone & Student Character Vector Art (Matching Mockup Reference) */}
+          <div className="relative z-10 w-full mt-auto pt-1 flex justify-center items-end">
+            <svg viewBox="0 0 320 185" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-[270px] sm:max-w-[300px] h-auto select-none pointer-events-none drop-shadow-md">
+              {/* Plant Leaves (Behind Left Side of Phone) */}
+              <g id="plant-leaves">
+                <path d="M100 180 C85 155 70 140 70 120 C85 125 95 150 100 180 Z" fill="white" fillOpacity="0.9" />
+                <path d="M102 181 C80 168 62 165 52 148 C72 152 88 165 102 181 Z" fill="white" fillOpacity="0.75" />
+                <path d="M104 182 C92 174 75 180 65 170 C80 172 94 178 104 182 Z" fill="white" fillOpacity="0.6" />
+              </g>
 
-          {/* Decorative background circle */}
-          <div className="absolute -bottom-16 -right-16 w-56 h-56 bg-white/10 rounded-full pointer-events-none" />
+              {/* White Smartphone Body */}
+              <g id="smartphone">
+                {/* Outer Shell */}
+                <rect x="105" y="10" width="105" height="170" rx="18" fill="white" stroke="#e2e8f0" strokeWidth="3" />
+                {/* Top Camera/Speaker Notch */}
+                <rect x="138" y="17" width="38" height="5" rx="2.5" fill="#cbd5e1" />
+
+                {/* Screen Inner Display Card */}
+                <rect x="115" y="32" width="85" height="138" rx="8" fill="#f8fafc" />
+
+                {/* Top Card Box on Phone Screen */}
+                <rect x="123" y="44" width="69" height="42" rx="6" fill="white" stroke="#e2e8f0" strokeWidth="1.5" />
+                {/* 3 Status/Toggle Circles inside Card */}
+                <circle cx="146" cy="65" r="5" fill="#e2e8f0" />
+                <circle cx="157" cy="65" r="5" fill="#94a3b8" />
+                <circle cx="168" cy="65" r="5" fill="#2cb67d" />
+
+                {/* Form Input Dotted Lines / Bars on Phone Screen */}
+                {/* Row 1 */}
+                <circle cx="127" cy="98" r="2.5" fill="#2cb67d" />
+                <circle cx="134" cy="98" r="2.5" fill="#2cb67d" />
+                <circle cx="141" cy="98" r="2.5" fill="#2cb67d" />
+                <rect x="127" y="106" width="61" height="4" rx="2" fill="#e2e8f0" />
+
+                {/* Row 2 */}
+                <circle cx="127" cy="118" r="2.5" fill="#2cb67d" />
+                <circle cx="134" cy="118" r="2.5" fill="#2cb67d" />
+                <circle cx="141" cy="118" r="2.5" fill="#2cb67d" />
+                <rect x="127" y="126" width="61" height="4" rx="2" fill="#e2e8f0" />
+
+                {/* Green Submit Button on Phone Screen */}
+                <rect x="162" y="140" width="26" height="12" rx="4" fill="#2cb67d" />
+              </g>
+
+              {/* Standing Student Character (Right Side of Phone) */}
+              <g id="student-character">
+                {/* Hair */}
+                <path d="M228 72 C225 64 232 60 238 60 C245 60 250 65 248 73 C245 76 235 76 228 72 Z" fill="#262b40" />
+                {/* Face / Head */}
+                <circle cx="237" cy="72" r="7" fill="#ffcca0" />
+                {/* Neck */}
+                <rect x="235" y="78" width="4" height="4" fill="#f8b688" />
+
+                {/* Green T-Shirt / Torso */}
+                <path d="M226 82 C226 82 232 81 237 81 C242 81 248 82 248 82 L249 122 L225 122 Z" fill="#2cb67d" />
+
+                {/* Left Arm (Gesturing towards phone screen) */}
+                <path d="M227 84 L212 106 L217 108 L229 90 Z" fill="#2cb67d" />
+                <circle cx="210" cy="108" r="3.5" fill="#ffcca0" />
+
+                {/* Right Arm */}
+                <path d="M247 84 L251 102 L246 104 L243 88 Z" fill="#2cb67d" />
+                <circle cx="249" cy="105" r="3" fill="#ffcca0" />
+
+                {/* Dark Trousers / Legs */}
+                <rect x="227" y="122" width="9" height="58" rx="2" fill="#262b40" />
+                <rect x="238" y="122" width="9" height="58" rx="2" fill="#262b40" />
+
+                {/* Shoes */}
+                <path d="M223 180 C223 177 228 177 236 177 L236 182 L223 182 Z" fill="#181c2b" />
+                <path d="M238 180 C238 177 243 177 251 177 L251 182 L238 182 Z" fill="#181c2b" />
+              </g>
+
+              {/* Base Line at Bottom */}
+              <line x1="40" y1="182" x2="270" y2="182" stroke="#262b40" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+            </svg>
+          </div>
         </div>
 
         {/* RIGHT WHITE FORM PANEL */}
         <div className="w-full md:w-[60%] p-6 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
           <div className="max-w-xl mx-auto w-full">
-            
+
             {/* Form Title */}
             <div className="text-center mb-6">
               <h2 className="text-3xl font-extrabold text-[#2cb67d] tracking-tight mb-1.5">
-                {activeTab === 'signup' ? 'Create Account' : 'Sign In to Portal'}
+                {activeTab === 'signup' ? 'Create Account' : 'Sign In to Calcoholics'}
               </h2>
 
               {/* Subtext */}
@@ -639,6 +868,7 @@ export default function LoginPage() {
                         type="email"
                         value={signInEmail}
                         onChange={(e) => setSignInEmail(e.target.value)}
+                        autoComplete="off"
                         className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2cb67d]/20 focus:border-[#2cb67d] transition-all"
                         placeholder="Email"
                         required
@@ -653,6 +883,7 @@ export default function LoginPage() {
                         type={showSignInPassword ? 'text' : 'password'}
                         value={signInPassword}
                         onChange={(e) => setSignInPassword(e.target.value)}
+                        autoComplete="new-password"
                         className="w-full pl-11 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2cb67d]/20 focus:border-[#2cb67d] transition-all"
                         placeholder="Password"
                         required
