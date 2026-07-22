@@ -8,9 +8,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ['Lora', 'Georgia', 'serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
+        // Legacy colors kept for compatibility
         'indigo-deep': '#1E293B',
         'slate-blue': '#475569',
         'electric-blue': '#3B82F6',
@@ -18,6 +23,18 @@ const config: Config = {
         'ghost-white': '#F8FAFC',
         'slate-light': '#E2E8F0',
         'gray-cool': '#94A3B8',
+        // Claude-inspired warm palette
+        'warm-bg':      '#FDFCFB',
+        'warm-card':    '#FFFFFF',
+        'warm-surface': '#F5F0EB',
+        'warm-border':  '#EDE9E4',
+        'warm-hover':   '#EDE9E4',
+        'terra':        '#C4602A',
+        'terra-light':  '#FDF0E8',
+        'terra-mid':    '#D4824E',
+        'charcoal':     '#2D2D35',
+        'charcoal-mid': '#52525E',
+        'charcoal-muted': '#8A8A96',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

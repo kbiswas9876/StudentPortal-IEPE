@@ -164,7 +164,7 @@ export default function AnalysisReportPage() {
             testResult: {
               ...prev.testResult,
               results: {
-                ...prev.testResult.results,
+                ...(prev.testResult.results ?? {}),
                 rank: dynamicData.rank,
                 percentile: dynamicData.percentile,
                 total_test_takers: dynamicData.totalTestTakers

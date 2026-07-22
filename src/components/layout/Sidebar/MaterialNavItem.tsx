@@ -11,6 +11,8 @@ interface MaterialNavItemProps {
     isActive: boolean
     onClick?: () => void
     isCollapsed?: boolean
+    activeClassName?: string
+    inactiveClassName?: string
 }
 
 export default function MaterialNavItem({
@@ -19,7 +21,9 @@ export default function MaterialNavItem({
     href,
     isActive,
     onClick,
-    isCollapsed = false
+    isCollapsed = false,
+    activeClassName = 'bg-gradient-to-tr from-indigo-600 to-indigo-400 shadow-lg shadow-indigo-500/40 text-white',
+    inactiveClassName = 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
 }: MaterialNavItemProps) {
     return (
         <Link href={href} onClick={onClick} className="block w-full mb-1">
@@ -28,17 +32,14 @@ export default function MaterialNavItem({
                 whileTap={{ scale: 0.98 }}
                 className={`
           relative flex items-center px-4 py-3 mx-2 rounded-lg
-          transition-all duration-300 ease-in-out
-          ${isActive
-                        ? 'bg-gradient-to-tr from-indigo-600 to-indigo-400 shadow-lg shadow-indigo-500/40 text-white'
-                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-                    }
+          transition-all duration-200 ease-in-out
+          ${isActive ? activeClassName : inactiveClassName}
         `}
             >
                 <Icon
                     className={`
-            w-5 h-5 min-w-[20px]
-            ${isActive ? 'text-white' : 'text-inherit'}
+            w-5 h-5 min-w-[20px] flex-shrink-0
+            ${isActive ? 'text-current' : 'text-inherit'}
             ${isCollapsed ? 'mr-0' : 'mr-4'}
           `}
                 />
@@ -46,7 +47,7 @@ export default function MaterialNavItem({
                 {!isCollapsed && (
                     <span className={`
             text-sm font-medium tracking-wide whitespace-nowrap
-            ${isActive ? 'text-white' : 'text-inherit'}
+            ${isActive ? 'text-current' : 'text-inherit'}
           `}>
                         {label}
                     </span>

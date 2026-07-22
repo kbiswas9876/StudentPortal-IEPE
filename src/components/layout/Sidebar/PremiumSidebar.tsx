@@ -30,7 +30,7 @@ interface SectionHeaderProps {
 const SectionHeader: React.FC<SectionHeaderProps> = ({ title }) => {
   return (
     <div className="px-6 py-3 mt-2 mb-1">
-      <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <span className="text-xs font-semibold uppercase tracking-widest text-charcoal-muted">
         {title}
       </span>
     </div>
@@ -47,7 +47,7 @@ const HamburgerMenu = ({
   isMobile?: boolean
 }) => {
   const strokeWidth = 2
-  const color = '#4a5568'
+  const color = '#52525E'
   const transition = { type: 'spring', stiffness: 400, damping: 30 }
 
   const topLineVariants = {
@@ -70,7 +70,7 @@ const HamburgerMenu = ({
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={onClick}
-      className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      className="p-2 rounded-lg hover:bg-warm-hover transition-colors"
       aria-label={isOpen ? 'Close menu' : 'Open menu'}
     >
       <motion.div
@@ -172,9 +172,9 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className={`
           fixed left-0 top-0 h-screen z-50
-          bg-white dark:bg-slate-900
-          border-r border-slate-200 dark:border-slate-800
-          shadow-xl
+          bg-warm-surface
+          border-r border-warm-border
+          shadow-sm
           ${isMobile ? 'lg:hidden' : 'hidden lg:block'}
         `}
         style={{ width: sidebarWidth }}
@@ -195,10 +195,10 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                 className="flex-1"
               >
                 <Link href="/" className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                  <div className="w-8 h-8 rounded-lg bg-charcoal flex items-center justify-center text-warm-surface font-bold text-sm shadow-sm">
                     SP
                   </div>
-                  <span className="text-slate-800 dark:text-slate-100 font-bold text-lg tracking-tight">
+                  <span className="text-charcoal font-serif font-semibold text-lg tracking-tight">
                     Student Portal
                   </span>
                 </Link>
@@ -207,7 +207,7 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
           </div>
         </div>
 
-        <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent mx-4 mb-4" />
+        <div className="h-px bg-gradient-to-r from-transparent via-warm-border to-transparent mx-4 mb-4" />
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto px-2 pb-4 custom-scrollbar">
@@ -221,10 +221,10 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                 <div
                   className={`
                     relative flex items-center justify-between px-4 py-3 mx-2 rounded-lg
-                    transition-all duration-300 cursor-pointer
+                    transition-all duration-200 cursor-pointer
                     ${isActive('/dashboard')
-                      ? 'bg-gradient-to-tr from-indigo-600 to-indigo-400 shadow-lg shadow-indigo-500/40 text-white'
-                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                      ? 'bg-terra text-white shadow-sm'
+                      : 'text-charcoal-mid hover:bg-warm-hover hover:text-charcoal'
                     }
                   `}
                   onClick={() => {
@@ -239,12 +239,11 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                   }}
                 >
                   <div className="flex items-center gap-4">
-                    <HomeIcon className="w-5 h-5" />
+                    <HomeIcon className="w-5 h-5 flex-shrink-0" />
                     <span className="text-sm font-medium">Dashboard</span>
                   </div>
                   <ChevronDownIcon
-                    className={`w-4 h-4 transition-transform duration-300 ${isPracticeMenuOpen ? 'rotate-180' : ''
-                      }`}
+                    className={`w-4 h-4 transition-transform duration-300 flex-shrink-0 ${isPracticeMenuOpen ? 'rotate-180' : ''}`}
                   />
                 </div>
 
@@ -264,12 +263,12 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                             flex items-center gap-3 px-4 py-2 mx-2 ml-6 rounded-md
                             transition-all duration-200 cursor-pointer text-sm
                             ${activeTab === 'practice' && isActive('/dashboard')
-                              ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-900/20 font-medium'
-                              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                              ? 'text-terra bg-terra-light font-medium'
+                              : 'text-charcoal-muted hover:text-charcoal-mid hover:bg-warm-hover'
                             }
                           `}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'practice' && isActive('/dashboard') ? 'bg-indigo-600' : 'bg-slate-400'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeTab === 'practice' && isActive('/dashboard') ? 'bg-terra' : 'bg-charcoal-muted'}`} />
                           Practice Setup
                         </div>
                         <div
@@ -278,12 +277,12 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                             flex items-center gap-3 px-4 py-2 mx-2 ml-6 rounded-md
                             transition-all duration-200 cursor-pointer text-sm
                             ${activeTab === 'saved' && isActive('/dashboard')
-                              ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-900/20 font-medium'
-                              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
+                              ? 'text-terra bg-terra-light font-medium'
+                              : 'text-charcoal-muted hover:text-charcoal-mid hover:bg-warm-hover'
                             }
                           `}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${activeTab === 'saved' && isActive('/dashboard') ? 'bg-indigo-600' : 'bg-slate-400'}`} />
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeTab === 'saved' && isActive('/dashboard') ? 'bg-terra' : 'bg-charcoal-muted'}`} />
                           Saved Sessions
                         </div>
                       </div>
@@ -298,6 +297,8 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                 href="/revision-hub"
                 isActive={isActive('/revision-hub')}
                 onClick={isMobile ? onClose : undefined}
+                activeClassName="bg-terra text-white"
+                inactiveClassName="text-charcoal-mid hover:bg-warm-hover hover:text-charcoal"
               />
               <MaterialNavItem
                 icon={ClockIcon}
@@ -305,9 +306,11 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                 href="/mock-tests"
                 isActive={isActive('/mock-tests')}
                 onClick={isMobile ? onClose : undefined}
+                activeClassName="bg-terra text-white"
+                inactiveClassName="text-charcoal-mid hover:bg-warm-hover hover:text-charcoal"
               />
 
-              <div className="my-4 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent mx-4" />
+              <div className="my-4 h-px bg-gradient-to-r from-transparent via-warm-border to-transparent mx-4" />
 
               {/* Management Section */}
               <SectionHeader title="Management" />
@@ -317,6 +320,8 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                 href="/my-content"
                 isActive={isActive('/my-content')}
                 onClick={isMobile ? onClose : undefined}
+                activeClassName="bg-terra text-white"
+                inactiveClassName="text-charcoal-mid hover:bg-warm-hover hover:text-charcoal"
               />
               <MaterialNavItem
                 icon={CalendarIcon}
@@ -324,9 +329,11 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                 href="/my-plans"
                 isActive={isActive('/my-plans')}
                 onClick={isMobile ? onClose : undefined}
+                activeClassName="bg-terra text-white"
+                inactiveClassName="text-charcoal-mid hover:bg-warm-hover hover:text-charcoal"
               />
 
-              <div className="my-4 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent mx-4" />
+              <div className="my-4 h-px bg-gradient-to-r from-transparent via-warm-border to-transparent mx-4" />
 
               {/* Settings Section */}
               <SectionHeader title="Settings" />
@@ -336,6 +343,8 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
                 href="/settings"
                 isActive={isActive('/settings')}
                 onClick={isMobile ? onClose : undefined}
+                activeClassName="bg-terra text-white"
+                inactiveClassName="text-charcoal-mid hover:bg-warm-hover hover:text-charcoal"
               />
             </>
           ) : (
@@ -391,9 +400,9 @@ export default function PremiumSidebar({ isOpen, onClose, isMobile = false }: Pr
 
         {/* Footer */}
         {(!isCollapsed || isMobile) && (
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="p-4 border-t border-warm-border">
             <div className="text-center">
-              <span className="text-xs text-slate-400 dark:text-slate-500">Student Portal v2.0</span>
+              <span className="text-xs text-charcoal-muted">Student Portal v2.0</span>
             </div>
           </div>
         )}

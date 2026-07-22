@@ -10,6 +10,7 @@ import NotificationBell from '@/components/NotificationBell'
 import { useAuth } from '@/lib/auth-context'
 import { useTheme } from '@/lib/theme-context'
 import { SunIcon, MoonIcon, UserCircleIcon } from '@heroicons/react/24/outline'
+import SrsSettingsModal from '@/components/SrsSettingsModal'
 import { Menu, Transition } from '@headlessui/react'
 import { Play, Settings, Sparkles } from 'lucide-react'
 
@@ -68,22 +69,22 @@ function RevisionHubControls({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-blue-50/80 via-indigo-50/80 to-purple-50/80 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 backdrop-blur-sm rounded-lg">
+    <div className="flex items-center gap-2 px-3 py-1.5 bg-terra-light rounded-lg border border-warm-border">
       {/* Daily Review Badge */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 shadow-sm">
-          <Sparkles className="h-3 w-3 text-white" strokeWidth={2.5} />
-          <span className="text-xs font-bold text-white tabular-nums">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-charcoal shadow-sm">
+          <Sparkles className="h-3 w-3 text-warm-surface" strokeWidth={2.5} />
+          <span className="text-xs font-bold text-warm-surface tabular-nums">
             {loading ? '...' : dueCount}
           </span>
         </div>
-        <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+        <span className="text-xs font-semibold text-charcoal-mid">
           Daily Review
         </span>
       </div>
 
       {/* Divider */}
-      <div className="h-4 w-px bg-slate-300 dark:bg-slate-600"></div>
+      <div className="h-4 w-px bg-warm-border"></div>
 
       {/* Action Buttons */}
       <div className="flex items-center gap-1.5">
@@ -92,7 +93,7 @@ function RevisionHubControls({ userId }: { userId: string }) {
           whileTap={{ scale: 0.95 }}
           onClick={handleStartReview}
           disabled={loading || dueCount === 0}
-          className="px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-slate-400 disabled:to-slate-500 text-white font-semibold text-xs rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-60"
+          className="px-3 py-1 bg-terra hover:bg-[#A84F22] disabled:bg-charcoal-muted text-white font-semibold text-xs rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Play className="h-3 w-3" strokeWidth={2.5} />
           Start
@@ -102,7 +103,7 @@ function RevisionHubControls({ userId }: { userId: string }) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsSrsSettingsOpen(true)}
-          className="px-3 py-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-xs rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-1"
+          className="px-3 py-1 bg-charcoal hover:bg-[#3E3E4A] text-warm-surface font-semibold text-xs rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-1"
           title="SRS Settings"
         >
           <Settings className="h-3 w-3" strokeWidth={2.5} />
@@ -113,7 +114,7 @@ function RevisionHubControls({ userId }: { userId: string }) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => router.push('/revision-hub/analytics')}
-          className="px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold text-xs rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-1"
+          className="px-3 py-1 bg-terra-light border border-warm-border hover:bg-warm-hover text-terra font-semibold text-xs rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-1"
         >
           <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
@@ -123,15 +124,11 @@ function RevisionHubControls({ userId }: { userId: string }) {
       </div>
 
       {/* SRS Settings Modal */}
-      {isSrsSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setIsSrsSettingsOpen(false)} />
-          <div className="relative z-10">
-            {/* Import and use SrsSettingsModal here if needed */}
-            <button onClick={() => setIsSrsSettingsOpen(false)}>Close Settings</button>
-          </div>
-        </div>
-      )}
+      <SrsSettingsModal
+        isOpen={isSrsSettingsOpen}
+        onClose={() => setIsSrsSettingsOpen(false)}
+        userId={userId}
+      />
     </div>
   )
 }
@@ -184,26 +181,26 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   }
 
   return (
-    <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700">
+    <div className="sticky top-0 z-30 bg-warm-bg/95 backdrop-blur-md border-b border-warm-border">
       <div className="flex items-center justify-between px-4 h-[69px]">
         {/* Left side - Menu button and title */}
         <div className="flex items-center space-x-4">
           <HamburgerMenu isOpen={false} onClick={onMenuClick} />
           
           <div>
-            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h1 className="text-lg font-serif font-semibold text-charcoal">
               {pageTitle}
             </h1>
             {breadcrumbs.length > 0 && (
-              <nav className="flex items-center space-x-1 text-sm text-slate-500 dark:text-slate-400">
+              <nav className="flex items-center space-x-1 text-sm text-charcoal-muted">
                 {breadcrumbs.map((crumb, index) => (
                   <React.Fragment key={crumb.href}>
                     {index > 0 && (
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3 text-charcoal-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     )}
-                    <span className={index === breadcrumbs.length - 1 ? 'text-slate-700 dark:text-slate-300 font-medium' : ''}>
+                    <span className={index === breadcrumbs.length - 1 ? 'text-charcoal-mid font-medium' : ''}>
                       {crumb.label}
                     </span>
                   </React.Fragment>
@@ -225,7 +222,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
+            className="p-2 rounded-lg hover:bg-warm-hover transition-colors duration-200"
             title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
           >
             <motion.div
@@ -233,9 +230,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
               transition={{ duration: 0.3, ease: 'easeInOut' }}
             >
               {theme === 'light' ? (
-                <SunIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                <SunIcon className="h-5 w-5 text-charcoal-mid" />
               ) : (
-                <MoonIcon className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                <MoonIcon className="h-5 w-5 text-charcoal-mid" />
               )}
             </motion.div>
           </motion.button>
@@ -246,8 +243,8 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
           {/* User Profile */}
           {user && (
             <Menu as="div" className="relative">
-              <Menu.Button className="flex items-center p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200">
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+              <Menu.Button className="flex items-center p-2 rounded-lg hover:bg-warm-hover transition-colors duration-200">
+                <div className="w-8 h-8 bg-gradient-to-br from-terra to-terra-mid rounded-full flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
                     {user.email?.charAt(0).toUpperCase()}
                   </span>
@@ -263,15 +260,15 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
                 leaveFrom="transform opacity-100 scale-100"
                 leaveTo="transform opacity-0 scale-95"
               >
-                <Menu.Items className="absolute right-0 top-full mt-2 w-48 origin-top-right bg-white/90 dark:bg-slate-800/90 backdrop-blur-lg rounded-lg shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none">
+                <Menu.Items className="absolute right-0 top-full mt-2 w-48 origin-top-right bg-white rounded-lg shadow-lg ring-1 ring-warm-border focus:outline-none">
                   <div className="py-1">
                     <Menu.Item>
                       {({ active }) => (
                         <Link
                           href="/settings"
                           className={`${
-                            active ? 'bg-slate-100/50 dark:bg-slate-700/50' : ''
-                          } flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300`}
+                            active ? 'bg-warm-hover' : ''
+                          } flex items-center px-4 py-2 text-sm text-charcoal-mid`}
                         >
                           <UserCircleIcon className="w-4 h-4 mr-3" />
                           Profile Settings
@@ -283,8 +280,8 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
                         <button
                           onClick={handleLogout}
                           className={`${
-                            active ? 'bg-slate-100/50 dark:bg-slate-700/50' : ''
-                          } flex items-center w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400`}
+                            active ? 'bg-warm-hover' : ''
+                          } flex items-center w-full text-left px-4 py-2 text-sm text-red-600`}
                         >
                           <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

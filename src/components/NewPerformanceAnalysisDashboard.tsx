@@ -183,7 +183,13 @@ const NewPerformanceAnalysisDashboard: React.FC<NewPerformanceAnalysisDashboardP
   // Calculate KPI data
   const kpiData = useMemo(() => {
     const { testResult, answerLog, questions } = sessionResult;
-    const { results } = testResult;
+    const results = testResult.results ?? {
+      marks_obtained: 0,
+      total_marks: 0,
+      percentile: 0,
+      rank: 0,
+      total_test_takers: 0,
+    };
     
     const totalCorrect = testResult.total_correct || 0;
     const totalIncorrect = testResult.total_incorrect || 0;

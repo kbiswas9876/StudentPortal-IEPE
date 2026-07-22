@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import React from 'react'
-import { Inter } from 'next/font/google'
+import { Inter, Lora } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth-context'
 import { SidebarProvider } from '@/lib/sidebar-context'
@@ -10,7 +10,18 @@ import { ChartJsProvider } from '@/components/ChartJsProvider'
 import { DashboardProvider } from '@/lib/dashboard-context'
 import { AppLayout } from '@/components/layout'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const lora = Lora({
+  subsets: ['latin'],
+  variable: '--font-lora',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+})
 
 export const metadata: Metadata = {
   title: 'Student Portal',
@@ -23,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${lora.variable}`}>
       <body className={inter.className}>
         <ChartJsProvider>
           <ThemeProvider>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Settings, Brain, Calendar, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react'
 import RadialPacingControl from './RadialPacingControl'
@@ -12,6 +13,11 @@ interface SrsSettingsModalProps {
 }
 
 export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSettingsModalProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   // State for pacing control (section 1)
   const [pacingMode, setPacingMode] = useState<number>(0)
   const [isLoadingPacing, setIsLoadingPacing] = useState(true)
@@ -181,7 +187,9 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen, showConfirmModal, onClose])
 
-  return (
+  if (!mounted) return null
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -191,7 +199,7 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]"
           />
 
           {/* Modal */}
@@ -200,9 +208,9 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 flex items-center justify-center z-[9999] p-4 pointer-events-none"
           >
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 max-w-2xl w-full max-h-[85vh] overflow-y-auto pointer-events-auto">
             {/* Header */}
             <div className="sticky top-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-5 py-3 flex items-center justify-between rounded-t-xl z-10">
               <div className="flex items-center gap-2.5">
@@ -446,7 +454,8 @@ export default function SrsSettingsModal({ isOpen, onClose, userId }: SrsSetting
           </AnimatePresence>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
 

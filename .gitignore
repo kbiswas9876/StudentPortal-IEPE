@@ -89,3 +89,18 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+# AI Agent directories
+.claude/
+.cursor/
+.kiro/
+
+# Build & TypeScript cache
+tsconfig.tsbuildinfo
+
+# Report markdown files
+*.md
+!README.md
+
+# Loose root SQL files
+/*.sql

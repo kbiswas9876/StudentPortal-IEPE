@@ -152,6 +152,20 @@ export async function GET(
     }
     // --- END: Logic ---
 
+    // Ensure results object always exists, even for practice sessions
+    if (!testResult.results) {
+        const marksObtained = testResult.session_type === 'mock_test' && testResult.mock_test_id
+            ? await calculateActualScore(supabaseAdmin as any, Number(resultId), Number(testResult.mock_test_id))
+            : (testResult.score_percentage ?? 0);
+        testResult.results = {
+            marks_obtained: marksObtained,
+            total_marks: testResult.total_marks ?? 0,
+            percentile: 0,
+            rank: 0,
+            total_test_takers: 0,
+        };
+    }
+
     const { data: answerLog, error: answerError } = await supabaseAdmin.from('answer_log').select('*').eq('result_id', resultId)
     if (answerError) return NextResponse.json({ error: 'Answer log not found' }, { status: 404 });
 

@@ -1,23 +1,32 @@
 /* Design System Tokens - Single source of truth for all styling */
 :root {
-  /* COLORS */
-  --color-background-page: #F9FAFB;   /* Very light grey */
-  --color-background-card: #FFFFFF;   /* White */
-  --color-text-primary: #1F2937;      /* Slate-800 */
-  --color-text-secondary: #6B7280;    /* Gray-500 */
-  --color-text-muted: #9CA3AF;        /* Gray-400 */
-  --color-brand-primary: #4F46E5;     /* Indigo-600 */
-  --color-brand-tint: rgba(79, 70, 229, 0.05); /* 5% Indigo */
-  --color-border-primary: #E5E7EB;    /* Gray-200 */
-  --color-border-hover: #D1D5DB;      /* Gray-300 */
-  --color-alert-report: #EF4444;      /* Red-500 */
-  --color-focus-ring: rgba(79, 70, 229, 0.18);
+  /* ── Claude-Inspired Warm Palette ── */
+  --color-background-page:  #FDFCFB;   /* Warm off-white cream */
+  --color-background-card:  #FFFFFF;   /* Pure white card surface */
+  --color-surface:          #F5F0EB;   /* Warm surface (sidebar) */
+  --color-border-primary:   #EDE9E4;   /* Warm border / divider */
+  --color-border-hover:     #D8CFC6;   /* Slightly darker warm border on hover */
+
+  /* Text */
+  --color-text-primary:     #2D2D35;   /* Deep charcoal — headings */
+  --color-text-secondary:   #52525E;   /* Mid charcoal — body, nav labels */
+  --color-text-muted:       #8A8A96;   /* Muted — section labels, placeholders */
+
+  /* Accent — Terracotta */
+  --color-brand-primary:    #C4602A;   /* Terracotta — active items, CTAs */
+  --color-brand-tint:       #FDF0E8;   /* Terracotta tint for hover bg */
+  --color-brand-mid:        #D4824E;   /* Lighter terracotta for gradients */
+
+  /* Legacy compatibility aliases */
+  --color-alert-report:     #EF4444;   /* Red-500 */
+  --color-focus-ring:       rgba(196, 96, 42, 0.18); /* Terra focus ring */
 
   /* TYPOGRAPHY */
+  --font-family-serif: 'Lora', 'Georgia', serif;
   --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-size-xs: 13px;
   --font-size-sm: 14px;
-  --font-size-base: 16px; /* 1rem */
+  --font-size-base: 16px;
   --font-size-lg: 18px;
   --font-size-xl: 20px;
   --font-weight-regular: 400;
@@ -37,8 +46,9 @@
   --border-radius-lg: 16px;
   --border-radius-pill: 9999px;
 
-  /* SHADOWS */
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  /* SHADOWS — soft, diffused */
+  --shadow-card: 0 1px 3px rgba(45, 45, 53, 0.06), 0 4px 12px rgba(45, 45, 53, 0.06);
+  --shadow-sidebar: 2px 0 16px rgba(45, 45, 53, 0.06);
 
   /* TRANSITIONS */
   --transition-fast: 150ms ease-out;
